@@ -18,8 +18,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
 
 from . import __version__
-from .analytics import SCENARIOS, network_report, scenario, summary, survey_report
-from .demo import BLOCKS, DEMO_ID, csv_string, fingerprint, manifest
+from .analytics import BLOCKS, SCENARIOS, network_report, scenario, summary, survey_report
+from .demo import DEMO_ID, csv_string, fingerprint, manifest
 from .store import DatasetStore, parse_upload
 
 ROOT = Path(__file__).resolve().parents[1]
