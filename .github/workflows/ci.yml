@@ -26,6 +26,14 @@ jobs:
         run: |
           ! git ls-files | grep -E '(^|/)(\.runtime|private-data|\.env)(/|$)'
           ! git ls-files | grep -E '\.(sav|xlsx|xls|sqlite|db|pem|key)$'
+      - name: Build synthetic research pack
+        run: python -m tools.export_demo
+      - name: Save private DEMO analysis package
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOLUO_2032_DEMO_V1_research_pack
+          path: artifacts/demo/*.zip
+          retention-days: 7
       - name: Install browser testing tools
         run: |
           python -m pip install playwright
