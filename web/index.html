@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08172a">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>博罗2032 · 内部研究工作台</title>
+<link rel="stylesheet" href="/static/style.css">
+<script defer src="/static/app.js"></script>
+</head>
+<body>
+<div class="shell">
+  <header class="header">
+    <div class="brand"><div class="brand-mark">B<span>·</span></div><div><strong>博罗2032 <em>内部版</em></strong><small>三次产业协同研究实验室 / INTERNAL LAB</small></div></div>
+    <div class="header-right"><span class="locked"><span class="lock-dot"></span> 私有研发环境</span><span id="modeBadge" class="mode-badge">DEMO DATA</span></div>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-left"><div class="eyebrow"><span class="star">✦</span> RESEARCH MISSION / 2026—2032</div>
+        <h1>三次产业，都要<span>向前。</span><br>结构如何更加合理？</h1>
+        <p>从真实基准与合成Demo出发，研究农业、工业、服务业的共同增长。选一个条件，运行真实计算，再检查模型能否支撑你的判断。</p>
+        <div class="hero-tags"><span>一个可替换的Demo</span><span>程序 × 专业软件</span><span>可追溯的每次实验</span></div>
+      </div>
+      <div class="target-card">
+        <div class="target-label">2032 · 参考结构情景 <span>非官方预测</span></div>
+        <div class="target-numbers"><b>1</b><i>:</i><b>5</b><i>:</i><b>4</b></div>
+        <p>这是研究要检验的目标，不是必须达到的预设结论。</p>
+        <div class="target-line"><span>农业</span><span>二产</span><span>三产</span></div>
+      </div>
+    </section>
+    <nav class="tabs" aria-label="工作区">
+      <button type="button" class="active" data-tab="scenario" aria-current="page">01 <span>结构风洞</span></button>
+      <button type="button" data-tab="network">02 <span>产业关系</span></button>
+      <button type="button" data-tab="model">03 <span>双轨模型</span></button>
+      <button type="button" data-tab="data">04 <span>数据与交付</span></button>
+    </nav>
+    <div class="status-strip" id="statusStrip" role="status"><span class="loading-dot"></span> 正在初始化默认Demo数据...</div>
+    <section id="panel-scenario" class="tab-panel" aria-label="结构风洞">
+      <div class="section-header"><div><div class="eyebrow dark">CONDITIONAL ECONOMY / 实时计算</div><h2>把一种情况，放进2032年。</h2><p>右侧选择发展情景与条件，左侧实时显示基准、产业结构和可能结果的分布。</p></div><button class="ghost-button" id="resetScenario" type="button">↺ 恢复Demo基准</button></div>
+      <div class="workspace">
+        <div class="results">
+          <div class="kpi-grid">
+            <div class="kpi"><small>2025基准 · 亿元</small><strong id="gdp2025">—</strong><span>三次产业增加值之和</span></div>
+            <div class="kpi dark"><small>2032情景 · GDP P50</small><strong id="gdp2032">—</strong><span id="scenarioTitle">条件模拟，不是预测</span></div>
+            <div class="kpi"><small>2032第三产业 · 份额P50</small><strong id="share2032">—</strong><span>目标参考：40%</span></div>
+          </div>
+          <article class="card">
+            <div class="card-head"><div><small>THE STRUCTURAL SHIFT</small><h3>同一经济体，两种结构</h3></div><div class="chip">增加值占比</div></div>
+            <div class="structure"><div class="structure-label"><strong>2025</strong><small>参考基准</small></div><div class="stackbar" id="bar2025" aria-label="2025三次产业占比"><span class="empty-bar"></span></div></div>
+            <div class="structure"><div class="structure-label"><strong>2032</strong><small>条件中位数</small></div><div class="stackbar" id="bar2032" aria-label="2032三次产业占比"><span class="empty-bar"></span></div></div>
+            <div class="legend"><span><i class="primary"></i>第一产业</span><span><i class="secondary"></i>第二产业</span><span><i class="tertiary"></i>第三产业</span></div>
+            <div id="sectorLines" class="sector-lines"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><small>SIMULATED DISTRIBUTION</small><h3>结果不是只有一条线</h3></div><span class="chip">条件模拟 · 10—90%区间</span></div>
+            <div id="histogram" class="histogram"><div class="placeholder">等待模型运行</div></div>
+            <div class="range-grid"><div><small>P10</small><b id="p10">—</b></div><div><small>P50</small><b id="p50">—</b></div><div><small>P90</small><b id="p90">—</b></div></div>
+            <p class="chart-footnote">分布由固定Demo增长假设和随机扰动实际计算，不是对博罗2032年经济总量的经验预测。</p>
+          </article>
+        </div>
+        <aside class="control-panel">
+          <div class="control-head"><small>CHANGE THE CONDITIONS</small><h3>亲手改变一件事</h3><p>每次切换都会重算，不是预制动画。</p></div>
+          <div id="scenarioChoices" class="choice-list">
+            <button type="button" class="choice selected" data-scenario="balanced"><span class="choice-radio"></span><span><strong>三次产业协同增强</strong><small>同时考虑农业、制造与服务业发展</small></span></button>
+            <button type="button" class="choice" data-scenario="industrial"><span class="choice-radio"></span><span><strong>制造业升级</strong><small>工业增长与专业服务需求</small></span></button>
+            <button type="button" class="choice" data-scenario="agriculture"><span class="choice-radio"></span><span><strong>农业价值链提升</strong><small>生产、加工与流通协同</small></span></button>
+            <button type="button" class="choice" data-scenario="service"><span class="choice-radio"></span><span><strong>生产性服务增强</strong><small>本地能力、客户与市场</small></span></button>
+            <button type="button" class="choice" data-scenario="stress"><span class="choice-radio"></span><span><strong>项目与人才承压</strong><small>观察不利条件下的偏离</small></span></button>
+          </div>
+          <details class="advanced"><summary>深入调整 · 五个发展条件 <span>＋</span></summary>
+            <div class="slider-field"><label for="knobAgri">农业提质 <b id="knobAgriValue">0</b></label><input id="knobAgri" data-knob="agriculture" type="range" min="-1" max="1" step=".25" value="0"></div>
+            <div class="slider-field"><label for="knobIndustry">工业升级 <b id="knobIndustryValue">0</b></label><input id="knobIndustry" data-knob="manufacturing" type="range" min="-1" max="1" step=".25" value="0"></div>
+            <div class="slider-field"><label for="knobServices">专业服务 <b id="knobServicesValue">0</b></label><input id="knobServices" data-knob="services" type="range" min="-1" max="1" step=".25" value="0"></div>
+            <div class="slider-field"><label for="knobTalent">人才条件 <b id="knobTalentValue">0</b></label><input id="knobTalent" data-knob="talent" type="range" min="-1" max="1" step=".25" value="0"></div>
+            <div class="slider-field"><label for="knobDelay">项目延期 <b id="knobDelayValue">0</b></label><input id="knobDelay" data-knob="project_delay" type="range" min="-1" max="1" step=".25" value="0"></div>
+            <p class="notice-mini">所有滑杆改变的都是明确的Demo增长假设，不是从真实问卷估计出的因果效应。</p>
+          </details>
+          <button id="runScenario" class="primary-button" type="button">运行这个情景 <span>↗</span></button>
+          <div class="control-foot"><span class="loading-dot"></span><span id="runMeta">等待运行</span></div>
+        </aside>
+      </div>
+    </section>
+    <section id="panel-network" class="tab-panel" hidden aria-label="产业关系">
+      <div class="section-header"><div><div class="eyebrow dark">INTER-INDUSTRY NETWORK</div><h2>增长能不能真正传到其他产业？</h2><p>Demo中实际构造了企业采购关系。先检查关系和服务需求，再考虑发展情景。</p></div><button class="ghost-button" id="runNetwork" type="button">重新计算网络</button></div>
+      <div class="network-layout"><article class="card"><div class="card-head"><h3>合成产业关系网络</h3><span class="chip">DEMO · 非实测</span></div><div id="networkDiagram" class="network-diagram"><div class="placeholder">等待加载</div></div><p class="chart-footnote">网络图为合成企业关系的服务类型汇总，不代表真实博罗供应商名单。</p></article><article class="card"><div class="card-head"><h3>不同服务的模拟需求</h3><span class="chip">关系金额 · 百万元</span></div><div id="serviceDemand" class="service-demand"><div class="placeholder">等待加载</div></div><div id="networkMeta" class="network-meta"></div></article></div>
+    </section>
+    <section id="panel-model" class="tab-panel" hidden aria-label="双轨模型">
+      <div class="section-header"><div><div class="eyebrow dark">PROGRAM × PROFESSIONAL SOFTWARE</div><h2>同一组数据，两种分析轨道。</h2><p>程序运行探索性路径模型，导出同一数据至SPSS/SmartPLS。专业软件结果回传后再做对照。</p></div><button id="runModel" class="ghost-button" type="button">运行程序模型</button></div>
+      <div class="model-layout">
+        <article class="card"><div class="card-head"><h3>编程轨道</h3><span class="chip">Mode-A · 探索实现</span></div><div class="model-illustration"><span>服务可得性</span><b>↘</b><span>服务使用</span><b>↘</b><span>经营表现</span></div><div id="modelOutput"><div class="placeholder">点击“运行程序模型”开始分析</div></div><p class="chart-footnote">这是独立编程实现的探索性PLS路径模型，尚未获得SmartPLS逐项等价验证。路径系数不是政策因果效应或GDP增量。</p></article>
+        <article class="card"><div class="card-head"><h3>专业软件轨道</h3><span class="chip">等待真实软件输出</span></div><p class="body-copy">同一Demo可导出为SPSS、SmartPLS可读取的数据包。完成专业分析后导入实际生成的结果JSON。</p><button id="exportPack" class="secondary-button" type="button">导出SPSS / SmartPLS分析包 ↓</button><label class="file-label" for="externalResultFile">导入专业软件结果 JSON</label><input id="externalResultFile" type="file" accept=".json,application/json"><div id="comparisonOutput" class="comparison-output"><div class="placeholder">还没有导入真实专业软件的输出，不会生成虚假对照数值。</div></div></article>
+      </div>
+    </section>
+    <section id="panel-data" class="tab-panel" hidden aria-label="数据与交付">
+      <div class="section-header"><div><div class="eyebrow dark">DATA PROVENANCE & REPLACEMENT</div><h2>先用Demo验证，再逐项替换真实数据。</h2><p>真实数据必须经授权，并在本地受控目录保存。导入不会覆盖Demo和公众V11。</p></div></div>
+      <div class="data-layout">
+        <article class="card"><div class="card-head"><h3>当前数据快照</h3><span id="datasetModeChip" class="chip">DEMO</span></div><div id="datasetDetails" class="dataset-detail">载入中...</div><p class="chart-footnote">2025宏观基数使用待再次核对的公开参考数据；其他企业、调查、关系和项目均为合成记录。</p></article>
+        <article class="card"><div class="card-head"><h3>替换一个数据模块</h3><span class="chip">本机私有导入</span></div>
+          <label for="dataType" class="field-label">数据类型</label><select id="dataType" class="field"><option value="macro">三次产业宏观数据</option><option value="survey">企业调查</option><option value="enterprises">企业主体</option><option value="relations">产业关系</option><option value="projects">项目数据</option><option value="workers">就业与人才</option></select>
+          <label for="dataFile" class="field-label">选择CSV或XLSX文件（单次≤3MB）</label><input id="dataFile" class="field file-field" type="file" accept=".csv,.xlsx">
+          <button type="button" id="importData" class="primary-button">校验并导入新快照 <span>↗</span></button>
+          <p class="chart-footnote">上传后标记“未经核验”；关联数据可能暂时不兼容，必须重新检验。不要上传未经许可的真实或个人敏感数据。</p>
+          <div id="uploadMessage" class="upload-message" role="status"></div>
+        </article>
+        <article class="card full-span"><div class="card-head"><h3>可复现研究档案与报告</h3><span class="chip">当前研究条件</span></div><div class="actions-row"><button id="exportReport" class="secondary-button" type="button">导出2032情景研究说明 ↓</button><button id="resetDemo" class="ghost-button" type="button">切回原始Demo数据</button></div><p class="body-copy">每次情景运行记录数据ID、假设与随机种子。报告不把演示结果写成真实博罗预测。</p></article>
+      </div>
+    </section>
+    <footer class="footer"><span>博罗决策模拟器 · INTERNAL V0.1 · 仅限私有研发</span><span>合成数据 ≠ 现实观测 · 情景结果 ≠ 确定预测</span></footer>
+  </main>
+</div>
+<div class="toast" id="toast" role="alert" hidden></div>
+<div class="auth-layer" id="authLayer" hidden><div class="auth-box"><h2>内部访问凭证</h2><p>当前本地服务已启用访问令牌。令牌仅在本页面内存保存，不写入浏览器存储。</p><label for="authToken">访问令牌</label><input id="authToken" type="password" autocomplete="off"><button type="button" id="authSubmit" class="primary-button">验证并继续</button></div></div>
+</body>
+</html>
