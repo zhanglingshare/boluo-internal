@@ -1,7 +1,88 @@
-# 博罗决策模拟器 · 内部版
+# 博罗决策模拟器 · 内部版 (Boluo Internal Lab)
 
-Private development repository. Demo-first 2032 three-sector research laboratory.
+**私有研发项目｜Demo First｜2026–2032｜绝不自动公开。**
 
-**Important:** Do not upload restricted administrative, enterprise, or personal records to this repository. Do not expose or connect this repository to public Pages. Public V11 is a separate project and must not be modified.
+这不是博罗V11公众站的隐藏页面，而是独立的研究实验平台。现阶段仅供仓库所有者及经其授权的GPT、豆包开发连接使用。**禁止向公众部署，禁止将部门、企业、个人未经授权的原始数据提交GitHub。**
 
-Implementation in progress; see subsequent commits for the runnable demo and tests.
+## 当前实际可运行的功能（V0.1）
+
+- **唯一Demo**：`BOLUO_2032_DEMO_V1`。固定随机种子生成500家合成企业、300份模拟企业问卷、250份模拟劳动者记录、合成项目与采购关系。2025宏观基准引用公开参考数值，须在正式研究前重新核对；2020–2024回溯以及全部企业关系均为**合成数据**。
+- **2032三产情景风洞**：按照2025基准、增长假设及相关扰动，对2026–2032年一二三产增加值进行2500条可复现条件模拟；显示结果区间、结构占比、与1:5:4参考线的差距。**这不是基于真实微观数据校准的经济预测。**
+- **企业关系分析**：使用Demo真实生成的有向采购/供货边计算关联数及服务需求，不能视为现实博罗产业网络。
+- **实验性Mode-A路径程序**：对Demo问卷构念SA(4题)、SU(3题)、OP(3题)计算载荷、Alpha、路径、Bootstrap区间。属于**探索性实现**，尚未通过与SmartPLS逐项等价验证，不能声称实证研究已完成。
+- **专业软件交接**：一键打包CSV、变量字典、路径模型说明和结果JSON模板，供SPSS、SmartPLS实际运行；手工导入软件真实输出后，可初步对照差异。
+- **数据替换**：上传CSV/XLSX覆盖某个研究快照中的指定组件，不覆盖默认Demo。自动校验、记录来源和指纹；混合模式继续标注未验证，绝不自动冒充真实经济结论。
+- **研究说明导出**：基于当前数据和条件计算结果生成Markdown报告。
+
+**尚未实现：**经验证的专业级PLS-SEM等价性；SPSS/SmartPLS全自动远程操控；政府统计数据库实时接口；正式样本抽样/调查发布系统；生产级多用户身份认证；经过真实数据验证的GDP因果参数。不要把V0.1说成这些功能已经交付。
+
+## 在你的本机启动
+
+建议Python 3.11或更高版本。
+
+```bash
+git clone git@github.com:zhanglingshare/boluo-internal.git
+cd boluo-internal
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m uvicorn boluo.app:app --host 127.0.0.1 --port 8765
+```
+
+然后在**本机浏览器**打开 **http://127.0.0.1:8765/**。
+
+若使用HTTPS认证方式克隆，请先确认个人GitHub凭证有权访问本私有仓库。上方本机地址不是公网部署地址。
+
+可选：配置本地内部令牌（页面会弹出输入框；令牌只保存在内存）：
+
+```bash
+export BOLUO_INTERNAL_TOKEN='choose-a-long-random-token'
+python -m uvicorn boluo.app:app --host 127.0.0.1 --port 8765
+```
+
+**禁止直接绑定 `0.0.0.0` 或对公网暴露开发服务器。** 当前认证是本地研发最低限度措施，并非生产级身份系统。需要远程访问时，必须另行设计安全网关、授权及审计。
+
+## 首次完整体验
+
+1. 打开“结构风洞”，默认载入Demo。
+2. 选择五种产业情景，或展开五条条件滑杆。每次调用计算接口重跑模型，结果不是预制图。
+3. 进入“产业关系”，观察合成采购网络与服务需求。
+4. 进入“双轨模型”，运行探索性路径程序，查看路径结果和区间。
+5. 点击“导出SPSS / SmartPLS分析包”，在专业软件中使用`data/survey.csv`和模型说明完成实际估计。
+6. 将**真实软件输出**整理为`model/external_result_template.json`约定的JSON，填写软件版本和实际系数后导回工作台。占位零系数不是研究结果。
+7. 进入“数据与交付”，导出研究说明；按模板导入另一份数据快照，确认各模块重新计算。
+
+## 数据替换说明
+
+- 支持`macro`、`enterprises`、`survey`、`relations`、`projects`、`workers`六类CSV/XLSX。
+- 单次最多3MB与2万条记录。字段参见 `docs/DATA-CONTRACT.md`。
+- 导入组件标记`IMPORTED_UNVERIFIED`。只替换部分数据会进入`MIXED`模式，后续研究不得称为全真实数据分析。
+- `.runtime/`默认存储在本机，不属于代码仓库，已添加Git忽略规则。此本地保护并不替代正式数据加密及组织权限。
+- 替换数据后，需要重新估计相关模型；不保证当前测量结构适用于所有真实问卷。
+
+## 运行自动测试
+
+```bash
+python -m pytest -q
+```
+
+GitHub Actions会自动运行Python测试与基础安全/数据隔离检查。
+
+## 研究红线
+
+1. **1:5:4是待检验的2032目标情景，不是强制正确答案。** 农业、工业、服务业共同发展，关注绝对规模、质量和就业。
+2. **企业营业收入、采购金额、投资额不能直接加总为增加值。**
+3. **SEM/PLS相关系数不得未经额外经济识别和校准就换算为GDP贡献。**
+4. **程序轨道与专业软件轨道同时保留。** 同方法可检查数值复现，不同方法须检查估计对象是否可比；差异必须保留。
+5. **合成Demo不能冒充真实博罗企业、调查或交易数据。**
+6. **不得改变公众仓库 `zhanglingshare/boluo-simulator`。** 本项目拥有独立代码、测试和数据目录。
+7. **不从AI开发连接直接读取受限制数据。** 真实数据使用条件须另行授权。
+
+## 研发下一阶段（未完成）
+
+- 用固定测试集及SmartPLS逐项验证探索性PLS实现，补充更完整的测量/区分效度与预测检验。
+- 数据契约升级：企业—调查—项目—关系跨表校验、分层样本、行业分类和价格口径映射。
+- 研究任务、模型注册表、敏感性和统计功效质量门。
+- 安全审查后，接入经授权的企业与部门数据。
+
+© 2026 张凌。内部研发项目；未经明确许可不得传播源码、数据或分析成果。
