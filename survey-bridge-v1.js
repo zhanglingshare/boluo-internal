@@ -77,12 +77,15 @@ function validateAggregate(item){
  if(item.item_id!==dim.item_id)return {ok:false,reason:'问卷题项与冻结对照题项不一致'};
  if(item.scale_min!==1||item.scale_max!==5)return {ok:false,reason:'目前只接受预注册的1–5等级题项'};
  if(!item.fieldwork_start||!item.fieldwork_end||!item.population||!item.sampling_frame||!item.sampling_method)return {ok:false,reason:'缺少调查时段、总体或抽样说明'};
+ if(item.population!==dim.population)return {ok:false,reason:'调查总体与原先研究对象不一致，不能直接比较'};
  if(item.fieldwork_end<item.fieldwork_start)return {ok:false,reason:'调查起止时间错误'};
  if(!Array.isArray(item.groups)||!item.groups.length)return {ok:false,reason:'未提供匿名分群汇总'};
- const accepted=new Set(GROUPS[t].map(x=>x.id));let sumWeight=0;
+ const accepted=new Set(GROUPS[t].map(x=>x.id)),seen=new Set();let sumWeight=0;
  for(const g of item.groups){
+  if(seen.has(g.id))return {ok:false,reason:'不能重复计算同一分群'};
+  seen.add(g.id);
   if(!accepted.has(g.id))return {ok:false,reason:'未注册的分群名称'};
-  if(!(Number.isInteger(g.n)&&g.n>0&&Number.isFinite(g.mean)&&g.mean>=1&&g.mean<=5&&Number.isFinite(g.weight)&&g.weight>=0))return {ok:false,reason:'分群样本量、均值或总体权重不合法'};
+  if(!(Number.isInteger(g.n)&&g.n>=10&&Number.isFinite(g.mean)&&g.mean>=1&&g.mean<=5&&Number.isFinite(g.weight)&&g.weight>=0))return {ok:false,reason:'分群样本量不足10或均值、总体权重不合法，不得公开小样本群体'};
   if(g.ci_low!==undefined&&g.ci_high!==undefined&&!(Number.isFinite(g.ci_low)&&Number.isFinite(g.ci_high)&&g.ci_low<=g.mean&&g.mean<=g.ci_high))return {ok:false,reason:'分群区间必须包含其调查估计均值'};
   sumWeight+=g.weight;
  }
