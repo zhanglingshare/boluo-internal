@@ -96,3 +96,15 @@ test('synthetic HTMT, two-predictor VIF and holdout predictions are computed, no
  assert.ok(Number.isFinite(m.holdout.skill));
  assert.match(m.holdout.method,/非PLSpredict/);
 });
+
+test('Mode-A synthetic measurement now reports outer loadings, rho-c and f-square',()=>{
+ const m=E.survey({sampleSize:150,seed:319});
+ assert.deepEqual(Object.keys(m.loadings),['SA','SU','OP']);
+ assert.equal(m.loadings.SA.length,4);
+ assert.equal(m.loadings.SU.length,3);
+ assert.equal(m.loadings.OP.length,3);
+ assert.ok(Object.values(m.loadings).flat().every(Number.isFinite));
+ assert.ok(Object.values(m.rhoC).every(x=>Number.isFinite(x)&&x>0&&x<=1));
+ assert.deepEqual(Object.keys(m.f2),['SA→SU','SA→OP','SU→OP']);
+ assert.ok(Object.values(m.f2).every(x=>Number.isFinite(x)&&x>=0));
+});
