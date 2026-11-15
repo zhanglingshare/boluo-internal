@@ -177,3 +177,30 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
 .v4-wind-baseline .wb-cell em{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px}
 .v4-wind-baseline .wb-cell em.good{background:rgba(61,142,99,.3);color:#7fe0a8}
 .v4-wind-baseline .wb-cell em.gold{background:rgba(158,120,45,.3);color:#f2ca7e}
+
+/* V4-03 OSINT 转换模块 */
+.v4-osint-flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+.v4-osint-flow .of-step{background:rgba(31,72,110,.5);border:1px solid var(--stroke);padding:6px 14px;border-radius:16px;font-size:12px;color:#cfe3f5}
+.v4-osint-flow i{color:var(--muted);font-style:normal}
+.v4-osint-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}
+.v4-osint-card{background:rgba(15,35,58,.45);border:1px solid var(--stroke);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;border-top:3px solid #6a93b8}
+.v4-osint-card.fact{border-top-color:#57c99a}
+.v4-osint-card.proxy{border-top-color:#f0c96e}
+.v4-osint-card.blindspot{border-top-color:#e08a6e}
+.v4-osint-card b{font-size:14px}
+.v4-osint-card b small{color:var(--muted);font-weight:400;margin-left:4px}
+.v4-osint-bar{position:relative;height:8px;background:rgba(15,35,58,.8);border-radius:5px;margin:6px 0 2px}
+.v4-osint-bar i{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,#2b6f9e,#5bd2ff);border-radius:5px;opacity:.55}
+.v4-osint-bar b{position:absolute;top:-3px;width:3px;height:14px;background:#fff;border-radius:2px;box-shadow:0 0 6px rgba(255,255,255,.6)}
+.of-fact{font-size:12px;color:#b9d3e8;line-height:1.55;flex:1}
+.of-ev{display:grid;gap:4px}
+.of-ev-row{font-size:11px;color:#8fa8bd;display:flex;gap:6px;align-items:baseline}
+.of-grade{background:rgba(31,72,110,.6);padding:1px 5px;border-radius:4px;font-weight:700;font-size:10px;flex-shrink:0}
+.of-ev-row i{font-style:normal;font-size:9px;flex-shrink:0}
+.of-ev-row i.up{color:#7fe0a8}
+.of-ev-row i.down{color:#f2987e}
+.of-ev-row i.flat{color:#8fa8bd}
+.of-need{background:rgba(72,58,31,.22);border-radius:8px;padding:8px 10px;font-size:11.5px;color:#ead9b5;line-height:1.5}
+.of-need b{font-size:11px}
+.v4-osint-legend{color:var(--muted);margin-top:10px}
+.v4-osint-card .tag.warn{background:rgba(158,120,45,.3);color:#f2ca7e}

@@ -96,7 +96,40 @@ function evidenceReadiness(){
   {id:'projectTiming',title:'投资→投产兑现时滞',status:'关键数据缺失',observable:'年度投资同比和工业增加值同比',need:'逐项目合同、建设、投产、爬坡批次',reason:'年度相关不能推断实际时滞与净因果效应'}
  ];
 }
-const API={S,YEARS,INDUSTRIES,REGIONS,ENTITY_CLUES,dim,history,percent,divergence,compare,retention,retentionSurface,evidenceReadiness};
+
+/* ---------- V4-03 OSINT 转换模块数据：公开情报 → 问卷刚需 ----------
+   三层铁律：事实层=可直接核验的客观事实；代理层=只能作带区间先验；
+   盲区层=公开渠道看不到，宽区间或直接留空，等真实问卷。
+   所有证据均指向仓库既有公开来源（公报 S / 产业报道），不新造任何观测。 */
+const OSINT_BASKET={
+ method:'公开外显信号→可观察事实→代理信号→问卷刚需。事实层锁定；代理层只给区间先验；盲区不猜。真实问卷到位后按残差回校。',
+ constructs:[
+  {id:'IND',name:'工业动能',layer:'fact',grade:'A',mean:4.0,half:0.35,
+   fact:'2025规上工业增加值+8.7%，电子信息制造+23.0%；同期固定资产投资-18.8%',
+   evidence:[{src:'2025博罗公报',grade:'A',dir:'+',text:'规上工业增加值增长8.7%'},{src:'2025博罗公报',grade:'A',dir:'+',text:'电子信息制造增加值增长23.0%'},{src:'2025博罗公报',grade:'A',dir:'-',text:'固定资产投资下降18.8%（方向相反）'}],
+   surveyNeed:'投资与产出背离下，企业真实扩产意愿、订单可见度——问卷里的"近12个月是否计划增加设备投资"'},
+  {id:'SUP',name:'本地服务可得',layer:'proxy',grade:'B',mean:3.4,half:0.6,
+   fact:'三产增加值349.00亿占34.7%；合成网络假设服务承接指数约0.6（C级演示）',
+   evidence:[{src:'2025博罗公报',grade:'A',dir:'.',text:'第三产业增加值349.00亿元、占GDP 34.7%'},{src:'合成网络（C级）',grade:'C',dir:'.',text:'专业服务承接能力为演示假设，无实测'}],
+   surveyNeed:'研发/检测/物流/工业软件是否本地可得——只能问企业，公开渠道无法推断'},
+  {id:'PER',name:'经营表现',layer:'blindspot',grade:'-',mean:3.5,half:1.0,
+   fact:'公开渠道无企业级营收/利润/用工微观数据',
+   evidence:[{src:'公报口径',grade:'A',dir:'.',text:'统计公报只有行业汇总，无企业微观'},{src:'公开报道',grade:'B',dir:'.',text:'点名企业（如百亿级报道）不含经营数字'}],
+   surveyNeed:'经营表现是问卷的刚需核心：近三年营收变化、用工变化、利润压力'},
+  {id:'ENT',name:'产业主体',layer:'fact',grade:'B',mean:3.8,half:0.5,
+   fact:'公开报道点名欣旺达、华通等百亿级企业；无真实采购边',
+   evidence:[{src:'产业主体公开报道',grade:'B',dir:'+',text:'公开媒体点名的百亿级企业'},{src:'研究核对',grade:'A',dir:'.',text:'与本地供应商的真实采购关系、结算地均未公开'}],
+   surveyNeed:'供应商分布与采购半径：本地采购比例、跨区结算——问卷最该问的"钱从哪来到哪去"'},
+  {id:'AGR',name:'农业现金流',layer:'proxy',grade:'B',mean:3.2,half:0.7,
+   fact:'2025农业增加值107.44亿(+7.8%)；账期75天/12天为演示参数',
+   evidence:[{src:'2025博罗公报',grade:'A',dir:'+',text:'第一产业增加值107.44亿元、增长7.8%'},{src:'演示参数（C级）',grade:'C',dir:'.',text:'渠道回款75天/茶农12天为机制演示，非实测'}],
+   surveyNeed:'真实账期与回款压力：渠道账期天数、垫资规模——替换演示参数的唯一途径'}
+ ],
+ layerLegend:{fact:'可核验客观事实',proxy:'仅作态度/结构的代理先验',blindspot:'公开盲区，等真人问卷'},
+ gradeLegend:{A:'官方/可核验',B:'权威媒体/平台',C:'演示/合成假设'}
+};
+
+const API={S,YEARS,INDUSTRIES,REGIONS,ENTITY_CLUES,dim,history,percent,divergence,compare,retention,retentionSurface,evidenceReadiness,OSINT_BASKET};
 root.BoluoV4=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);

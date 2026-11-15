@@ -582,7 +582,29 @@ function surveyPage(r){
  '<div><small>测试集RMSE</small><strong>'+decimal(m.holdout.rmse,3)+'</strong></div>'+
  '<div><small>训练均值基准RMSE</small><strong>'+decimal(m.holdout.meanBaselineRMSE,3)+'</strong></div>'+
  '<div><small>相对均值基准预测得分</small><strong class="'+(m.holdout.skill<0?'bad':'cyan')+'">'+decimal(m.holdout.skill,3)+'</strong></div></div>'+
- '<div class="research-vintage gap">'+html(m.holdout.method)+'。该对照使用构念题项的均分与独立线性回归，不能称为PLSpredict或完成PLS-SEM的样本外验证。</div></article></div>';
+ '<div class="research-vintage gap">'+html(m.holdout.method)+'。该对照使用构念题项的均分与独立线性回归，不能称为PLSpredict或完成PLS-SEM的样本外验证。</div></article></div>'+
+ v4OsintPanel();
+}
+function v4OsintPanel(){
+ const B=V4.OSINT_BASKET;
+ const layerBadge=(l)=>l==='fact'?'<span class="tag real">事实层</span>':l==='proxy'?'<span class="tag model">代理层</span>':'<span class="tag warn">盲区层</span>';
+ const confBar=(mean,half)=>{
+  const l=Math.max(0,mean-half)*10,r=Math.min(10,mean+half)*10;
+  return '<div class="v4-osint-bar"><i style="left:'+l+'%;width:'+(r-l)+'%"></i><b style="left:'+(mean*10)+'%"></b></div>';
+ };
+ return '<section class="card research-feature gap" id="osint-module"><div class="row wrap"><div><div class="eyebrow">OSINT → SURVEY CONVERSION</div><h3>公开情报能替你回答多少？哪些必须发问卷？</h3></div>'+badge('与上方合成问卷互不冒充','warn')+'</div>'+
+ '<div class="research-vintage">'+html(B.method)+'</div>'+
+ '<div class="v4-osint-flow"><span class="of-step">公开情报</span><i>→</i><span class="of-step">可观察事实</span><i>→</i><span class="of-step">代理信号</span><i>→</i><span class="of-step">问卷刚需</span><i>→</i><span class="of-step">未来校准</span></div>'+
+ '<div class="v4-osint-grid">'+B.constructs.map(c=>
+  '<div class="v4-osint-card '+c.layer+'">'+layerBadge(c.layer)+
+  '<b>'+c.name+' <small>'+c.grade+'级</small></b>'+
+  confBar(c.mean,c.half)+
+  '<p class="micro">先验均值 '+decimal(c.mean,1)+' ± '+decimal(c.half,1)+'</p>'+
+  '<p class="of-fact">'+html(c.fact)+'</p>'+
+  '<div class="of-ev">'+c.evidence.map(e=>'<div class="of-ev-row"><span class="of-grade">'+e.grade+'</span><i class="'+(e.dir==='+'?'up':e.dir==='-'?'down':'flat')+'">'+(e.dir==='+'?'▲':e.dir==='-'?'▼':'●')+'</i>'+html(e.text)+'</div>').join('')+'</div>'+
+  '<div class="of-need"><b>问卷刚需：</b>'+html(c.surveyNeed)+'</div></div>').join('')+'</div>'+
+ '<div class="v4-osint-legend micro">'+Object.entries(B.layerLegend).map(([k,v])=>'<span>'+v+'</span>').join(' · ')+'</div>'+
+ '<div class="notice gap"><b>两层不冒充：</b>本模块是"公开情报→问卷设计"的转换器，上方合成问卷是"有数据后怎么检验机制"的演示。OSINT 只能给事实层锁定的客观项与代理层的区间先验；经营表现等盲区层，除真实问卷外无其他来源。'+v4EvidenceLinks(['b2025','industryNews'])+'</div></section>';
 }
 function networkSvg(net){
  const w=660,h=330;
