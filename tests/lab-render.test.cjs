@@ -58,7 +58,7 @@ test('research archive saves and reloads snapshot',()=>{
 
 test('historical chart switches between share, level and GDP revision view',()=>{
  const v=boot('data');
- assert.match(v.stage.innerHTML,/2024年GDP/);
+ assert.match(v.stage.innerHTML,/2024年原初步GDP/);
  const before=v.stage.innerHTML;
  v.listeners.click({target:{closest(sel){return sel==='[data-history]'?{dataset:{history:'gdp'}}:null;}}});
  assert.notEqual(v.stage.innerHTML,before);
@@ -87,5 +87,5 @@ test('clicking a two-parameter heatmap cell really updates the simulation',()=>{
  const before=v.nodes.topRun.textContent;
  v.listeners.click({target:{closest(sel){return sel==='[data-heat]'?{dataset:{heat:'1,1'}}:null;}}});
  assert.notEqual(v.nodes.topRun.textContent,before);
- assert.match(v.stage.innerHTML,/两个条件/);
+ assert.match(v.stage.innerHTML,/双变量压力面/);
 });
