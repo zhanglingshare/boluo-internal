@@ -247,8 +247,8 @@ function v3PriceBridgePanel(){
  '<div><small>隐含总量价格变化（近似）</small><strong class="gold">'+decimal(b.impliedPriceGrowth,2)+'%</strong></div>'+
  '<div><small>1600亿目标所需五年名义复合增速</small><strong>'+decimal(b.nominalTargetCAGR,2)+'%</strong></div></div>'+
  '<div class="v3-price-equation"><span>2024核实GDP <b>970.87亿元</b></span>'+
- '<icon>→</icon><span>2025公布GDP <b>1005.45亿元</b></span>'+
- '<icon>→</icon><span>不变价实际增幅 <b>5.5%</b></span></div>'+
+ '<span class="v3-arrow">→</span><span>2025公布GDP <b>1005.45亿元</b></span>'+
+ '<span class="v3-arrow">→</span><span>不变价实际增幅 <b>5.5%</b></span></div>'+
  '<div class="research-vintage gap">'+html(b.note)+' 2030年1600亿元为现价总量目标，所需名义复合增幅不得直接和实际GDP增长率比较。</div>'+
  v3Sources(['revision','stat'])+'</section>';
 }
