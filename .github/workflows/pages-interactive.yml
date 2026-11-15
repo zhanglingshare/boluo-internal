@@ -11,12 +11,16 @@ on:
       - "research-v3-viz.js"
       - "research-v4.js"
       - "research-v4-viz.js"
+      - "research-v5.js"
+      - "research-v5-viz.js"
+      - "research-v5-ui.js"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
       - "tests/research-methods.test.cjs"
       - "tests/research-v3.test.cjs"
       - "tests/research-v4.test.cjs"
+      - "tests/research-v5.test.cjs"
       - ".github/workflows/pages-interactive.yml"
   pull_request:
     paths:
@@ -29,12 +33,16 @@ on:
       - "research-v3-viz.js"
       - "research-v4.js"
       - "research-v4-viz.js"
+      - "research-v5.js"
+      - "research-v5-viz.js"
+      - "research-v5-ui.js"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
       - "tests/research-methods.test.cjs"
       - "tests/research-v3.test.cjs"
       - "tests/research-v4.test.cjs"
+      - "tests/research-v5.test.cjs"
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -51,6 +59,9 @@ jobs:
       - run: node --check research-v3-viz.js
       - run: node --check research-v4.js
       - run: node --check research-v4-viz.js
+      - run: node --check research-v5.js
+      - run: node --check research-v5-viz.js
+      - run: node --check research-v5-ui.js
       - run: node --test tests/*.test.cjs
       - name: Protect prior mockups
         run: |
