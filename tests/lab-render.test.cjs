@@ -218,7 +218,7 @@ test('V5 wind views each have purpose-specific calculations',()=>{
  const expect=[
  ['wind/0','仅此产业承担目标后的反解点'],
  ['wind/1','2025工业增长8.7%'],
- ['wind/2','本地价值'],
+ ['wind/2','本地增加值'],
  ['wind/3','账期错配'],
  ['wind/4','网格覆盖率'],
  ['wind/5','模型响应']
