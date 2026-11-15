@@ -5,6 +5,7 @@ const E=window.BoluoEngine;
 const R=window.BoluoResearch, RV=window.BoluoResearchViz;
 const V3=window.BoluoV3, V3V=window.BoluoV3Viz;
 const V4=window.BoluoV4, V4V=window.BoluoV4Viz;
+const DD=window.BoluoDiscoveryData, RD=window.BoluoRelationsData;
 if(!V4||!V4V){document.getElementById('stage').textContent='产业结构V4模块加载失败，请刷新页面。';return;}
 if(!V3||!V3V){document.getElementById('stage').textContent='研究V3模块加载失败，请刷新页面。';return;}
 if(!R||!RV){document.getElementById('stage').textContent='结构研究模块加载失败，请刷新页面。';return;}
@@ -15,7 +16,8 @@ function safeRead(k,fallback){try{return JSON.parse(localStorage.getItem(k))||fa
 function safeWrite(k,val){try{localStorage.setItem(k,JSON.stringify(val));return true;}catch(e){return false;}}
 let state=E.normalize(safeRead(KEY,DEFAULT));
 let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
-let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
+let page='home',view=0,agentSlug='',sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
+const AGENT_PAGES={intel:1,network:1,cliff:1,scenes:1,tournament:1,debate:1,vulnerability:1,counterfactual:1,brief:1,ledger:1};
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
 let methodFilter='全部';
 let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20,v4Year=null;
@@ -833,6 +835,177 @@ function archivePage(r){
  (records.length?records.map(x=>'<div class="record"><div><b>'+html(x.title)+'</b><small>'+html(x.date)+' · '+html(x.id)+' · '+x.state.year+'年目标</small></div><div class="actions"><button type="button" class="tiny-btn" data-action="restore" data-id="'+html(x.id)+'">重开</button><button type="button" class="tiny-btn" data-action="compare" data-id="'+html(x.id)+'">对比</button><button type="button" class="tiny-btn" data-action="remove" data-id="'+html(x.id)+'" aria-label="删除'+html(x.title)+'">删除</button></div></div>').join(''):'<div class="notice">还没有保存过实验。先打开风洞调整条件，再点击“保存”。</div>')+
  '<p class="footnote">当前阶段未接入云端存储；浏览器清理站点数据后，本地快照可能消失。正式研究归档需要后续后端支持。</p></article></div>'+compared;
 }
+
+/* ============ 智能体议事厅（纯新增，独立命名空间 #agents） ============ */
+const AGENT_ROSTER=[
+ {slug:'intel',num:'I',name:'情报建构',role:'从碎片建构关系',doubt:'怀疑没有出处的联系',color:'cyan'},
+ {slug:'network',num:'N',name:'关系网络',role:'谁和谁连着',doubt:'怀疑把记录当因果',color:'blue'},
+ {slug:'cliff',num:'C',name:'投资断崖',role:'钱从哪来、会不会断',doubt:'怀疑投资自动回来',color:'red'},
+ {slug:'scenes',num:'S',name:'现场兑现',role:'40 个项目四态',doubt:'怀疑签约当投产',color:'gold'},
+ {slug:'tournament',num:'T',name:'预测锦标赛',role:'独立预测同一目标',doubt:'怀疑单一权威数',color:'cyan'},
+ {slug:'debate',num:'D',name:'红蓝争论',role:'竞争解释对抗',doubt:'怀疑单一路径',color:'red'},
+ {slug:'vulnerability',num:'V',name:'脆弱度',role:'哪里会先断',doubt:'怀疑看起来都稳',color:'gold'},
+ {slug:'counterfactual',num:'X',name:'双世界反事实',role:'换条件会怎样',doubt:'怀疑点预测',color:'blue'},
+ {slug:'brief',num:'B',name:'决策简报',role:'收敛成一页话',doubt:'怀疑无条件建议',color:'green'},
+ {slug:'ledger',num:'L',name:'台账留痕',role:'来源与假设登记',doubt:'怀疑不可追溯',color:'green'}
+];
+const AGENT_FEED=[
+ {type:'finding',who:'S',name:'现场兑现',text:'40 个公开现场：16 投产 / 19 在建 / 3 签约 / 2 受阻，签约与在建不进已落地视图。'},
+ {type:'finding',who:'C',name:'投资断崖',text:'工业投资 240.31→266→超230，2026 绝对额未公布，同比 −44.7%；缺口落在 2027 下半年。'},
+ {type:'challenge',who:'C',name:'投资断崖',text:'质疑模型假设：任何“投资自动回升”的情景，先守住 −44.7% 这条证据。'},
+ {type:'finding',who:'N',name:'关系网络',text:'汉德本地采购占比从不足 10% 提到约 40%，但为企业受访口径，不外推全镇。'},
+ {type:'dissent',who:'T',name:'预测锦标赛',text:'五情景 P50 从 1395 到 1581 散开，分歧不平均——它就是不确定性的地图。'},
+ {type:'handoff',who:'I',name:'情报建构',text:'把“订单跟上了吗”交接给关系网络与风洞：查连接、压分布。'}
+];
+function agentMeta(slug){return AGENT_ROSTER.find(a=>a.slug===slug);}
+function agentHead(eyebrow,title,sub){
+ return '<header class="pagehead subpage-head"><div><div class="eyebrow">'+eyebrow+'</div><h1>'+title+'</h1><p>'+sub+'</p></div>'+
+ '<button type="button" class="secondary" data-agent-back>← 返回议事厅</button></header>';
+}
+function agentCard(a){
+ return '<button type="button" class="ag-card" data-agent-go="'+a.slug+'"><span class="ag-num '+a.color+'">'+a.num+'</span>'+
+ '<span class="ag-body"><b>'+a.name+'</b><small>'+a.role+'</small><span class="ag-doubt">⚐ '+a.doubt+'</span></span>'+
+ '<span class="ag-arrow">→</span></button>';
+}
+function agentFoot(slug,handoff){
+ return '<section class="ag-foot card"><div><b>建构之手</b><p>大胆提出关系与假设，先呈现再验证。</p></div>'+
+ '<div><b>验证之手</b><p>断言带证据等级；弱证据保留为 hypothesis，不删除。</p></div>'+
+ (handoff?'<div class="ag-handoff"><b>交接 →</b><p>'+handoff+'</p></div>':'')+'</section>';
+}
+function stateBadge(st){
+ const map={live:['已投产','good'],wip:['在建','cyan'],stat:['签约','gold'],out:['受阻','bad']};
+ const x=map[st]||['未知',''];
+ return '<i class="ev-badge '+x[1]+'">'+x[0]+'</i>';
+}
+function agentsLanding(r){
+ const s=state;
+ const stateChips=[['情景',E.PRESETS[s.scenario].name],['目标',s.target+' 亿'],['年份',s.year],['抽样',s.draws.toLocaleString()+' 条'],['P50',money(r.total.p50)+' 亿'],['达标占比',(r.hit*100).toFixed(1)+'%']];
+ return '<header class="pagehead"><div><div class="eyebrow">AGENTIC DECISION ROOM</div><h1>智能体议事厅</h1>'+
+ '<p>每个页面是一个专职 Agent：它们分工、交接，也竞争、争论。收敛处显示稳健，分歧处显示不确定性。老七区页面保持不动，本厅与子页全部为新增。</p></div></header>'+
+ '<section class="hero-panel ag-hero"><div class="eyebrow">CORE QUESTION</div><h2>投资断崖之后，<strong>下一棒谁接？</strong></h2>'+
+ '<p>在信息残缺下建构关系，用验算与交叉验证分级；条件模拟不是官方预测。</p>'+
+ '<div class="ag-chips">'+stateChips.map(c=>'<span><small>'+c[0]+'</small><b>'+c[1]+'</b></span>').join('')+'</div></section>'+
+ '<section class="gap"><div class="hc-group-label">专职 AGENT 名册（10）</div><div class="ag-grid">'+AGENT_ROSTER.map(agentCard).join('')+'</div></section>'+
+ '<section class="card gap"><h3>跨 Agent 争论 / 交接流</h3><div class="af-feed">'+AGENT_FEED.map(m=>
+  '<div class="af-row '+m.type+'"><span class="af-tag">'+{finding:'发现',challenge:'质疑',dissent:'异见',handoff:'交接'}[m.type]+'</span>'+
+  '<span class="af-who">'+m.who+' · '+m.name+'</span><p>'+m.text+'</p></div>').join('')+'</div></section>'+
+ '<p class="footnote gap">错误与异见被显式保留、可追溯，不平均成假确定的数字；逻辑给结论把关，不给想象设限。</p>';
+}
+function intelPage(r){
+ const src=Object.keys(DD.sources).map((k,i)=>{const x=DD.sources[k];
+  return '<div class="al-row"><span class="al-key">'+String(i+1).padStart(2,'0')+' · '+html(k)+'</span><div class="al-body"><b>'+html(x.publisher)+'</b><small>'+html(x.kind)+'</small><p>'+html(x.note)+'</p></div></div>';});
+ const steps=['信息残缺','建构关系','验算','交叉验证','分级判断'];
+ return agentHead('I / INTELLIGENCE CONSTRUCTION','情报建构 Agent','在残缺、滞后、互相矛盾的公开信息里，先大胆建构关系，再用验算与交叉验证给它定级。')+
+ '<section class="card gap"><h3>方法论：从碎片到判断</h3><div class="ag-logic">'+steps.map((s,i)=>'<div><b>'+(i+1)+'</b><span>'+s+'</span></div>').join('')+'</div>'+
+ '<p class="footnote">建构阶段无禁区，验证阶段才上纪律；想象不设边界，断言才需证据。</p></section>'+
+ '<section class="card gap"><h3>公开来源可靠性（8 类 · 核对于 '+html(DD.checkedAt)+'）</h3><div class="al-list">'+src.join('')+'</div></section>'+
+ agentFoot('intel','把建构出的关系交给关系网络核对，把待验证假设交给风洞压测。');
+}
+function networkPage(r){
+ const blocks=Object.keys(RD.cases).map(ck=>{
+  const c=RD.cases[ck];const seen={};const nodes=[];
+  Object.keys(c.views).forEach(vk=>(c.views[vk].nodes||[]).forEach(n=>{if(!seen[n.id]){seen[n.id]=1;nodes.push(n);}}));
+  const rec=nodes.filter(n=>n.kind==='record').length,que=nodes.filter(n=>n.kind==='question').length;
+  return '<div class="nw-case"><div class="nw-head"><b>'+html(c.label)+'</b><h3>'+html(c.title)+'</h3><small>'+html(c.subtitle)+'</small><span class="nw-count"><i class="good">记录 '+rec+'</i><i class="gold">待问 '+que+'</i></span></div>'+
+  '<div class="nw-nodes">'+nodes.map(n=>'<div class="nw-node"><div class="row"><b>'+html(n.label)+'</b><i class="ev-badge '+(n.kind==='record'?'good':'gold')+'">'+(n.kind==='record'?'事实记录':'待问问题')+'</i></div>'+
+   '<p>'+html(n.detail||'')+'</p><small class="ag-boundary">边界：'+html(n.boundary||'')+'</small><small class="ag-next">下一步：'+html(n.next||'')+'</small></div>').join('')+'</div>'+
+  '<p class="nw-takeaway">'+html(c.takeaway)+'</p></div>';
+ });
+ return agentHead('N / RELATIONSHIP NETWORK','关系网络 Agent','只描述记录或问题，不描述因果系数；事实与待问分两类，每条带边界与下一步。')+
+ '<section class="card gap">'+blocks.join('')+'</section>'+
+ agentFoot('network','把节点的待问项交接给情报建构，把机制假设交给模型台。');
+}
+function cliffPage(r){
+ const bars=DD.topics.factory.cliff;const max=Math.max(...bars.bars.map(b=>b.val||0));
+ return agentHead('C / INVESTMENT CLIFF','投资断崖 Agent','天生怀疑“投资会自动回来”；用多窗口数据看清缺口时点。')+
+ '<section class="card gap"><h3>工业投资断崖（亿元）</h3><div class="cliff-chart">'+bars.bars.map(b=>
+  '<div class="cliff-col"><div class="cliff-bar '+(b.val===null?'null':'')+'" style="height:'+(b.val===null?18:Math.round(b.val/max*180))+'px">'+(b.val===null?'<span>斜纹</span>':'<b>'+b.txt+'</b>')+'</div>'+
+  '<small>'+b.y+(b.rate?'<em>'+b.rate+'</em>':'')+'</small></div>').join('')+'</div>'+
+ '<p class="small">'+html(bars.caption)+'</p><p class="footnote">'+html(bars.foot)+'；缺值用斜纹，不补齐。</p></section>'+
+ agentFoot('cliff','把“2027 缺口”交接给风洞与反事实，压不同接续条件。');
+}
+function scenesPage(r){
+ const counts={};DD.events.forEach(e=>counts[e.state]=(counts[e.state]||0)+1);
+ const cards=DD.events.map(e=>'<div class="ev-card"><div class="row"><b>'+html(e.title)+'</b>'+stateBadge(e.state)+'</div>'+
+  '<small>'+html(e.town||'县级')+' · '+html(e.subtitle||'')+'</small>'+(e.question?'<p class="ag-q">'+html(e.question)+'</p>':'')+'</div>');
+ return agentHead('S / SCENE DELIVERY','现场兑现 Agent','签约不是投产，在建不是落地；四态分开，门外排队的不进已落地视图。')+
+ '<section class="card gap"><h3>四态分布</h3><div class="ag-state-row">'+Object.keys({live:1,wip:1,stat:1,out:1}).map(k=>
+  '<div><b class="big-num">'+(counts[k]||0)+'</b>'+stateBadge(k)+'</div>').join('')+'</div></section>'+
+ '<section class="card gap"><h3>公开现场（40）</h3><div class="ev-grid">'+cards.join('')+'</div></section>'+
+ agentFoot('scenes','把已落地节点交给关系网络连边，把受阻项交给脆弱度。');
+}
+function tournamentRows(){
+ const base={year:state.year,target:state.target,seed:state.seed,draws:state.draws};
+ return Object.keys(E.PRESETS).map(k=>{const st=E.normalize({...base,scenario:k});const rr=E.run(st);return {key:k,name:E.PRESETS[k].name,p50:rr.total.p50,hit:rr.hit};});
+}
+function tournamentPage(r){
+ const rows=tournamentRows();const vals=rows.map(x=>x.p50);const lo=Math.min(...vals),hi=Math.max(...vals);
+ return agentHead('T / FORECAST TOURNAMENT','预测锦标赛','各 Agent 独立预测同一目标，分歧高亮，绝不平均成一个假确定的数。')+
+ '<section class="card gap"><h3>同一目标 '+state.target+' 亿 · 各情景独立 P50</h3><div class="tn-list">'+rows.map(x=>
+  '<div class="tn-row"><span>'+x.name+'</span><div class="tn-track"><i style="width:'+Math.round((x.p50-1300)/(state.target-1300)*100)+'%;background:'+(x.p50>1550?'var(--cyan)':'var(--gold)')+'"></i><em style="left:'+Math.round((state.target-1300)/(state.target-1300)*100)+'%"></em></div>'+
+  '<b>'+money(x.p50)+'</b><small class="good">'+(x.hit*100).toFixed(1)+'%</small></div>').join('')+'</div>'+
+ '<p class="footnote">分歧跨度 '+money(hi-lo)+' 亿（'+money(lo)+'–'+money(hi)+'）；这是不确定性的地图，不是误差。达标占比≠现实概率。</p></section>'+
+ agentFoot('tournament','把分歧最大的假设交给红蓝争论，收敛后交给简报。');
+}
+function debatePage(r){
+ const rivals=[
+  {h:'投资断崖是周期回落，资金会回流',pro:'历史上投资有波动，2024 曾回到 266。',con:'2026 绝对额未公布且 −44.7%，连续两年方向向下。',kill:'2027 上半年工业投资绝对额回升且项目开工率回升。'},
+  {h:'工业接续已在兑现，增加值能对冲投资',pro:'工业增加值 +8.9%，16 个项目已投产。',con:'投产≠订单满，受访口径显示本地配套仍在爬坡。',kill:'投产企业订单与产能利用率连续两季公开达标。'},
+  {h:'服务补位接棒，消费与生产性服务顶上',pro:'服务占比最大、P50 情景最高（1581）。',con:'依赖人口与流量，文旅开业不等于稳定营收。',kill:'生产性服务业营收与就业连续四个窗口增长。'}
+ ];
+ return agentHead('D / RED-BLUE DEBATE','红蓝争论 Agent','竞争性假设（ACH）：不靠一个分析师的定力，靠一屋子的对抗。')+
+ '<section class="card gap"><div class="db-list">'+rivals.map((x,i)=>'<div class="db-hyp"><div class="row"><b>H'+(i+1)+' · '+html(x.h)+'</b></div>'+
+  '<p class="ag-pro">支持：'+html(x.pro)+'</p><p class="ag-con">反方：'+html(x.con)+'</p><small class="ag-kill">推翻判据：'+html(x.kill)+'</small></div>').join('')+'</div></section>'+
+ agentFoot('debate','把仍未被推翻的假设交给简报，附明确条件。');
+}
+function vulnerabilityPage(r){
+ const nodes=[
+  {label:'已投产项目',kind:'observed',text:'16 个公开投产事实，可溯源。',check:'订单与产能利用率是否跟上。'},
+  {label:'本地配套深度',kind:'observed',text:'汉德本地采购约 40%（受访口径）。',check:'供应商名单与交易记录核对。'},
+  {label:'投资回升节奏',kind:'unknown',text:'2026 绝对额未公布，方向不明。',check:'2027 上半年固投与开工数据。'},
+  {label:'承接缺口的主体',kind:'unknown',text:'哪一棒主导尚未确定。',check:'行业增加值与就业的连续窗口。'},
+  {label:'机制外推假设',kind:'hypothesis',text:'1:5:4 为内部假设结构线。',check:'真实结构演化是否支持。'},
+  {label:'脆弱度可替代性',kind:'hypothesis',text:'替代率高则缓冲强，属建模假设。',check:'企业实际替代与转单能力。'}
+ ];
+ const km={observed:'good',unknown:'gold',hypothesis:'cyan'};
+ return agentHead('V / VULNERABILITY','脆弱度 Agent','三态节点：已证实 / 未知 / 假设；看清哪里会先断、哪些是真的哪些是猜的。')+
+ '<section class="card gap"><h3>节点三态</h3><div class="vn-grid">'+nodes.map(n=>'<div class="vn-node"><div class="row"><b>'+html(n.label)+'</b><i class="ev-badge '+km[n.kind]+'">'+{observed:'已证实',unknown:'未知',hypothesis:'假设'}[n.kind]+'</i></div>'+
+  '<p>'+html(n.text)+'</p><small class="ag-next">要核实：'+html(n.check)+'</small></div>').join('')+'</div></section>'+
+ agentFoot('vulnerability','把未知节点交接给情报与现场，持续补证据。');
+}
+function counterfactualPage(r){
+ const base=E.normalize({...state,scenario:'balanced',knobs:{}});const r0=E.run(base);
+ const rows=[{label:'原始情景（三产协同·滑杆全零）',p50:r0.total.p50,hit:r0.hit,base:true}];
+ Object.keys(E.EFFECTS).forEach(k=>{const st=E.normalize({...base,knobs:{[k]:1}});const rr=E.run(st);rows.push({label:E.LABELS[k],p50:rr.total.p50,hit:rr.hit,delta:rr.total.p50-r0.total.p50});});
+ return agentHead('X / COUNTERFACTUAL','双世界反事实 Agent','同一随机种子下，拨动一个条件，看世界 A→世界 B 的变化；这是条件对照，不是因果承诺。')+
+ '<section class="card gap"><h3>世界 A（原始） vs 世界 B（单一条件）</h3><div class="cf-list">'+rows.map(x=>'<div class="cf-row '+(x.base?'base':'')+'"><span>'+x.label+'</span>'+
+  '<b>'+money(x.p50)+' 亿</b><small>'+(x.hit*100).toFixed(1)+'%</small>'+(x.base?'<em class="muted">基准</em>':'<em class="'+(x.delta>=0?'good':'bad')+'">'+(x.delta>=0?'+':'')+money(x.delta)+'</em>')+'</div>').join('')+'</div>'+
+ '<p class="footnote">敏感性排序≠因果/可干预；会计差异≠政策效果。</p></section>'+
+ agentFoot('counterfactual','把稳健的条件效应交给简报，标注置信与边界。');
+}
+function briefPage(r){
+ const items=[
+  ['核心问题','投资断崖（−44.7%）后，下一棒谁接、2027 缺口怎么填。'],
+  ['条件','五情景 P50 在 1395–1581 亿；达标占比 0.7%–42.1%，均为条件模拟。'],
+  ['机制','工业接续与服务补位 P50 最高；项目延期为负向条件（−60.1）。'],
+  ['观测指标','工业投资绝对额、投产企业订单率、生产性服务营收、本地配套占比。'],
+  ['立场','不下单点预测，给条件化区间与盯什么；P50 不是点预测。']
+ ];
+ return agentHead('B / ONE-PAGE BRIEF','一页纸决策简报','可直接带进会议室：条件、机制、观测指标、边界，一页讲完。')+
+ '<section class="card brief-card"><div class="bf-list">'+items.map(x=>'<div class="bf-row"><b>'+x[0]+'</b><p>'+x[1]+'</p></div>').join('')+'</div>'+
+ '<p class="footnote">条件模拟≠官方预测；达标比例≠现实概率。本页为研究性简报，非政策定论。</p></section>'+
+ agentFoot('brief','把每次简报与快照交给台账留痕，新证据回流后更新。');
+}
+function ledgerPage(r){
+ const src=Object.keys(DD.sources).map((k,i)=>{const x=DD.sources[k];return '<div class="metric-line"><span>'+String(i+1).padStart(2,'0')+' · '+html(k)+'</span><b>'+html(x.publisher)+'</b></div>';});
+ const retired=['“投产即满产”假设——被现场提问“订单跟上了吗”挑战，退役为待验证。','“签约 80 亿等于落地”——被四态纪律挑战，签约单独标注。'];
+ return agentHead('L / LEDGER','台账留痕 Agent','来源、假设与退役假设全部登记，让每次判断与错误可追溯、可回流。')+
+ '<section class="card gap"><h3>来源台账（8）</h3>'+src.join('')+'</section>'+
+ '<section class="card gap"><h3>假设与版本</h3><div class="notice">数据版本 '+html(DD.version)+' · 核对于 '+html(DD.checkedAt)+'；关系版本 '+html(RD.version)+'。</div></section>'+
+ '<section class="card gap"><h3>退役假设（错误的路径也是资产）</h3><div class="rt-list">'+retired.map(x=>'<div class="rt-row">'+html(x)+'</div>').join('')+'</div></section>'+
+ agentFoot('ledger','新证据进来触发改判，档案记录每一次变更。');
+}
+const AGENT_RENDER={intel:intelPage,network:networkPage,cliff:cliffPage,scenes:scenesPage,tournament:tournamentPage,debate:debatePage,vulnerability:vulnerabilityPage,counterfactual:counterfactualPage,brief:briefPage,ledger:ledgerPage};
 function calibrationMarkup(){
  const s=state;
  return '<section class="column" style="padding-top:18px">'+
@@ -851,17 +1024,32 @@ function draw(){
  state=E.normalize(state);
  current=E.run(state);
  safeWrite(KEY,state);
- const hashpage=(location.hash||'#home').replace(/^#/,'').split('/')[0];
- if(['home','mission','data','survey','models','wind','archive'].includes(hashpage))page=hashpage;
+ const parts=(location.hash||'#home').slice(1).split('/');
+ const hashpage=parts[0],hashsub=parts[1]||'';
+ if(hashpage==='agents'){page='agents';agentSlug=AGENT_PAGES[hashsub]?hashsub:'';}
+ else{if(['home','mission','data','survey','models','wind','archive'].includes(hashpage))page=hashpage;agentSlug='';}
  document.querySelectorAll('[data-page]').forEach(el=>{const active=el.getAttribute('data-page')===page;el.classList.toggle('active',active);if(el.matches('.navitem'))el.setAttribute('aria-current',active?'page':'false');});
  document.getElementById('topRun').textContent='LIVE · '+current.runId.toUpperCase()+' · '+state.draws.toLocaleString('zh-CN')+' 条';
- stage.innerHTML=page==='home'?home(current):page==='mission'?mission(current):page==='data'?dataPage(current):page==='survey'?surveyPage(current):page==='models'?modelsPage(current):page==='wind'?windPage(current):archivePage(current);
+ if(page==='agents')stage.innerHTML=agentSlug?AGENT_RENDER[agentSlug](current):agentsLanding(current);
+ else stage.innerHTML=page==='home'?home(current):page==='mission'?mission(current):page==='data'?dataPage(current):page==='survey'?surveyPage(current):page==='models'?modelsPage(current):page==='wind'?windPage(current):archivePage(current);
  document.getElementById('calibrationContent').innerHTML=calibrationMarkup();
 }
 function navigate(target,sub){
  page=target;
  if(sub!==undefined)view=sub;
  location.hash='#'+target+(target==='wind'?'/'+view:'');
+ window.scrollTo({top:0,behavior:'smooth'});
+ draw();
+}
+function navigateAgent(slug){
+ page='agents';agentSlug=slug||'';
+ location.hash='#agents'+(slug?'/'+slug:'');
+ window.scrollTo({top:0,behavior:'smooth'});
+ draw();
+}
+function agentBack(){
+ agentSlug='';
+ location.hash='#agents';
  window.scrollTo({top:0,behavior:'smooth'});
  draw();
 }
@@ -875,6 +1063,8 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
+ const agentback=e.target.closest('[data-agent-back]');if(agentback){agentBack();return;}
+ const agentgo=e.target.closest('[data-agent-go]');if(agentgo){navigateAgent(agentgo.dataset.agentGo);return;}
  const v4lens=e.target.closest('[data-v4-lens]');if(v4lens){v4Lens=v4lens.dataset.v4Lens;draw();return;}
  const v4industry=e.target.closest('[data-v4-industry]');if(v4industry){v4Industry=v4industry.dataset.v4Industry;draw();return;}
  const v4metric=e.target.closest('[data-v4-metric]');if(v4metric){v4Metric=v4metric.dataset.v4Metric;draw();return;}
