@@ -106,6 +106,10 @@ function surveyReview(m){
    explanation:'反映式题项的汇聚效度提醒，仍须结合真实测量理论'},
  {label:'Alpha最小值',value:Math.min(...Object.values(m.alpha)),guide:'≥0.70',flag:Math.min(...Object.values(m.alpha))>=.7,
    explanation:'内部一致性而非构念或因果成立'},
+ {label:'反映式题项载荷最小绝对值',value:Math.min(...Object.values(m.loadings).flat().map(Math.abs)),guide:'≥0.70（经验参考）',flag:Math.min(...Object.values(m.loadings).flat().map(Math.abs))>=.7,
+   explanation:'单个题项能否充分代表构念，需结合内容效度判断'},
+ {label:'复合信度ρc最小值',value:Math.min(...Object.values(m.rhoC)),guide:'≥0.70（经验参考）',flag:Math.min(...Object.values(m.rhoC))>=.7,
+   explanation:'基于反映式指标载荷与误差方差的合成样本估计'},
  {label:'相对均值预测技能',value:m.holdout.skill,guide:'>0（演示阈值）',flag:m.holdout.skill>0,
    explanation:'仅合成构念均分回归对均值基准的测试，非PLSpredict'}
  ];
