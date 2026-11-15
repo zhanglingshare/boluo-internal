@@ -175,6 +175,46 @@ function estimate(rows){
   alpha:{SA:alpha(rows.map(r=>r.SA)),SU:alpha(rows.map(r=>r.SU)),OP:alpha(rows.map(r=>r.OP))},
   ave,converged,iterations:iteration+1};
 }
+function htmt(rows){
+ const constructs=['SA','SU','OP'],columns={};
+ for(const key of constructs)columns[key]=rows[0][key].map((_,j)=>rows.map(row=>row[key][j]));
+ const within={};
+ for(const key of constructs){
+  const cols=columns[key],rs=[];
+  for(let i=0;i<cols.length;i++)for(let j=i+1;j<cols.length;j++)rs.push(Math.abs(pearson(cols[i],cols[j])));
+  within[key]=mean(rs);
+ }
+ const pairs=[['SA','SU'],['SA','OP'],['SU','OP']],result={};
+ for(const [a,b] of pairs){
+  const cross=[];for(const ca of columns[a])for(const cb of columns[b])cross.push(Math.abs(pearson(ca,cb)));
+  const denom=Math.sqrt(within[a]*within[b]);
+  result[a+'_'+b]=denom>1e-9?mean(cross)/denom:null;
+ }
+ return result;
+}
+function holdout(rows,seed){
+ /* One reproducible 80/20 test for a simple construct-mean regression.
+    It is NOT PLSpredict and does not reuse the PLS score estimator. */
+ const next=rng(seed+491),arr=rows.map((row,i)=>({
+  id:i,sa:mean(row.SA),su:mean(row.SU),op:mean(row.OP),order:next()}));
+ arr.sort((a,b)=>a.order-b.order);
+ const split=Math.floor(arr.length*.8),train=arr.slice(0,split),test=arr.slice(split);
+ const meanOf=k=>mean(train.map(r=>r[k]));
+ const ma=meanOf('sa'),mb=meanOf('su'),my=meanOf('op');
+ const avg=(fn)=>mean(train.map(fn));
+ const va=avg(r=>(r.sa-ma)**2),vb=avg(r=>(r.su-mb)**2),
+  cov=avg(r=>(r.sa-ma)*(r.su-mb)),
+  ca=avg(r=>(r.sa-ma)*(r.op-my)),cb=avg(r=>(r.su-mb)*(r.op-my));
+ const den=Math.max(1e-8,va*vb-cov*cov);
+ const ba=(ca*vb-cb*cov)/den,bb=(cb*va-ca*cov)/den;
+ const prediction=r=>my+ba*(r.sa-ma)+bb*(r.su-mb);
+ const errors=test.map(r=>(r.op-prediction(r))**2);
+ const base=test.map(r=>(r.op-my)**2);
+ const mse=mean(errors),mseBase=mean(base);
+ return {train:train.length,test:test.length,rmse:Math.sqrt(mse),
+  meanBaselineRMSE:Math.sqrt(mseBase),skill:mseBase>1e-9?1-mse/mseBase:null,
+  method:'合成样本构念均分的80/20留出预测基准，非PLSpredict，也不构成PLS的样本外验证'};
+}
 function survey(input){
  const s=normalize(input),n=Math.floor(clamp(saneNumber((input||{}).sampleSize,300),100,500));
  const rows=sample(s.seed+42,n),fit=estimate(rows),next=rng(s.seed+201);
@@ -184,7 +224,7 @@ function survey(input){
   const x=estimate(bs);paths.forEach(name=>results[name].push(x.paths[name]));
  }
  const intervals={};paths.forEach(k=>intervals[k]=[quantile(results[k],.025),quantile(results[k],.975)]);
- return {...fit,n,intervals,bootstrap:120,source:'固定种子合成问卷；探索性Mode-A PLS内外权重估计 + 120次Bootstrap，未经SmartPLS逐项等价验证，非实测结论'};
+ return {...fit,n,intervals,htmt:htmt(rows),vifOP:1/(1-fit.paths['SA→SU']**2),holdout:holdout(rows,s.seed),bootstrap:120,source:'固定种子合成问卷；探索性Mode-A PLS内外权重估计 + 120次Bootstrap，未经SmartPLS逐项等价验证，非实测结论'};
 }
 function tea(receive=75,pay=12,daily=10){
  const gap=Math.max(0,receive-pay),money=gap*daily;
