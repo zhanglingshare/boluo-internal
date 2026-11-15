@@ -239,6 +239,19 @@ function surfacePanel(){
 function v3Sources(keys){
  return '<div class="v3-provenance">'+keys.map(key=>'<a href="'+V3.URL[key]+'" target="_blank" rel="noopener noreferrer">↗ '+({stat:'2025统计公报',plan:'政府计划',news:'南方日报',revision:'GDP修订公告',jrc:'欧盟JRC方法'}[key]||key)+'</a>').join('')+'</div>';
 }
+function v3PriceBridgePanel(){
+ const b=V3.priceBridge();
+ return '<section class="card gap"><div class="row wrap"><div><div class="eyebrow">NOMINAL VS REAL / REVISION-AWARE DIAGNOSTIC</div><h3>为什么“千亿突破”不等于同等幅度的真实产出增长？</h3></div>'+badge('价格桥为近似推导','model')+'</div>'+
+ '<div class="research-kpi"><div><small>2025 GDP近似现价增长</small><strong>'+decimal(b.nominalGrowth,2)+'%</strong></div>'+
+ '<div><small>2025 GDP官方实际增速</small><strong class="cyan">'+decimal(b.realGrowth,1)+'%</strong></div>'+
+ '<div><small>隐含总量价格变化（近似）</small><strong class="gold">'+decimal(b.impliedPriceGrowth,2)+'%</strong></div>'+
+ '<div><small>1600亿目标所需五年名义复合增速</small><strong>'+decimal(b.nominalTargetCAGR,2)+'%</strong></div></div>'+
+ '<div class="v3-price-equation"><span>2024核实GDP <b>970.87亿元</b></span>'+
+ '<icon>→</icon><span>2025公布GDP <b>1005.45亿元</b></span>'+
+ '<icon>→</icon><span>不变价实际增幅 <b>5.5%</b></span></div>'+
+ '<div class="research-vintage gap">'+html(b.note)+' 2030年1600亿元为现价总量目标，所需名义复合增幅不得直接和实际GDP增长率比较。</div>'+
+ v3Sources(['revision','stat'])+'</section>';
+}
 function v3DataPanel(){
  const summary=V3.summary(),selected=V3.INDUSTRIES[selectedIndustry],conflict=V3.CONFLICTS.find(x=>x.id===selectedConflict)||V3.CONFLICTS[0];
  const nav='<div class="research-tabs v3-tabs">'+[
@@ -359,7 +372,7 @@ function dataPage(r){
  return heading('02 / EVIDENCE DESK','事实先钉牢，未知才好推演。',
  '数据划成 A/B/C 层，宏观基数不与合成企业关系混称。导入与导出本阶段不做，使用仓库既有公开信息和可复现合成样本。',
  btn('go-survey','继续：看模拟调查 ↗','primary'))+
- historicalPanel()+v3DataPanel()+
+ historicalPanel()+v3PriceBridgePanel()+v3DataPanel()+
  '<section class="stats">'+stat('2025 GDP',money(d.gdp)+' 亿','公开地区生产总值','cyan')+
  stat('2025规上工业增加值增幅','+8.7%','增幅，不是产业增加值占GDP的比例','good')+
  stat('2025固定资产投资','-18.8%','与工业增长方向相反','bad')+
