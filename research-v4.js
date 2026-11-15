@@ -16,12 +16,12 @@ const S={
  industryNews:'https://epaper.nfnews.com/nfdaily/html/202601/27/content_10161537.html'
 };
 const YEARS=[
- {year:2020,shares:[24.2,13,6.2,null,null],sizes:[31,24.2,44.8],growth:1.9,source:'b2020',note:'小型44.0%+微型0.8%归为小微；未披露的行业保留缺失'},
- {year:2021,shares:[21.9,15.3,7.7,7.1,null],sizes:[27.3,24.2,48.5],growth:16.3,source:'b2021',note:'公报列示前五行业未包含电力热力，不能填零'},
- {year:2022,shares:[20.8,15.9,8.6,7.6,4.1],sizes:[27.4,23.5,49],growth:4.0,source:'b2022',note:'2022规模结构总和99.9%，属于公报修约'},
- {year:2023,shares:[18.6,14,9.5,8.1,5.1],sizes:[20.9,24.4,54.7],growth:8.1,source:'b2023',note:'公报公布的年末行业占比，不推导未公布的企业级关系'},
- {year:2024,shares:[20.2,14,10.5,8.2,6.3],sizes:[19.8,24.9,55.4],growth:7.9,source:'b2024',note:'2024规模结构合计100.1%，按原公报保留修约'},
- {year:2025,shares:[23.2,14.2,9.6,8.2,6.2],sizes:[19.2,24,56.8],growth:8.7,source:'b2025',note:'2025已披露五行业约61.4%，其他行业不自动补值'}
+ {year:2020,shares:[24.2,13,6.2,null,null],rates:[4.2,13.8,1.6,null,null],sizes:[31,24.2,44.8],growth:1.9,source:'b2020',note:'小型44.0%+微型0.8%归为小微；未披露的行业保留缺失'},
+ {year:2021,shares:[21.9,15.3,7.7,7.1,null],rates:[11.3,25.8,28.7,0.2,null],sizes:[27.3,24.2,48.5],growth:16.3,source:'b2021',note:'公报列示前五行业未包含电力热力，不能填零'},
+ {year:2022,shares:[20.8,15.9,8.6,7.6,4.1],rates:[-0.7,2.9,1.4,3.7,6.7],sizes:[27.4,23.5,49],growth:4.0,source:'b2022',note:'2022规模结构总和99.9%，属于公报修约'},
+ {year:2023,shares:[18.6,14,9.5,8.1,5.1],rates:[1.2,-4.4,14.2,16.3,30.4],sizes:[20.9,24.4,54.7],growth:8.1,source:'b2023',note:'公报公布的年末行业占比，不推导未公布的企业级关系'},
+ {year:2024,shares:[20.2,14,10.5,8.2,6.3],rates:[10.4,5.6,13.2,11.5,10.4],sizes:[19.8,24.9,55.4],growth:7.9,source:'b2024',note:'2024规模结构合计100.1%，按原公报保留修约'},
+ {year:2025,shares:[23.2,14.2,9.6,8.2,6.2],rates:[23.0,13.7,-4.2,11.1,14.0],sizes:[19.2,24,56.8],growth:8.7,source:'b2025',note:'2025已披露五行业约61.4%，其他行业不自动补值'}
 ];
 const INDUSTRIES=[
  {id:'electronics',name:'电子设备制造',type:'规上工业增加值份额',taxonomy:'计算机、通信和其他电子设备制造业'},
@@ -46,7 +46,7 @@ const norm=a=>{const sum=a.reduce((x,y)=>x+y,0);return a.map(x=>x/sum);};
 function safeId(value,list){return list.includes(value)?value:list[0];}
 function history(industry='electronics',kind='industry'){
  const selected=safeId(industry,INDUSTRIES.map(x=>x.id)),i=INDUSTRIES.findIndex(x=>x.id===selected);
- const data=YEARS.map(y=>({year:y.year,share:kind==='size'?null:y.shares[i],large:y.sizes[0],medium:y.sizes[1],small:y.sizes[2],industrialGrowth:y.growth,
+ const data=YEARS.map(y=>({year:y.year,share:kind==='size'?null:y.shares[i],large:y.sizes[0],medium:y.sizes[1],small:y.sizes[2],industrialGrowth:y.growth,rate:y.rates[i],
  source:S[y.source],available:kind==='size'||y.shares[i]!==null,note:y.note}));
  const withValue=data.filter(r=>r.available&&r.share!==null);
  const first=withValue[0],last=withValue[withValue.length-1];
