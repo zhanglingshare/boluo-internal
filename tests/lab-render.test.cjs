@@ -166,7 +166,7 @@ test('V4 same-city five-region composition graph uses grounded comparator and se
 test('V4 normalized local value model reacts to sliders and 121-case heatmap',()=>{
  const v=boot('models');
  assert.match(v.stage.innerHTML,/规范化100单位/);
- assert.match(v.stage.innerHTML,/没有观测到博罗真实采购/);
+ assert.match(v.stage.innerHTML,/真实本地采购比例和服务供应商增加值率尚无可信的县域观测/);
  v.listeners.change({target:{closest(sel){return sel==='[data-v4-control]'?{dataset:{v4Control:'local'},value:'70'}:null;}}});
  assert.match(v.stage.innerHTML,/70.0 单位/);
  v.listeners.click({target:{closest(sel){return sel==='[data-v4-heat]'?{dataset:{v4Heat:'50,50'}}:null;}}});
