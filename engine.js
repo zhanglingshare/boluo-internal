@@ -164,16 +164,24 @@ function estimate(rows){
  const scores=getScores();
  const a=pearson(scores.SA,scores.SU),b=pearson(scores.SA,scores.OP),c=pearson(scores.SU,scores.OP);
  const den=Math.max(1e-5,1-a*a),direct=(b-a*c)/den,indirect=(c-a*b)/den;
- const ave={};
+ const ave={},loadings={},rhoC={};
  for(const name of names){
   const colCount=xs[name][0].length;
-  const loadings=Array.from({length:colCount},(_,j)=>pearson(xs[name].map(r=>r[j]),scores[name]));
-  ave[name]=mean(loadings.map(v=>v*v));
+  const indicatorLoadings=Array.from({length:colCount},(_,j)=>pearson(xs[name].map(r=>r[j]),scores[name]));
+  ave[name]=mean(indicatorLoadings.map(v=>v*v));
+  loadings[name]=indicatorLoadings;
+  const summed=indicatorLoadings.reduce((a,b)=>a+b,0);
+  const error=indicatorLoadings.reduce((a,v)=>a+Math.max(0,1-v*v),0);
+  rhoC[name]=(summed*summed)/(summed*summed+error||1);
  }
+ const r2op=clamp(direct*b+indirect*c,0,1),denom=Math.max(1e-8,1-r2op);
+ const f2={'SA→SU':(a*a)/(Math.max(1e-8,1-a*a)),
+  'SA→OP':Math.max(0,(r2op-c*c)/denom),
+  'SU→OP':Math.max(0,(r2op-b*b)/denom)};
  return {paths:{'SA→SU':a,'SA→OP':direct,'SU→OP':indirect},
   r2:{SU:a*a,OP:clamp(direct*b+indirect*c,0,1)},
   alpha:{SA:alpha(rows.map(r=>r.SA)),SU:alpha(rows.map(r=>r.SU)),OP:alpha(rows.map(r=>r.OP))},
-  ave,converged,iterations:iteration+1};
+  ave,loadings,rhoC,f2,converged,iterations:iteration+1};
 }
 function htmt(rows){
  const constructs=['SA','SU','OP'],columns={};
