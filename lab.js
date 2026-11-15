@@ -207,6 +207,23 @@ function modelComparisonPanel(r){
  '</details><div class="research-vintage gap"><b>建模纪律：</b>'+html(m.caution)+' 2020—2023年现价复合增速跨统计版本且样本很短，不能当正式长期趋势估计。</div></section>';
 }
 
+function backtestPanel(){
+ const b=R.backtest();
+ return '<section class="card gap"><div class="row wrap"><div><div class="eyebrow">HOLDOUT CHECK / SMALL-SAMPLE WARNING</div><h3>历史回测：先看模型在哪些年份容易出错</h3></div>'+badge('仅两个留出年 · 不构成认证','warn')+'</div>'+
+ RV.backtestTable(b)+
+ '<div class="research-kpi gap"><div><small>2022—23历史外推平均绝对百分比误差</small><strong class="gold">'+perc(b.histMAPE)+'</strong></div>'+
+ '<div><small>7.3%共同名义增速基准误差</small><strong>'+perc(b.constantMAPE)+'</strong></div></div>'+
+ '<div class="research-vintage gap">'+html(b.caution)+' 价格基准、修订与样本量不足时，错误率不应用于宣布“模型通过验证”。</div></section>';
+}
+function surfacePanel(){
+ const surf=R.surface(E,state);
+ return '<section class="card gap research-feature"><div class="row wrap"><div><div class="eyebrow">JOINT PERTURBATION / RESPONSE SURFACE</div><h3>工业与专业服务同时变化，结果在哪个角落翻转？</h3></div>'+badge('可点击的双变量压力面','model')+'</div>'+
+ RV.stressSurface(surf,state)+
+ '<div class="research-kpi"><div><small>最低确定性总量</small><strong>'+money(surf.minimum)+' 亿</strong></div>'+
+ '<div><small>最高确定性总量</small><strong>'+money(surf.maximum)+' 亿</strong></div>'+
+ '<div><small>当前对照目标</small><strong>'+money(surf.target)+' 亿</strong></div></div>'+
+ '<p class="footnote">'+html(surf.caution)+' 图中81个格子的差异来自设定的两个增长条件及复利响应，不是实证估计出的政策协同增益。</p></section>';
+}
 function dataPage(r){
  const d=E.DATA;
  return heading('02 / EVIDENCE DESK','事实先钉牢，未知才好推演。',
@@ -281,7 +298,7 @@ function modelsPage(r){
  stat('合成企业主体',net.nodes+' 个','其中制造300 / 服务120 / 农业80','')+
  stat('合成网络连接',net.edges+' 条','有向采购/供货边，非实测','')+
  stat('问卷路径重抽样','120 次','探索性Mode-A PLS，合成问卷','')+'</section>'+
- hypothesisPanel()+variablePanel()+networkResearchPanel()+modelComparisonPanel(r)+
+ hypothesisPanel()+variablePanel()+networkResearchPanel()+modelComparisonPanel(r)+backtestPanel()+
  '<section class="grid2 gap"><article class="card"><h3>社会调查：为什么不能直接转成GDP？</h3>'+surveyGraph(m)+
  line('合成 SA→SU 路径',decimal(m.paths['SA→SU'],3),'')+
  line('合成 SA→OP 路径',decimal(m.paths['SA→OP'],3),'')+
@@ -386,7 +403,7 @@ function wind3(r){
 }
 function wind4(r){
  const sensitivity=E.sensitivity(state);
- return modelComparisonPanel(r)+'<section class="stats">'+stat('条件抽样轨迹',money(r.samples)+' 条','固定随机种子可重现','cyan')+
+ return modelComparisonPanel(r)+surfacePanel()+'<section class="stats">'+stat('条件抽样轨迹',money(r.samples)+' 条','固定随机种子可重现','cyan')+
  stat('P10 · 较低情景',money(r.total.p10)+' 亿','模型分布第10百分位','')+
  stat('P50 · 中位数',money(r.total.p50)+' 亿','不是点预测','')+
  stat('P90 · 较高情景',money(r.total.p90)+' 亿','模型分布第90百分位','')+'</section>'+
@@ -490,6 +507,7 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
+ const heat=e.target.closest('[data-heat]');if(heat){const vals=heat.dataset.heat.split(',').map(Number);if(vals.length===2&&vals.every(Number.isFinite)){state.knobs.manufacturing=vals[0];state.knobs.services=vals[1];draw();}return;}
  const historical=e.target.closest('[data-history]');if(historical){historyMode=historical.dataset.history;draw();return;}
  const variable=e.target.closest('[data-variable]');if(variable){selectedVariable=variable.dataset.variable;draw();return;}
  const service=e.target.closest('[data-service-node]');if(service){selectedNetworkNode=service.dataset.serviceNode;draw();return;}
@@ -536,7 +554,7 @@ document.addEventListener('change',function(e){
  else if(Object.prototype.hasOwnProperty.call(E.EFFECTS,k)){state.knobs[k]=val;}
  draw();
 });
-document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('[data-variable], [data-service-node]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('[data-variable], [data-service-node], [data-heat]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
 window.addEventListener('hashchange',()=>{
  const p=(location.hash||'#home').slice(1).split('/');
  if(p[0]==='wind'&&p[1]!==undefined&&Number.isInteger(Number(p[1])))view=Math.max(0,Math.min(5,Number(p[1])));
