@@ -237,3 +237,63 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
 .v5-f2-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .v5-f2-row>div{display:flex;flex-direction:column;gap:5px;flex:1;min-width:110px;border:1px solid var(--stroke);border-radius:9px;padding:12px}
 .v5-f2-row span{font-size:11px;color:var(--sub)}.v5-f2-row b{font-size:19px;color:#a2def3}
+
+
+/* V7 observable signals + synthetic group response + future real-survey anchor */
+.sb-research-lab{display:grid;gap:14px}
+.sb-research-lab .v6-topic-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.sb-research-lab .v6-topic-tabs button{flex:1;min-width:105px;padding:11px 12px;text-align:center;color:#b6cedf;background:rgba(47,83,117,.27);border:1px solid rgba(109,170,211,.23);border-radius:11px;font-size:12px;font-weight:700}
+.sb-research-lab .v6-topic-tabs button.active{color:#ecfaff;background:rgba(46,137,177,.34);border-color:#75c9e1;box-shadow:0 0 0 1px rgba(100,196,228,.17)}
+.sb-top-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.sb-top-stats>div{border:1px solid rgba(83,158,196,.24);border-radius:13px;padding:14px 13px;background:linear-gradient(135deg,rgba(24,63,89,.54),rgba(13,30,50,.55));min-height:99px}
+.sb-top-stats span{display:block;font-size:11px;color:#a2bacd}
+.sb-top-stats strong{font-size:30px;letter-spacing:-.05em;font-variant-numeric:tabular-nums;display:block;margin-top:10px;color:#93def6}
+.sb-top-stats strong small{font-size:12px;color:#a7c6d8}
+.sb-top-stats .sb-unknown{font-size:21px;color:#e6b583}
+.sb-two-columns{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.sb-two-columns .v6-panel{margin:0}
+.sb-panel-head{display:flex;align-items:center;flex-wrap:wrap;gap:10px;justify-content:space-between;margin-bottom:16px}
+.sb-panel-head h3{margin:0}
+.sb-evidence-list{display:grid;gap:10px;min-height:190px}
+.sb-evidence-list .v6-evidence-card{display:flex;justify-content:space-between;gap:14px;padding:14px;border:1px solid rgba(120,166,194,.20);border-radius:9px;background:rgba(37,71,104,.17)}
+.sb-evidence-list .v6-evidence-card>div{min-width:0;flex:1;display:grid;gap:7px}
+.sb-evidence-list .v6-evidence-card strong{color:#e1f4f9;font-size:12px}
+.sb-evidence-list .v6-evidence-card span,.sb-evidence-list .v6-evidence-card small{font-size:10px;color:#b2c4d5}
+.sb-evidence-list .v6-evidence-card a{font-size:10px;white-space:nowrap;color:#8bd5ee;text-decoration:none;align-self:center}
+.sb-research-lab .v6-empty-signals{padding:20px 16px;font-size:12px;color:#b6c8d3;line-height:1.75;display:flex;align-items:center;justify-content:center;flex-direction:column;border:1px dashed rgba(181,166,113,.33);border-radius:11px;min-height:144px}
+.sb-research-lab .v6-empty-signals b{color:#e2c99b}
+.sb-mechanisms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.sb-mechanisms button{padding:12px 14px;border-radius:10px;border:1px solid rgba(98,156,198,.25);color:#c5d7e5;background:rgba(48,93,129,.22);font-weight:650}
+.sb-mechanisms button.active{color:#fff;background:rgba(53,141,177,.38);border-color:#83cfe7}
+.sb-research-lab .sliderrow{margin:16px 0}
+.sb-research-lab input[type="range"]{width:100%;accent-color:#67c8dd}
+.sb-group-bars{display:grid;gap:18px;margin:17px 0 8px}
+.sb-group-row{display:grid;gap:7px}
+.sb-group-head{display:flex;justify-content:space-between;align-items:center;gap:7px;font-size:11px}
+.sb-group-head b{font-size:12px;color:#eff8fb}
+.sb-group-head span{color:#94b2c8;font-variant-numeric:tabular-nums}
+.sb-group-track{position:relative;background:rgba(255,255,255,.07);height:17px;border-radius:7px;overflow:hidden}
+.sb-group-track i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,#377cae,#6cdbdf);transition:width .25s ease-out}
+.sb-group-track em{position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.55)}
+.sb-group-distribution{height:25px;display:flex;align-items:end;justify-content:space-around;gap:5px}
+.sb-group-distribution span{background:rgba(116,167,204,.39);width:18%;min-height:3px;max-height:100%;border-radius:3px 3px 0 0}
+.sb-scenario-summary{margin:16px 0;padding:13px 15px;border:1px solid rgba(100,165,209,.24);background:rgba(43,91,122,.17);border-radius:10px;display:flex;flex-direction:column;gap:7px}
+.sb-scenario-summary b{color:#a0eaf2;font-size:16px}
+.sb-scenario-summary small{font-size:11px;color:#e6c391}
+.sb-wind-link{margin:5px 0 10px;width:100%;padding:12px;font-weight:700}
+.sb-explainer{margin-top:18px;border-top:1px solid rgba(118,168,206,.19);padding-top:13px}
+.sb-explainer summary{cursor:pointer;color:#c2dff0;font-size:12px}
+.sb-explainer p{font-size:11px;line-height:1.8;color:#a1bad0;margin-top:11px}
+.sb-alternatives{display:grid;gap:8px;margin-top:13px}
+.sb-alternatives>div{font-size:12px;line-height:1.6;display:flex;gap:9px;padding:9px;border-radius:7px;background:rgba(36,86,116,.19)}
+.sb-alternatives span{font-weight:700;color:#68cfe7}
+.sb-calibration{margin:0}
+.sb-survey-pending{display:flex;align-items:center;gap:19px;min-height:108px;background:rgba(53,81,102,.18);border:1px dashed rgba(136,177,199,.35);border-radius:12px;padding:20px}
+.sb-pending-symbol{font-size:41px;color:#afc4d7}
+.sb-survey-pending b{font-size:15px;color:#e7f1f8}
+.sb-survey-pending p{font-size:12px;line-height:1.7;color:#a0b6c9;margin-top:7px}
+.sb-real-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:11px}
+.sb-real-badges span{font-size:10px;color:#a4efd4;border:1px solid #376e60;padding:5px 9px;border-radius:30px}
+@media(max-width:960px){.sb-two-columns{grid-template-columns:1fr}.sb-top-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.sb-top-stats>div{padding:11px;min-height:85px}.sb-top-stats strong{font-size:23px}.sb-two-columns .v6-panel{padding:14px}.sb-evidence-list .v6-evidence-card{flex-direction:column}.sb-evidence-list .v6-evidence-card a{align-self:flex-start}.sb-group-head{flex-wrap:wrap}.sb-research-lab .v6-topic-tabs button{min-width:calc(50% - 8px)}}
+@media(prefers-reduced-motion:reduce){.sb-group-track i{transition:none}}
