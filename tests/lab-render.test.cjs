@@ -9,12 +9,15 @@ const V3=require('../research-v3.js');globalThis.BoluoV3=V3;
 const V3V=require('../research-v3-viz.js');
 const V4=require('../research-v4.js');globalThis.BoluoV4=V4;
 const V4V=require('../research-v4-viz.js');
+const V5=require('../research-v5.js');globalThis.BoluoV5=V5;
+const V5V=require('../research-v5-viz.js');globalThis.BoluoV5Viz=V5V;
+const V5UI=require('../research-v5-ui.js');
 const js=fs.readFileSync(path.resolve(__dirname,'../lab.js'),'utf8');
 function boot(route){
  const nodes={};const listeners={};
  function element(id){if(!nodes[id])nodes[id]={innerHTML:'',textContent:'',style:{},hidden:true};return nodes[id];}
  const location={hash:'#'+route};
- const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
+ const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoV5:V5,BoluoV5Viz:V5V,BoluoV5UI:V5UI,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
  const document={body:{style:{}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
  const storage=new Map();
  const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}};
@@ -178,4 +181,56 @@ test('V4 public enterprise clues are separated from unverified purchase relation
  assert.match(v.stage.innerHTML,/欣旺达/);
  assert.match(v.stage.innerHTML,/华通/);
  assert.match(v.stage.innerHTML,/没有足够可靠的实际交易边/);
+});
+
+
+test('V5 research contract is available in seven workspaces and six wind views',()=>{
+ for(const route of ['home','mission','data','survey','models','archive',...Array.from({length:6},(_,i)=>'wind/'+i)]){
+  const v=boot(route);
+  assert.match(v.stage.innerHTML,/RESEARCH CONTRACT/,route);
+  assert.match(v.stage.innerHTML,/研究对象|研究问题|产业结构|预测|模型/,route);
+  assert.match(v.stage.innerHTML,/v5-deep/,route);
+  assert.doesNotMatch(v.stage.innerHTML,/NaN|Infinity|undefined/,route);
+ }
+});
+test('V5 question-identification-falsification tabs change actual research content',()=>{
+ const v=boot('mission');
+ const a=v.stage.innerHTML;
+ v.listeners.click({target:{closest(sel){return sel==='[data-v5-tab]'?{dataset:{v5Page:'mission',v5Tab:'falsify'}}:null;}}});
+ assert.notEqual(v.stage.innerHTML,a);
+ assert.match(v.stage.innerHTML,/什么会推翻当前解释/);
+ assert.match(v.stage.innerHTML,/替代解释/);
+});
+test('V5 hypothesis selection in home explains alternative mechanisms',()=>{
+ const v=boot('home');
+ v.listeners.click({target:{closest(sel){return sel==='[data-v5-focus]'?{dataset:{v5Focus:'H4'}}:null;}}});
+ assert.match(v.stage.innerHTML,/工业扩张与绿色效率/);
+ assert.match(v.stage.innerHTML,/技术效率改善/);
+});
+test('V5 synthetic network adversarial compare recalculates on cut change',()=>{
+ const v=boot('models');
+ assert.match(v.stage.innerHTML,/随机失效对照/);
+ v.listeners.change({target:{closest(sel){return sel==='[data-v5-cut]'?{value:'20'}:null;}}});
+ assert.match(v.stage.innerHTML,/20个/);
+ assert.match(v.stage.innerHTML,/二阶受影响制造主体/);
+});
+test('V5 wind views each have purpose-specific calculations',()=>{
+ const expect=[
+ ['wind/0','仅此产业承担目标后的反解点'],
+ ['wind/1','行业增速'],
+ ['wind/2','本地价值'],
+ ['wind/3','账期错配'],
+ ['wind/4','网格覆盖率'],
+ ['wind/5','模型响应']
+ ];
+ for(const [route,word] of expect){
+  const v=boot(route);
+  assert.ok(v.stage.innerHTML.includes(word),route+' lacks '+word);
+ }
+});
+test('V5 archives show evidence gates and note non-immutable local storage',()=>{
+ const v=boot('archive');
+ assert.match(v.stage.innerHTML,/顶级研究的终点/);
+ assert.match(v.stage.innerHTML,/尚缺实证/);
+ assert.match(v.stage.innerHTML,/localStorage/);
 });
