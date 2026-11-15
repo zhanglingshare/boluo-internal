@@ -78,6 +78,15 @@ const HYPOTHESES=[
   test:'逐行业分解用电和实物产量，比较行业内效率变化与结构效应',
   falsifier:'若同一行业同类企业能效未改善，效率型解释需要修正',quality:'缺企业级能耗面板'}
 ];
+function priceBridge(){
+ const revised2024=970.87,issued2025=1005.45,realGrowth=.055;
+ const nominalRatio=issued2025/revised2024;
+ const impliedPriceRatio=nominalRatio/(1+realGrowth);
+ const target=1600;
+ return {revised2024,issued2025,nominalGrowth:(nominalRatio-1)*100,realGrowth:realGrowth*100,
+  impliedPriceGrowth:(impliedPriceRatio-1)*100,nominalTargetCAGR:((target/issued2025)**(1/5)-1)*100,
+  note:'2025现价GDP除以2024核实总量得到近似名义增长；与公布5.5%实际增长相比可推导一个总量隐含价格变化近似。两期核算版本、链式价格指数与修订差异必须进一步核验，不能将该数当作官方GDP平减指数。'};
+}
 function summary(){
  const covered=INDUSTRIES.reduce((a,r)=>a+r.share,0);
  const u20=45832-8164,r20=32915-8671;
@@ -127,6 +136,6 @@ function cascade({cut=10,mode='targeted',threshold=2}={}){
    manufacturersImpaired:mfg.size,farmsTouched:farms.size,share:n.impactPct,
    note:'二阶网络传播使用每家合成制造主体的服务供应损失阈值，农业节点只经供应关系标记。不是现实减产金额或GDP损失。'};
 }
-const API={URL,INDUSTRIES,SIZES,PRODUCTS,INDICATORS,TARGETS,CONFLICTS,HYPOTHESES,summary,select,epistemic,morris,cascade};
+const API={priceBridge,URL,INDUSTRIES,SIZES,PRODUCTS,INDICATORS,TARGETS,CONFLICTS,HYPOTHESES,summary,select,epistemic,morris,cascade};
 root.BoluoV3=API;if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
