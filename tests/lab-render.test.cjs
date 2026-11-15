@@ -54,3 +54,38 @@ test('research archive saves and reloads snapshot',()=>{
  assert.ok(v.stage.innerHTML.includes('研究 1'));
  assert.ok(v.stage.innerHTML.includes('重开'));
 });
+
+
+test('historical chart switches between share, level and GDP revision view',()=>{
+ const v=boot('data');
+ assert.match(v.stage.innerHTML,/2024年GDP/);
+ const before=v.stage.innerHTML;
+ v.listeners.click({target:{closest(sel){return sel==='[data-history]'?{dataset:{history:'gdp'}}:null;}}});
+ assert.notEqual(v.stage.innerHTML,before);
+ assert.match(v.stage.innerHTML,/GDP与修订/);
+ assert.match(v.stage.innerHTML,/970.87/);
+});
+test('theory variable selection changes the visible evidence and identification warning',()=>{
+ const v=boot('models');
+ const original=v.stage.innerHTML;
+ v.listeners.click({target:{closest(sel){return sel==='[data-variable]'?{dataset:{variable:'price'}}:null;}}});
+ assert.notEqual(v.stage.innerHTML,original);
+ assert.match(v.stage.innerHTML,/产业价格与折算指数/);
+ assert.match(v.stage.innerHTML,/缺失该数据/);
+});
+test('network stress selector recalculates cut edges without repainting placeholders',()=>{
+ const v=boot('models');
+ const before=v.stage.innerHTML;
+ v.listeners.change({target:{closest(sel){return sel==='[data-research]'?{dataset:{research:'cut'},value:'20'}:null;}}});
+ const after=v.stage.innerHTML;
+ assert.notEqual(after,before);
+ assert.match(after,/20 个/);
+ assert.match(after,/合成采购额失联/);
+});
+test('clicking a two-parameter heatmap cell really updates the simulation',()=>{
+ const v=boot('wind/4');
+ const before=v.nodes.topRun.textContent;
+ v.listeners.click({target:{closest(sel){return sel==='[data-heat]'?{dataset:{heat:'1,1'}}:null;}}});
+ assert.notEqual(v.nodes.topRun.textContent,before);
+ assert.match(v.stage.innerHTML,/两个条件/);
+});
