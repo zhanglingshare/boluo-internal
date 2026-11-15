@@ -44,6 +44,7 @@ function render(ctx={}){
  return '<section class="sb-research-lab"><div class="v6-lead"><span>两条证据链 · 一套可重跑的研究实验</span>'+
  '<h2>公开世界有什么迹象？假设改变后，会发生什么？</h2>'+
  '<p>现实证据和模拟回答分开展示。现在可以运行情景，未来真人问卷会用来检查这些假设。</p></div>'+tabs+
+ '<div class="sb-current-question"><b>'+esc(signal.question)+'</b><small>该问题尚未被真实抽样调查测量</small></div>'+ 
  '<div class="sb-top-stats">'+
  '<div><span>公开材料</span><strong>'+signal.evidenceCount+' <small>条</small></strong></div>'+
  '<div><span>独立原始来源</span><strong>'+signal.independentOrigins+' <small>组</small></strong></div>'+
