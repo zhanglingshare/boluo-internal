@@ -7,12 +7,14 @@ globalThis.BoluoResearch=R;
 const RV=require('../research-viz.js');
 const V3=require('../research-v3.js');globalThis.BoluoV3=V3;
 const V3V=require('../research-v3-viz.js');
+const V4=require('../research-v4.js');globalThis.BoluoV4=V4;
+const V4V=require('../research-v4-viz.js');
 const js=fs.readFileSync(path.resolve(__dirname,'../lab.js'),'utf8');
 function boot(route){
  const nodes={};const listeners={};
  function element(id){if(!nodes[id])nodes[id]={innerHTML:'',textContent:'',style:{},hidden:true};return nodes[id];}
  const location={hash:'#'+route};
- const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
+ const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
  const document={body:{style:{}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
  const storage=new Map();
  const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}};
@@ -138,4 +140,42 @@ test('synthetic survey exposes measurement quality and honest holdout errors',()
  assert.match(v.stage.innerHTML,/经营表现模型两个解释构念的VIF/);
  assert.match(v.stage.innerHTML,/留出样本预测能力/);
  assert.match(v.stage.innerHTML,/不能称为PLSpredict/);
+});
+
+
+test('V4 industry history and missing-value heatmap render on data workspace',()=>{
+ const v=boot('data');
+ assert.match(v.stage.innerHTML,/六年行业内部史/);
+ assert.match(v.stage.innerHTML,/份额变化/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-v4-industry]'?{dataset:{v4Industry:'power'}}:null;}}});
+ assert.match(v.stage.innerHTML,/电力热力/);
+ assert.match(v.stage.innerHTML,/缺测/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-v4-metric]'?{dataset:{v4Metric:'rates'}}:null;}}});
+ assert.match(v.stage.innerHTML,/增速冷暖/);
+ assert.match(v.stage.innerHTML,/30.4%/);
+});
+test('V4 same-city five-region composition graph uses grounded comparator and select',()=>{
+ const v=boot('data');
+ v.listeners.click({target:{closest(sel){return sel==='[data-v4-lens]'?{dataset:{v4Lens:'peers'}}:null;}}});
+ assert.match(v.stage.innerHTML,/2025惠州五地三次产业结构坐标/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-v4-peer]'?{dataset:{v4Peer:'huicheng'}}:null;}}});
+ assert.match(v.stage.innerHTML,/博罗与惠城/);
+ assert.match(v.stage.innerHTML,/结构距离/);
+ assert.match(v.stage.innerHTML,/1,203.3亿/);
+});
+test('V4 normalized local value model reacts to sliders and 121-case heatmap',()=>{
+ const v=boot('models');
+ assert.match(v.stage.innerHTML,/规范化100单位/);
+ assert.match(v.stage.innerHTML,/没有观测到博罗真实采购/);
+ v.listeners.change({target:{closest(sel){return sel==='[data-v4-control]'?{dataset:{v4Control:'local'},value:'70'}:null;}}});
+ assert.match(v.stage.innerHTML,/70.0 单位/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-v4-heat]'?{dataset:{v4Heat:'50,50'}}:null;}}});
+ assert.match(v.stage.innerHTML,/25.0 单位/);
+ assert.match(v.stage.innerHTML,/data-v4-heat="50,50"/);
+});
+test('V4 public enterprise clues are separated from unverified purchase relations',()=>{
+ const v=boot('models');
+ assert.match(v.stage.innerHTML,/欣旺达/);
+ assert.match(v.stage.innerHTML,/华通/);
+ assert.match(v.stage.innerHTML,/没有足够可靠的实际交易边/);
 });
