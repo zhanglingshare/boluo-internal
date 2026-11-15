@@ -46,7 +46,7 @@ test('pending real questionnaire does not automatically create phantom survey re
  assert.match(html,/扩张解释/);
  assert.match(html,/摩擦解释/);
  assert.match(html,/合成平均回应/);
- assert.match(html,/真人问卷尚未接入/);
+ assert.match(html,/真实问卷尚未接入/);
  assert.match(html,/不是置信区间/);
  assert.match(html,/survey-to-wind/);
 });
@@ -69,7 +69,7 @@ test('future real anonymous group aggregates produce a transparent DESCRIPTIVE c
  assert.equal(res.available,true);
  assert.equal(res.nSurvey,290);
  assert.equal(res.calibrationCertified,false);
- assert.equal(res.surveyMean,3.2);
+ assert.ok(Math.abs(res.surveyMean-3.2)<1e-12);
  assert.ok(Number.isFinite(res.difference));
  assert.equal(res.frozenVersion,'shadow-v1');
  assert.equal(res.groups.length,3);
