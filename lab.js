@@ -245,7 +245,7 @@ function surveyPage(r){
  stat('重抽样','120 次','Bootstrap 百分位区间','')+
  stat('服务使用解释度',perc(m.r2.SU),'合成样本内 R²','')+
  stat('经营表现解释度',perc(m.r2.OP),'合成样本内 R²','')+'</section>'+
- '<div class="grid2"><article class="card"><h3>调查模型 · 双链关系</h3><div class="logic" style="grid-template-columns:repeat(3,1fr)"><div><b>SA</b><span>服务可得</span></div><div><b>SU</b><span>服务使用</span></div><div><b>OP</b><span>经营表现</span></div></div>'+
+ '<div class="grid2"><article class="card"><h3>调查模型 · 双链关系</h3>'+surveyGraph(m)+''+
  '<div class="line-sep"></div>'+path('SA→SU')+path('SA→OP')+path('SU→OP')+
  '<p class="footnote">系数来自探索性Mode-A PLS路径估计，括号内为合成样本Bootstrap 95%区间。此实现未经SmartPLS逐项等价验证，不能据此判断政策因果或换算GDP。</p></article>'+
  '<article class="card"><h3>你可以改变研究样本</h3><div class="sliderrow"><label>模拟受访企业数量 <output data-live="sampleSize">'+sampleSize+' 份</output></label><input type="range" data-set="sampleSize" min="100" max="500" step="25" value="'+sampleSize+'"></div>'+
@@ -272,30 +272,24 @@ function networkSvg(net){
  return output+'</svg>';
 }
 function modelsPage(r){
- const net=E.network(state),m=E.survey({...state,sampleSize});
- const tornado=E.sensitivity({...state,draws:850});
- return heading('04 / STRUCTURAL RESEARCH','不同的算法，回答不同的问题。',
- '产业连通、问卷机制和宏观情景并列运行。不能把三者的输出简单加权成“博罗成功概率”。',
- btn('go-wind','进入第05工作区 ↗','primary'))+
- '<section class="grid3"><div class="tile"><small>合成产业关系网络</small><strong class="big">'+net.nodes+' 节点</strong><p>'+net.edges+' 条合成关系，检验断点与承接</p></div>'+
- '<div class="tile"><small>合成问卷关系检验</small><strong class="big">'+m.n+' 份</strong><p>3条路径 + 120次重抽样</p></div>'+
- '<div class="tile"><small>宏观条件推演</small><strong class="big">'+r.samples+' 条</strong><p>'+state.year+'年分布与敏感性实际计算</p></div></section>'+
- '<section class="grid2 gap"><article class="card"><h3>产业关系网络 · 真正遍历合成边</h3>'+networkSvg(net)+
- '<div class="three-gauge"><div><small class="muted">服务采购边</small><b>'+net.serviceEdges+'</b></div><div><small class="muted">农业供货边</small><b>'+net.agriEdges+'</b></div><div><small class="muted">前10节点断开</small><b class="bad">'+net.lostEdges+' 边</b></div></div>'+
- '<div class="line-sep"></div><h3>模拟专业服务需求构成</h3>'+barchart(net.services.map(x=>({name:x.name,value:x.amount})),' 百万元')+
- '<p class="footnote">'+net.note+'。交易额不能直接折算增加值。</p></article>'+
- '<article class="card"><h3>断点实验 · 哪里更脆弱？</h3>'+
- '<div class="tile" style="padding:17px;background:rgba(255,255,255,.02)"><small>如果合成网络中交易额最高的10个服务主体突然退出</small><div class="big-num bad">'+money(net.lostDemand)+' <span style="font-size:15px">百万元</span></div><p>关联交易额失联，不是经济损失估计，亦非真实企业。</p></div>'+
- '<h3 class="gap">当前条件与服务承接能力</h3>'+line('服务承接能力指数',decimal(net.capacity,2),'cyan')+
- line('资源不足的演示风险指数',decimal(net.risk)+' / 100','gold')+
- '<div class="dangerbox gap">红队问题：工业增长，如果本地研发、检测、软件和物流供给跟不上，产业增加值可能继续增长，但本地收益与就业传导未必同步。</div>'+
- '<h3 class="gap">跨模型一致性闸门</h3>'+
- line('网络：哪里存在断点？','合成图上可检验','good')+
- line('问卷：服务可得与经营表现相关吗？','合成路径可检验','good')+
- line('产业：目标附近的样本有多少？',perc(r.hit),'')+
- '<p class="footnote">以上三个回答的统计单位和估计对象不同。路径系数不可直接转为GDP贡献。真实关系需要调查校准。</p></article></section>'+
- '<article class="card gap"><h3>五个条件的单变量扰动敏感性</h3>'+sensitivityBars(tornado)+
- '<p class="footnote">每次单独把一个标准化参数上下移动0.5，使用同一随机种子、850条轨迹分别重新计算。排序是模型中的局部敏感度，不是现实因果重要性。</p></article>';
+ const net=R.networkStress({cut:cutCount,mode:cutMode}),m=E.survey({...state,sampleSize});
+ return heading('04 / STRUCTURAL RESEARCH','真正的结构分析，不止画一张网。',
+ '从可证伪的理论机制与变量测量开始，连接产业网络的实际计算、竞争性模型对照与条件敏感性。请始终区分真实历史和合成关系。',
+ btn('go-wind','进入情景风洞 ↗','primary'))+
+ '<section class="stats">'+
+ stat('2020—2025现价GDP增长',money(R.describe().nominalTotal)+' 亿','真实历年现价数据的算术差分','cyan')+
+ stat('合成企业主体',net.nodes+' 个','其中制造300 / 服务120 / 农业80','')+
+ stat('合成网络连接',net.edges+' 条','有向采购/供货边，非实测','')+
+ stat('问卷路径重抽样','120 次','探索性Mode-A PLS，合成问卷','')+'</section>'+
+ hypothesisPanel()+variablePanel()+networkResearchPanel()+modelComparisonPanel(r)+
+ '<section class="grid2 gap"><article class="card"><h3>社会调查：为什么不能直接转成GDP？</h3>'+surveyGraph(m)+
+ line('合成 SA→SU 路径',decimal(m.paths['SA→SU'],3),'')+
+ line('合成 SA→OP 路径',decimal(m.paths['SA→OP'],3),'')+
+ line('合成 SU→OP 路径',decimal(m.paths['SU→OP'],3),'')+
+ '<p class="footnote">测量层是受访者对服务可得、使用及表现的题项。县域GDP是不同核算单位的汇总；若缺跨层机制和外部数据，绝不可将此路径系数乘GDP得到所谓政策效应。</p></article>'+
+ '<article class="card"><h3>参数敏感性与研究可识别性</h3>'+sensitivityBars(E.sensitivity({...state,draws:850}))+
+ '<div class="research-vintage gap">敏感性排序来自模型内的参数扰动，不等于变量已通过历史数据筛选，更不是因果影响排序。未来必须对照真实项目投产、采购流向、就业及价格指标才能识别机制。</div>'+
+ '<div class="actions">'+btn('go-wind','改变产业条件，继续压测 ↗','primary')+'</div></article></section>';
 }
 function sensitivityBars(s){
  const top=Math.max(...s.map(x=>Math.max(Math.abs(x.plus),Math.abs(x.minus))),1);
@@ -315,7 +309,7 @@ function windPage(r){
 }
 function wind0(r){
  const base=E.DATA,sector=r.sector;
- return '<section class="stats">'+
+ return '<div class="notice" style="margin-bottom:17px"><b>历史检验：</b>2020年二产份额50.0%，2025年54.6%；当前2030结构只是条件演示。2024年三产分项仍为初步统计，GDP已核实修订。'+btn('go-data','查看历史结构 ↗','tiny-btn')+'</div>'+ '<section class="stats">'+
  stat(state.year+' GDP 中位数',money(r.total.p50)+' 亿','模型计算，不是官方预测','cyan')+
  stat('目标差额',sign(-r.gap)+' 亿','中位数减去对照目标',r.gap>0?'bad':'good')+
  stat('模型样本达标占比',perc(r.hit),'取决于增长与波动假设','')+
@@ -392,7 +386,7 @@ function wind3(r){
 }
 function wind4(r){
  const sensitivity=E.sensitivity(state);
- return '<section class="stats">'+stat('条件抽样轨迹',money(r.samples)+' 条','固定随机种子可重现','cyan')+
+ return modelComparisonPanel(r)+'<section class="stats">'+stat('条件抽样轨迹',money(r.samples)+' 条','固定随机种子可重现','cyan')+
  stat('P10 · 较低情景',money(r.total.p10)+' 亿','模型分布第10百分位','')+
  stat('P50 · 中位数',money(r.total.p50)+' 亿','不是点预测','')+
  stat('P90 · 较高情景',money(r.total.p90)+' 亿','模型分布第90百分位','')+'</section>'+
