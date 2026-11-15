@@ -15,6 +15,7 @@ let state=E.normalize(safeRead(KEY,DEFAULT));
 let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
+let methodFilter='全部';
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
 function v3Morris(){const key=JSON.stringify(state);if(key!==memoMorrisKey||!memoMorrisValue){memoMorrisValue=V3.morris(E,state);memoMorrisKey=key;}return memoMorrisValue;}
@@ -98,6 +99,30 @@ function home(r){
  '<div class="line-sep"></div><h3>结构变化能传到谁？</h3><p class="small muted">产业协同不是GDP单点提速，而是制造、专业服务、农业加工和人力条件能否互相承接。</p>'+btn('go-models','拆开产业网络 ↗','secondary')+'</article>'+
  '<article class="card"><h3>从问题发现到行动检验</h3><div class="logic"><div><b>01</b><span>提出问题</span></div><div><b>02</b><span>核对证据</span></div><div><b>03</b><span>跑结构</span></div><div><b>04</b><span>改条件</span></div><div><b>05</b><span>盯断点</span></div></div><div class="dangerbox gap">'+insight(r)+'</div><p class="footnote">注意：2030年1600亿元是公开报道中的努力目标。模型年增长率属于名义增长假设，不能与政府公布的不变价GDP增长率直接比较。</p></article></section>';
 }
+function v3MethodGatePanel(){
+ const items=[
+ ['历史结构与产业贡献描述','事实可描述','已有6年三产数据；2024核实分项有缺口'],
+ ['规上工业内部异质性','事实可描述','2025只披露5行业，不能推出全行业分解'],
+ ['名义与实际增长口径桥','事实可描述','已用2024核实GDP，隐含价格因子非官方'],
+ ['2025计划实绩差异','事实可描述','需检查财政和社零数据可比范围'],
+ ['合成供应链SNA','仅可演示','500节点680合成边；不能识别现实企业'],
+ ['探索性Mode-A PLS','仅可演示','合成问卷；可测量HTMT与VIF但无专业软件认证'],
+ ['蒙特卡洛压力','仅可演示','分位数依赖自设增长与扰动参数'],
+ ['Morris全局筛查','仅可演示','参数空间敏感性并非现实政策净效应'],
+ ['双重差分DiD','证据不足','缺少处理组、对照组与可核对的前趋势'],
+ ['工具变量/准实验','证据不足','未找到可信外生工具与排除限制'],
+ ['行业Shift-share','证据不足','缺可比地区同期细分行业基准和长面板'],
+ ['投入产出与本地价值留存','证据不足','未获真实企业采购流和县域投入产出表'],
+ ['效率前沿DEA','证据不足','缺可比决策单元投入和产出指标'],
+ ['长期动态计量','证据不足','县域仅有6年且有修订，无法支持高维参数']
+ ];
+ const view=items.filter(x=>methodFilter==='全部'||x[1]===methodFilter);
+ const color={'事实可描述':'real','仅可演示':'model','证据不足':'warn'};
+ return '<section class="card gap"><div class="row wrap"><div><div class="eyebrow">METHOD ADMISSION GATE / ANTI-PSEUDOSCIENCE</div><h3>14种研究方法，不能因为会写代码就声称可以使用</h3></div>'+badge('方法准入 · 证据门槛优先','model')+'</div>'+
+ '<div class="research-tabs">'+['全部','事实可描述','仅可演示','证据不足'].map(x=>'<button type="button" data-method-filter="'+x+'" class="'+(methodFilter===x?'active':'')+'">'+x+'</button>').join('')+'</div>'+
+ '<div class="v3-method-grid">'+view.map((x,i)=>'<div class="v3-method"><div class="row wrap"><b>'+html(x[0])+'</b>'+badge(x[1],color[x[1]])+'</div><p>'+html(x[2])+'</p></div>').join('')+'</div>'+
+ '<p class="footnote">准入基于证据与识别条件，而非方法是否高级。拿不到有代表性的样本时，应明示研究方案与数据缺口，不把演示结果包装成实证结论。</p></section>';
+}
 function mission(r){
  const h=(state.target/E.DATA.gdp)**(1/(state.year-2025))-1;
  return heading('01 / QUESTION & FALSIFICATION','这次，我们究竟要证伪什么？',
@@ -117,7 +142,7 @@ function mission(r){
  '<div class="notice">① 事实：2025年宏观统计。与模型设定分开。</div>'+
  '<div class="notice">② 机制：关系图、调查和参数系数均先用合成样本探索。</div>'+
  '<div class="notice">③ 推演：目标达标比例是条件模拟频率，不是现实成功概率。</div>'+
- '<div class="notice">④ 复核：不同随机种子、不同冲击幅度都要重跑；结论不稳健就标记。</div></div></div>';
+ '<div class="notice">④ 复核：不同随机种子、不同冲击幅度都要重跑；结论不稳健就标记。</div></div></div>'+v3MethodGatePanel();
 }
 
 /* Methods-workbench: actual observed vintages, diagnostic variable map and
@@ -662,6 +687,7 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
+ const filter=e.target.closest('[data-method-filter]');if(filter){methodFilter=filter.dataset.methodFilter;draw();return;}
  const v3lens=e.target.closest('[data-v3-lens]');if(v3lens){dataLens=v3lens.dataset.v3Lens;draw();return;}
  const v3industry=e.target.closest('[data-v3-industry]');if(v3industry){selectedIndustry=Number(v3industry.dataset.v3Industry);draw();return;}
  const v3conflict=e.target.closest('[data-v3-conflict]');if(v3conflict){selectedConflict=v3conflict.dataset.v3Conflict;draw();return;}
