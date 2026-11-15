@@ -96,3 +96,11 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
 .v3-price-equation b{display:block;color:var(--ink);font-size:16px;margin-top:6px}
 .v3-price-equation .v3-arrow{color:var(--cyan);font-size:20px}
 @media(max-width:650px){.v3-price-equation{display:grid;grid-template-columns:1fr}.v3-price-equation .v3-arrow{text-align:center;transform:rotate(90deg)}}
+
+
+.v3-method-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.v3-method{border:1px solid var(--stroke);border-radius:11px;padding:14px;background:rgba(45,89,132,.1);min-height:116px}
+.v3-method b{font-size:12px}.v3-method p{margin:11px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
+.v3-method .tag{font-size:9px}
+@media(max-width:1100px){.v3-method-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.v3-method-grid{grid-template-columns:1fr}.v3-method{min-height:0}}
