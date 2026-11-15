@@ -72,8 +72,8 @@ test('tea scenario alternatives are deterministic but not claiming real seasonal
 test('synthetic survey review requires multiple method criteria, not one p value',()=>{
  const m=E.survey({sampleSize:100,seed:317});
  const x=V5.surveyReview(m);
- assert.equal(x.total,5);
- assert.ok(x.green>=0&&x.green<=5);
+ assert.equal(x.total,7);
+ assert.ok(x.green>=0&&x.green<=7);
  assert.ok(x.thresholds.every(row=>Number.isFinite(row.value)&&row.guide&&row.explanation));
  assert.match(x.warning,/尚未与SmartPLS/);
  assert.match(Viz.quality(x),/HTMT最大值/);
