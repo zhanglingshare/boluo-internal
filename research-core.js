@@ -120,7 +120,36 @@ function networkStress(input){
   serviceNoSupplier,selected:Array.from(removed),top:sorted.slice(0,8).map(x=>({id:x[0],weight:x[1],indegree:incoming.get(x[0])})),
   byType,graph:GRAPH,note:'基于固定种子的500个合成主体及680条有向关系。节点删除显示连接与金额失联，不等于实际GDP或真实损失。'};
 }
-const API={HISTORY:DATA,VARIABLES,HYPOTHESES,DAG,describe,variable,compareModels,networkStress,shares};
+function backtest(){
+ /* Tiny historical one-step checks, not genuine out-of-sample validation of MC parameters. */
+ const tests=[];
+ for(let i=2;i<=3;i++){
+  const actual=DATA[i].gdp,origin=DATA[i-1],histRate=Math.pow(origin.gdp/DATA[0].gdp,1/(i-1))-1;
+  const mechanical=origin.gdp*(1+histRate),uniform=origin.gdp*1.073;
+  tests.push({trainEnd:origin.year,year:DATA[i].year,actual,
+   historical:mechanical,constant:uniform,
+   histAbsError:Math.abs(mechanical-actual)/actual,
+   constantAbsError:Math.abs(uniform-actual)/actual});
+ }
+ const avg=name=>tests.reduce((sum,row)=>sum+row[name],0)/tests.length;
+ return {tests,histMAPE:avg('histAbsError'),constantMAPE:avg('constantAbsError'),
+  caution:'2022、2023仅两次一步检验；没有验证本次2025起点的蒙特卡洛参数，也不满足正式样本外模型评估要求。'};
+}
+function surface(engine,input){
+ const base=engine.normalize(input),axis=[-1,-.75,-.5,-.25,0,.25,.5,.75,1],N=base.year-2025;
+ const vals=[],years=base.year;
+ for(const services of axis)for(const manufacturing of axis){
+  const trial={...base,knobs:{...base.knobs,manufacturing,services}};
+  const rates=engine.growth(trial),levels=[107.44,549.01,349.0];
+  const total=levels.reduce((sum,val,j)=>sum+val*Math.pow(1+rates[j],N),0);
+  vals.push({manufacturing,services,value:total,gap:total-base.target});
+ }
+ const max=Math.max(...vals.map(x=>x.value)),min=Math.min(...vals.map(x=>x.value));
+ return {axis,values:vals,minimum:min,maximum:max,year:years,target:base.target,
+   caution:'两参数联合扰动的无随机冲击确定性响应面。只是既有增长函数的复合增长结果，不是从样本中识别出的交互效应。'};
+}
+
+const API={HISTORY:DATA,VARIABLES,HYPOTHESES,DAG,describe,variable,compareModels,networkStress,shares,backtest,surface};
 root.BoluoResearch=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
