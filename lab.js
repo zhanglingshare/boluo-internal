@@ -3,6 +3,8 @@
 'use strict';
 const E=window.BoluoEngine;
 const R=window.BoluoResearch, RV=window.BoluoResearchViz;
+const V3=window.BoluoV3, V3V=window.BoluoV3Viz;
+if(!V3||!V3V){document.getElementById('stage').textContent='研究V3模块加载失败，请刷新页面。';return;}
 if(!R||!RV){document.getElementById('stage').textContent='结构研究模块加载失败，请刷新页面。';return;}
 if(!E){document.getElementById('stage').textContent='计算模块加载失败，请刷新页面。';return;}
 const KEY='boluo-internal-lab-v1',ARCHIVE='boluo-internal-snapshots-v1';
@@ -13,6 +15,9 @@ let state=E.normalize(safeRead(KEY,DEFAULT));
 let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
+let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
+let memoMorrisKey='',memoMorrisValue=null;
+function v3Morris(){const key=JSON.stringify(state);if(key!==memoMorrisKey||!memoMorrisValue){memoMorrisValue=V3.morris(E,state);memoMorrisKey=key;}return memoMorrisValue;}
 let current=null;
 let memoSurveyKey='',memoSurveyResult=null;
 function getSurvey(){
@@ -230,12 +235,131 @@ function surfacePanel(){
  '<div><small>当前对照目标</small><strong>'+money(surf.target)+' 亿</strong></div></div>'+
  '<p class="footnote">'+html(surf.caution)+' 图中81个格子的差异来自设定的两个增长条件及复利响应，不是实证估计出的政策协同增益。</p></section>';
 }
+
+function v3Sources(keys){
+ return '<div class="v3-provenance">'+keys.map(key=>'<a href="'+V3.URL[key]+'" target="_blank" rel="noopener noreferrer">↗ '+({stat:'2025统计公报',plan:'政府计划',news:'南方日报',revision:'GDP修订公告',jrc:'欧盟JRC方法'}[key]||key)+'</a>').join('')+'</div>';
+}
+function v3DataPanel(){
+ const summary=V3.summary(),selected=V3.INDUSTRIES[selectedIndustry],conflict=V3.CONFLICTS.find(x=>x.id===selectedConflict)||V3.CONFLICTS[0];
+ const nav='<div class="research-tabs v3-tabs">'+[
+ ['industry','产业穿透'],['targets','预期与现实'],['signals','跨系统信号'],['audit','证据冲突']
+ ].map(([id,name])=>'<button type="button" data-v3-lens="'+id+'" class="'+(dataLens===id?'active':'')+'">'+name+'</button>').join('')+'</div>';
+ let body='';
+ if(dataLens==='industry')body=
+ '<div class="research-kpi"><div><small>五个公开细分行业覆盖率</small><strong>'+decimal(summary.covered)+'%</strong></div>'+
+ '<div><small>未列示行业比重</small><strong class="gold">'+decimal(summary.missing)+'%</strong></div>'+
+ '<div><small>电子设备增加值增速</small><strong class="cyan">+23%</strong></div>'+
+ '<div><small>橡胶塑料增加值增速</small><strong class="bad">-4.2%</strong></div></div>'+
+ '<div class="grid2 gap"><article class="panel"><h3>增长速度 × 产业体量</h3>'+V3V.scatter(selectedIndustry)+
+ '<div class="v3-selected"><b>'+html(selected.name)+'</b><span>占规上工业 '+selected.share+'% · 增速 <strong class="'+(selected.growth<0?'bad':'good')+'">'+sign(selected.growth)+'%</strong></span></div>'+
+ '<p class="footnote">每个气泡代表已披露的规上工业行业，不包含其余38.6%。占比与增长来自同一公报，但没有行业全量面板；不能据此推出精确增长贡献。</p></article>'+
+ '<article class="panel"><h3>不同企业规模的增长差异</h3>'+V3V.industrialSizes()+
+ '<div class="line-sep"></div><h3>实物产品：不是所有生产都在上升</h3>'+V3V.products()+'</article></div>'+v3Sources(['stat']);
+ else if(dataLens==='targets')body=
+ '<div class="grid2"><article class="panel"><h3>2025计划 vs 实际：同为增速，差了多少？</h3>'+V3V.plan()+'</article>'+
+ '<article class="panel"><h3>值得核验的四个落差</h3>'+
+ '<div class="v3-signal-hero"><span>固定资产投资目标差异</span><strong class="bad">-23.8 <small>百分点</small></strong></div>'+
+ '<div class="hypothesis"><span class="tag model">不能直接推因果</span><div><b>为什么规上工业仍增长8.7%？</b><p>存量产能、项目投产时差、市场订单变化和价格/核算差异都可能参与解释。</p></div></div>'+
+ '<div class="hypothesis"><span class="tag warn">需要核查</span><div><b>财政增长0.2%是否低于计划3%？</b><p>可比口径需要进一步确认；绝不能将不同版本绝对值直接相除。</p></div></div>'+
+ '<div class="hypothesis"><span class="tag model">回到结构</span><div><b>目标未实现不等于政策无效</b><p>计划指标是决策基准，完成度用于定位需要解释的差异，不足以推导单项行动的净效应。</p></div></div></article></div>'+v3Sources(['plan','stat']);
+ else if(dataLens==='signals')body=
+ '<div class="research-kpi"><div><small>2025年跨系统公开信号</small><strong>'+summary.signals+' 项</strong></div>'+
+ '<div><small>农村人均收入增速</small><strong class="good">+6.2%</strong></div>'+
+ '<div><small>城镇人均收入增速</small><strong>+3.5%</strong></div>'+
+ '<div><small>城乡收入比（2025）</small><strong>'+decimal(summary.income.ratioNow,2)+'</strong></div></div>'+
+ '<div class="research-switch gap"><label>只看哪类信号？</label><select class="select" data-v3-control="domain">'+
+ ['全部','生产','投资','消费','服务','金融','民生','绿色'].map(k=>'<option value="'+k+'" '+(v3Domain===k?'selected':'')+'>'+k+'</option>').join('')+'</select></div>'+
+ '<div class="grid2"><article class="panel"><h3>公开指标的方向与幅度</h3>'+V3V.signals(v3Domain)+'</article>'+
+ '<article class="panel"><h3>城乡收入是否真的在收敛？</h3>'+
+ line('2020城镇/农村收入比（由公报差额倒推）',decimal(summary.income.ratioBefore,3),'')+
+ line('2025城镇/农村收入比',decimal(summary.income.ratioNow,3),'cyan')+
+ line('2025城镇人均可支配收入','45,832元','')+
+ line('2025农村人均可支配收入','32,915元','')+
+ '<div class="dangerbox gap">收入差距比值变化是描述统计，不足以证明某产业或项目推动了居民福利。还要检验价格、人口构成、岗位质量及中位数收入。</div>'+
+ '<h3 class="gap">几个无法互相抵消的信号</h3>'+line('金融业增加值实际增速','-3.7%','bad')+
+ line('旅游综合收入增长','+19.1%','good')+line('单位GDP能耗变动','-2.9%','good')+'</article></div>'+v3Sources(['stat']);
+ else body=
+ '<div class="research-kpi"><div><small>需要复核的公开口径冲突</small><strong class="bad">'+summary.unresolved+' 项</strong></div>'+
+ '<div><small>已经明确核实的历史修订</small><strong>1 项</strong></div>'+
+ '<div><small>禁止的操作</small><strong style="font-size:16px">自动修正数据</strong></div></div>'+
+ '<div class="v3-conflict-list">'+V3.CONFLICTS.map(x=>'<button type="button" class="'+(x.id===conflict.id?'active':'')+'" data-v3-conflict="'+x.id+'"><span>'+html(x.name)+'</span><b>'+html(x.state)+'</b></button>').join('')+'</div>'+
+ '<div class="v3-evidence-detail"><div class="row wrap"><h3>'+html(conflict.name)+'</h3>'+badge(html(conflict.priority),conflict.priority==='P0'?'warn':'')+'</div>'+
+ '<div class="grid2"><div class="notice"><b>材料 A</b><p>'+html(conflict.a)+'</p></div>'+
+ '<div class="notice"><b>材料 B</b><p>'+html(conflict.b)+'</p></div></div>'+
+ '<div class="v3-conflict-stat">'+html(conflict.math)+'</div>'+
+ '<div class="research-vintage"><b>不能推断：</b>'+html(conflict.caveat)+'</div>'+
+ '<div class="notice gap"><b>下一项验证动作：</b>'+html(conflict.verify)+'</div>'+
+ v3Sources(conflict.sources)+'</div>';
+ return '<section class="card research-feature gap"><div class="row wrap"><div><div class="eyebrow">EMPIRICAL DEPTH / 2025</div><h3>从“三产占比”穿透到行业、目标和证据矛盾</h3></div>'+badge('真实公开证据｜区别于合成模型','real')+'</div>'+
+ nav+body+'</section>';
+}
+function v3QuestionPanel(){
+ const q=V3.HYPOTHESES.find(x=>x.id===selectedQuestion)||V3.HYPOTHESES[0];
+ const mechanism=q.rival[Math.min(selectedMechanism,q.rival.length-1)];
+ return '<section class="card research-feature gap"><div class="row wrap"><div><div class="eyebrow">FALSIFICATION LAB / COMPETING EXPLANATIONS</div><h3>不是问“模型支持什么”，而是问“哪条解释可能被推翻”</h3></div>'+badge('待检验的竞争机制','model')+'</div>'+
+ '<div class="research-tabs">'+V3.HYPOTHESES.map(x=>'<button type="button" data-v3-question="'+x.id+'" class="'+(q.id===x.id?'active':'')+'">'+x.id+' '+x.title+'</button>').join('')+'</div>'+
+ '<div class="grid2"><div class="panel"><h3>已观察到的信号</h3>'+q.facts.map(x=>'<div class="v3-fact">'+badge('事实','real')+' '+html(x)+'</div>').join('')+
+ '<h3 class="gap">解释竞争</h3>'+q.rival.map((x,i)=>'<button type="button" class="v3-mechanism '+(i===selectedMechanism?'active':'')+'" data-v3-mechanism="'+i+'"><span>'+('0'+(i+1))+'</span>'+html(x)+'</button>').join('')+'</div>'+
+ '<div class="panel"><div class="eyebrow">SELECTED RIVAL MECHANISM</div><h3>'+html(mechanism)+'</h3>'+
+ '<div class="dangerbox">现有信号与此解释可能相容，但相容性不构成因果证明。没有对照、时间顺序和混杂控制，就不能排除其他解释。</div>'+
+ '<h3 class="gap">怎样才能推翻它？</h3><p class="research-summary">'+html(q.falsifier)+'</p>'+
+ '<h3 class="gap">最值得补充的证据</h3><div class="notice">'+html(q.test)+'</div>'+
+ '<div class="line-sep"></div>'+badge(html(q.quality),'model')+'</div></div>'+
+ '<p class="footnote">研究逻辑：竞争性机制 → 可观察的不同预期 → 测量与对照 → 证据排除。此处仅建立待验证的研究设计，不声称已有因果识别。</p></section>';
+}
+function v3CascadePanel(){
+ const v=V3.cascade({cut:cascadeCut,mode:cascadeMode,threshold:cascadeThreshold});
+ return '<section class="card research-feature gap"><div class="row wrap"><div><div class="eyebrow">SECOND-ORDER NETWORK SHOCK / SYNTHETIC</div><h3>服务供应链断开后，会不会再传到制造业和农业？</h3></div>'+badge('二阶机制实验 · 全部合成','model')+'</div>'+
+ '<div class="research-switch">'+
+ '<label>移除服务主体</label><select class="select" data-v3-control="cut">'+[0,3,5,10,20,30].map(x=>'<option value="'+x+'" '+(x===cascadeCut?'selected':'')+'>'+x+'个</option>').join('')+'</select>'+
+ '<label>失效顺序</label><select class="select" data-v3-control="mode"><option value="targeted" '+(cascadeMode==='targeted'?'selected':'')+'>交易额最高优先</option><option value="random" '+(cascadeMode==='random'?'selected':'')+'>固定随机移除</option></select>'+
+ '<label>制造主体失效阈值</label><select class="select" data-v3-control="threshold"><option value="1" '+(cascadeThreshold===1?'selected':'')+'>失去1项服务</option><option value="2" '+(cascadeThreshold===2?'selected':'')+'>失去2项服务</option></select></div>'+
+ V3V.cascade(v)+
+ '<div class="research-kpi"><div><small>失去服务采购边</small><strong class="bad">'+v.lostServiceEdges+'条</strong></div>'+
+ '<div><small>制造业有关系受影响</small><strong>'+v.manufacturersTouched+'家</strong></div>'+
+ '<div><small>达到设定失效阈值</small><strong class="gold">'+v.manufacturersImpaired+'家</strong></div>'+
+ '<div><small>关联农业供应节点</small><strong>'+v.farmsTouched+'家</strong></div></div>'+
+ '<div class="research-vintage gap">'+html(v.note)+' 不提供金额因果损失或停产概率。</div></section>';
+}
+function v3MorrisPanel(){
+ const m=v3Morris();
+ return '<section class="card gap"><div class="row wrap"><div><div class="eyebrow">GLOBAL SCREENING / MORRIS-TYPE DESIGN</div><h3>变量有多敏感？先在整个允许区间内抽查</h3></div>'+badge('32组轨迹 × 五参数','model')+'</div>'+
+ V3V.morris(m)+
+ '<div class="research-vintage gap">'+html(m.warning)+' 高μ*表示设定模型敏感，不代表现实中政策可控性或因果重要性。高σ可能来自非线性和参数交互，需另行区分。</div>'+
+ v3Sources(['jrc'])+'</section>';
+}
+function v3UncertaintyPanel(r){
+ const e=V3.epistemic(E,state);
+ return '<section class="card research-feature gap"><div class="row wrap"><div><div class="eyebrow">ALEATORY VS EPISTEMIC</div><h3>同一个风洞，两种完全不同的不确定性</h3></div>'+badge('不把两种区间混成概率','model')+'</div>'+
+ V3V.uncertainty(e,r,state.target)+
+ '<div class="grid2"><div class="notice"><b>模型内随机性</b><p>在给定增长、波动和相关系数假设下，固定随机种子模拟出的P10—P90。不是现实置信区间。</p></div>'+
+ '<div class="notice"><b>参数知识不足</b><p>将每年三产增长率统一上下调整1.5个百分点的三组假设边界。没有可靠概率权重，不做随机概率声明。</p></div></div>'+
+ '<div class="research-kpi gap"><div><small>当前假设的蒙特卡洛P10—P90宽度</small><strong>'+money(r.total.p90-r.total.p10)+'亿</strong></div>'+
+ '<div><small>假设整体±1.5pp形成的确定性边界宽度</small><strong>'+money(e.spread)+'亿</strong></div></div>'+
+ '<p class="footnote">'+html(e.note)+' 二者不能相加当作“95%概率区间”。</p></section>';
+}
+function v3ServicePanel(){
+ return '<section class="card gap"><h3>服务业内部不是一种速度</h3>'+
+ '<div class="grid3"><div class="tile"><small>旅游综合收入</small><div class="big-num good">+19.1%</div><p>2025收入51.88亿元</p></div>'+
+ '<div class="tile"><small>交通仓储邮政增加值</small><div class="big-num good">+5.1%</div><p>2025增加值13.14亿元</p></div>'+
+ '<div class="tile"><small>金融业增加值</small><div class="big-num bad">-3.7%</div><p>2025增加值38.97亿元</p></div></div>'+
+ '<div class="research-vintage gap">旅游综合收入是营业统计口径，不能与交通、金融的增加值直接求和；这些数字只能说明不同服务活动的方向不一。</div>'+v3Sources(['stat'])+'</section>';
+}
+function v3AgriculturePanel(){
+ return '<section class="card gap"><h3>农业的真实生产量与价格/价值链，不是一回事</h3>'+
+ '<div class="grid3"><div class="tile"><small>2025蔬菜产量</small><div class="big-num">118.07 <span style="font-size:13px">万吨</span></div><p>同比+2.7%</p></div>'+
+ '<div class="tile"><small>2025肉类总产量</small><div class="big-num">9.46 <span style="font-size:13px">万吨</span></div><p>同比+2.8%</p></div>'+
+ '<div class="tile"><small>2025粮食产量</small><div class="big-num">15.53 <span style="font-size:13px">万吨</span></div><p>基本持平</p></div></div>'+
+ '<p class="footnote">2025农业增加值同比增长7.8%（不变价）。产量、价格、加工和销售分别有不同核算单位，不能据单个产品产量推算一产增加值或茶农净收入。</p>'+
+ v3Sources(['stat'])+'</section>';
+}
+
 function dataPage(r){
  const d=E.DATA;
  return heading('02 / EVIDENCE DESK','事实先钉牢，未知才好推演。',
  '数据划成 A/B/C 层，宏观基数不与合成企业关系混称。导入与导出本阶段不做，使用仓库既有公开信息和可复现合成样本。',
  btn('go-survey','继续：看模拟调查 ↗','primary'))+
- historicalPanel()+
+ historicalPanel()+v3DataPanel()+
  '<section class="stats">'+stat('2025 GDP',money(d.gdp)+' 亿','公开地区生产总值','cyan')+
  stat('2025规上工业增加值增幅','+8.7%','增幅，不是产业增加值占GDP的比例','good')+
  stat('2025固定资产投资','-18.8%','与工业增长方向相反','bad')+
@@ -304,7 +428,7 @@ function modelsPage(r){
  stat('合成企业主体',net.nodes+' 个','其中制造300 / 服务120 / 农业80','')+
  stat('合成网络连接',net.edges+' 条','有向采购/供货边，非实测','')+
  stat('问卷路径重抽样','120 次','探索性Mode-A PLS，合成问卷','')+'</section>'+
- hypothesisPanel()+variablePanel()+networkResearchPanel()+modelComparisonPanel(r)+backtestPanel()+
+ hypothesisPanel()+v3QuestionPanel()+variablePanel()+networkResearchPanel()+v3CascadePanel()+modelComparisonPanel(r)+backtestPanel()+v3MorrisPanel()+
  '<section class="grid2 gap"><article class="card"><h3>社会调查：为什么不能直接转成GDP？</h3>'+surveyGraph(m)+
  line('合成 SA→SU 路径',decimal(m.paths['SA→SU'],3),'')+
  line('合成 SA→OP 路径',decimal(m.paths['SA→OP'],3),'')+
@@ -377,7 +501,7 @@ function wind1(r){
 }
 function wind2(r){
  const n=E.network(state),services=r.sector[2];
- return '<section class="stats">'+stat('2025第三产业增加值','349.00 亿','已公布的现价增加值','cyan')+
+ return v3ServicePanel()+'<section class="stats">'+stat('2025第三产业增加值','349.00 亿','已公布的现价增加值','cyan')+
  stat('模拟专业服务采购边',n.serviceEdges+' 条','合成关系图，C级','')+
  stat(state.year+'第三产业中位数',money(services.p50)+' 亿','由当前条件计算','gold')+
  stat('服务承接指数',decimal(n.capacity,2),'合成网络压力指标','')+'</section>'+
@@ -392,7 +516,7 @@ function wind2(r){
 }
 function wind3(r){
  const cash=E.tea(recv,pay,daily);
- return '<section class="stats">'+stat('2025农业增加值','107.44 亿','公开宏观基数','cyan')+
+ return v3AgriculturePanel()+'<section class="stats">'+stat('2025农业增加值','107.44 亿','公开宏观基数','cyan')+
  stat('2025农业增加值增速','+7.8%','不变价公开增幅','good')+
  stat(state.year+'一产中位数',money(r.sector[0].p50)+' 亿','条件模拟','')+
  stat('合成账期资金占用',money(cash.money)+' 万','C级机制假设，不是实际借款需求','gold')+'</section>'+
@@ -409,7 +533,7 @@ function wind3(r){
 }
 function wind4(r){
  const sensitivity=E.sensitivity(state);
- return modelComparisonPanel(r)+surfacePanel()+'<section class="stats">'+stat('条件抽样轨迹',money(r.samples)+' 条','固定随机种子可重现','cyan')+
+ return v3UncertaintyPanel(r)+modelComparisonPanel(r)+surfacePanel()+'<section class="stats">'+stat('条件抽样轨迹',money(r.samples)+' 条','固定随机种子可重现','cyan')+
  stat('P10 · 较低情景',money(r.total.p10)+' 亿','模型分布第10百分位','')+
  stat('P50 · 中位数',money(r.total.p50)+' 亿','不是点预测','')+
  stat('P90 · 较高情景',money(r.total.p90)+' 亿','模型分布第90百分位','')+'</section>'+
@@ -513,6 +637,11 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
+ const v3lens=e.target.closest('[data-v3-lens]');if(v3lens){dataLens=v3lens.dataset.v3Lens;draw();return;}
+ const v3industry=e.target.closest('[data-v3-industry]');if(v3industry){selectedIndustry=Number(v3industry.dataset.v3Industry);draw();return;}
+ const v3conflict=e.target.closest('[data-v3-conflict]');if(v3conflict){selectedConflict=v3conflict.dataset.v3Conflict;draw();return;}
+ const v3question=e.target.closest('[data-v3-question]');if(v3question){selectedQuestion=v3question.dataset.v3Question;selectedMechanism=0;draw();return;}
+ const v3mechanism=e.target.closest('[data-v3-mechanism]');if(v3mechanism){selectedMechanism=Number(v3mechanism.dataset.v3Mechanism);draw();return;}
  const heat=e.target.closest('[data-heat]');if(heat){const vals=heat.dataset.heat.split(',').map(Number);if(vals.length===2&&vals.every(Number.isFinite)){state.knobs.manufacturing=vals[0];state.knobs.services=vals[1];draw();}return;}
  const historical=e.target.closest('[data-history]');if(historical){historyMode=historical.dataset.history;draw();return;}
  const variable=e.target.closest('[data-variable]');if(variable){selectedVariable=variable.dataset.variable;draw();return;}
@@ -546,6 +675,12 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',function(e){
+ const v3input=e.target.closest('[data-v3-control]');if(v3input){const key=v3input.dataset.v3Control;
+ if(key==='domain')v3Domain=v3input.value;
+ if(key==='cut')cascadeCut=Number(v3input.value);
+ if(key==='mode')cascadeMode=v3input.value;
+ if(key==='threshold')cascadeThreshold=Number(v3input.value);
+ draw();return;}
  const research=e.target.closest('[data-research]');
  if(research){if(research.dataset.research==='cut')cutCount=Number(research.value);else cutMode=research.value;draw();return;}
  const control=e.target.closest('[data-set]');if(!control)return;
@@ -560,7 +695,7 @@ document.addEventListener('change',function(e){
  else if(Object.prototype.hasOwnProperty.call(E.EFFECTS,k)){state.knobs[k]=val;}
  draw();
 });
-document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('[data-variable], [data-service-node], [data-heat]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('[data-variable], [data-service-node], [data-heat], [data-v3-industry]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
 window.addEventListener('hashchange',()=>{
  const p=(location.hash||'#home').slice(1).split('/');
  if(p[0]==='wind'&&p[1]!==undefined&&Number.isInteger(Number(p[1])))view=Math.max(0,Math.min(5,Number(p[1])));
