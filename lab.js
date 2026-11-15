@@ -468,6 +468,9 @@ function v4DataPanel(){
 }
 function v4RetentionPanel(){
  const m=V4.retention({local:v4Local,va:v4VA,improve:v4Improve}),heat=V4V.retentionHeat(m);
+ const base=V4.retention({local:30,va:35,improve:20});
+ const changed=(v4Local!==30||v4VA!==35||v4Improve!==20);
+ const deltaVA=m.added-base.added;
  const sliders=[
  ['local','假设服务采购在本地的比例',v4Local,'%','0','100','5'],
  ['va','假设本地服务供应商增加值率',v4VA,'%','0','100','5'],
@@ -478,11 +481,15 @@ function v4RetentionPanel(){
  '<div class="grid2 gap"><article class="panel"><h3>改变假设，观察本地留存</h3>'+
  sliders.map(([id,name,val,unit,min,max,step])=>'<div class="sliderrow"><label>'+name+' <output data-live-v4="'+id+'">'+val+unit+'</output></label>'+
  '<input type="range" data-v4-control="'+id+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+val+'"></div>').join('')+
+ '<div class="v4-baseline-diff'+(changed?' on':'')+'"><span class="micro">基准对照（本地采购30% · 增加值率35%）</span>'+
+ '<div><small>本地增加值</small><strong class="cyan">'+decimal(base.added)+' <i>→</i> '+decimal(m.added)+'</strong><em class="'+(deltaVA>=0?'good':'gold')+'">'+(deltaVA>=0?'+':'')+decimal(deltaVA)+' 单位</em></div>'+
+ '<div><small>本地采购支付</small><strong>'+decimal(base.localPay)+' <i>→</i> '+decimal(m.localPay)+'</strong></div>'+
+ '<div><small>跨区采购支付</small><strong>'+decimal(base.external)+' <i>→</i> '+decimal(m.external)+'</strong></div></div>'+
  '<div class="research-kpi gap"><div><small>本地服务采购支付</small><strong>'+decimal(m.localPay)+' 单位</strong></div>'+
  '<div><small>跨地区采购支付</small><strong>'+decimal(m.external)+' 单位</strong></div>'+
  '<div><small>本地服务增加值（假设）</small><strong class="cyan">'+decimal(m.added)+' 单位</strong></div>'+
  '<div><small>采购转移情景增量</small><strong class="gold">+'+decimal(m.delta)+' 单位</strong></div></div>'+
- '<p class="footnote">新增本地采购份额只是在固定服务采购预算下改动分配，不证明政策可直接实现，也不考虑资源约束、替代成本或重复核算。</p></article>'+
+ '<p class="footnote">新增本地采购份额只是在固定服务采购预算下改动分配，不证明政策可直接实现，也不考虑资源约束、替代成本或重复核算。'+(changed?'当前数值已偏离基准；箭头对照只显示会计恒等式的差异，不是政策效果估计。':'当前即为默认基准假设，拨动任一滑杆查看变化。')+'</p></article>'+
  '<article class="panel"><h3>这100单位假设采购，沿着谁流动？</h3>'+V4V.flow(m)+
  '<div class="notice gap"><b>部分识别：</b>若本地采购率未知，即使暂时固定增加值率为'+m.va+'%，本地服务增加值仅能落在0到'+decimal(m.trivialBounds[1])+'假设单位之间。没有实测采购额，无法得出县域总量。</div></article></div>'+
  '<div class="panel gap"><h3>121种采购结构：哪些组合才会出现高本地价值留存？</h3>'+heat+
@@ -843,6 +850,14 @@ document.addEventListener('click',function(e){
  if(act==='remove'){records=records.filter(x=>x.id!==id);if(compareId===id)compareId=null;safeWrite(ARCHIVE,records);draw();return;}
 });
 document.addEventListener('input',function(e){
+ const v4live=e.target.closest('[data-v4-control]');
+ if(v4live&&v4live.type==='range'){
+  const value=Number(v4live.value);
+  if(v4live.dataset.v4Control==='local'){v4Local=value;v4Improve=Math.min(v4Improve,100-v4Local);}
+  if(v4live.dataset.v4Control==='va')v4VA=value;
+  if(v4live.dataset.v4Control==='improve')v4Improve=value;
+  const out=v4live.parentElement.querySelector('output[data-live-v4]');if(out)out.textContent=value+(out.textContent.replace(/^[0-9]+/,''));
+  draw();return;}
  const control=e.target.closest('[data-set]');if(!control||control.type!=='range')return;
  const out=control.parentElement.querySelector('output[data-live]');if(out){
   const val=Number(control.value),k=control.dataset.set;
@@ -850,11 +865,6 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',function(e){
- const v4input=e.target.closest('[data-v4-control]');if(v4input){
- const value=Number(v4input.value);if(v4input.dataset.v4Control==='local'){v4Local=value;v4Improve=Math.min(v4Improve,100-v4Local);}
- if(v4input.dataset.v4Control==='va')v4VA=value;
- if(v4input.dataset.v4Control==='improve')v4Improve=value;
- draw();return;}
  const v3input=e.target.closest('[data-v3-control]');if(v3input){const key=v3input.dataset.v3Control;
  if(key==='domain')v3Domain=v3input.value;
  if(key==='cut')cascadeCut=Number(v3input.value);

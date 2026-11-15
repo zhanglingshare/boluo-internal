@@ -155,3 +155,14 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
 .v4-year-pills button:hover{background:#245b91}
 .v4-year-pills button.active{background:#2b6f9e;color:#fff;border-color:#7fd0ff;font-weight:800}
 .v4-year-pills button.clear{background:rgba(120,60,50,.35);border-color:#a05f4f;color:#f0b9a6}
+
+/* V4-04 价值流实验场：基准对照条 */
+.v4-baseline-diff{background:rgba(31,72,110,.25);border:1px solid var(--stroke);border-left:3px solid #6a93b8;border-radius:10px;padding:12px 14px;margin-top:14px;display:grid;gap:8px}
+.v4-baseline-diff.on{border-left-color:#f6c453;background:rgba(72,58,31,.22)}
+.v4-baseline-diff>div{display:flex;align-items:baseline;gap:10px;font-size:12px;flex-wrap:wrap}
+.v4-baseline-diff small{color:var(--muted);font-size:11px;min-width:96px}
+.v4-baseline-diff strong{font-variant-numeric:tabular-nums;font-size:14px;letter-spacing:-.02em}
+.v4-baseline-diff strong i{color:var(--muted);font-style:normal;font-size:11px;margin:0 4px}
+.v4-baseline-diff em{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px}
+.v4-baseline-diff em.good{background:rgba(61,142,99,.3);color:#7fe0a8}
+.v4-baseline-diff em.gold{background:rgba(158,120,45,.3);color:#f2ca7e}
