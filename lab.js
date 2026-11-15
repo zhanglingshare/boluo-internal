@@ -144,13 +144,16 @@ function surveyPage(r){
  stat('经营表现解释度',perc(m.r2.OP),'合成样本内 R²','')+'</section>'+
  '<div class="grid2"><article class="card"><h3>调查模型 · 双链关系</h3><div class="logic" style="grid-template-columns:repeat(3,1fr)"><div><b>SA</b><span>服务可得</span></div><div><b>SU</b><span>服务使用</span></div><div><b>OP</b><span>经营表现</span></div></div>'+
  '<div class="line-sep"></div>'+path('SA→SU')+path('SA→OP')+path('SU→OP')+
- '<p class="footnote">系数来自构念均分的标准化回归，括号内是合成样本Bootstrap 95%区间。不是SmartPLS执行结果，不能据此判断政策因果或换算GDP。</p></article>'+
+ '<p class="footnote">系数来自探索性Mode-A PLS路径估计，括号内为合成样本Bootstrap 95%区间。此实现未经SmartPLS逐项等价验证，不能据此判断政策因果或换算GDP。</p></article>'+
  '<article class="card"><h3>你可以改变研究样本</h3><div class="sliderrow"><label>模拟受访企业数量 <output data-live="sampleSize">'+sampleSize+' 份</output></label><input type="range" data-set="sampleSize" min="100" max="500" step="25" value="'+sampleSize+'"></div>'+
  '<div class="notice">刷新或调整样本后，全部问卷数据会按同一生成机制和固定种子重新生成，再重新估计系数与区间。</div>'+
- '<h3 class="gap">量表内部一致性（合成样本）</h3>'+
+ '<h3 class="gap">测量质量（合成样本）</h3>'+
  line('SA · 4个题项',decimal(m.alpha.SA,3),'')+
  line('SU · 3个题项',decimal(m.alpha.SU,3),'')+
- line('OP · 3个题项',decimal(m.alpha.OP,3),'')+
+ line('OP · 3个题项 Alpha',decimal(m.alpha.OP,3),'')+
+ line('SA · 平均方差提取 AVE',decimal(m.ave.SA,3),'')+
+ line('SU · 平均方差提取 AVE',decimal(m.ave.SU,3),'')+
+ line('OP · 平均方差提取 AVE',decimal(m.ave.OP,3),'')+
  '<div class="actions">'+btn('resample','换一个随机种子，再研究','secondary')+'</div></article></div>';
 }
 function networkSvg(net){
