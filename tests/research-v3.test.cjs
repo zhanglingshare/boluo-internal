@@ -81,3 +81,14 @@ test('all four research questions expose competing mechanisms and falsifiers',()
  assert.equal(V.HYPOTHESES.length,4);
  assert.ok(V.HYPOTHESES.every(x=>x.rival.length>=3&&x.test&&x.falsifier&&x.quality));
 });
+
+
+test('GDP nominal-real bridge uses final 2024 GDP vintage, not preliminary',()=>{
+ const x=V.priceBridge();
+ assert.equal(x.revised2024,970.87);
+ assert.equal(x.issued2025,1005.45);
+ assert.ok(x.nominalGrowth>3.5&&x.nominalGrowth<3.7);
+ assert.ok(x.impliedPriceGrowth<0&&x.impliedPriceGrowth>-2.0);
+ assert.ok(x.nominalTargetCAGR>9.7&&x.nominalTargetCAGR<9.8);
+ assert.match(x.note,/不能将该数当作官方/);
+});
