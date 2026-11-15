@@ -8,7 +8,9 @@ test('all seven workspaces and six tunnel views are implemented',()=>{
  for(const name of ['home','mission','data','survey','models','wind','archive'])assert.match(src,new RegExp("function "+(name==='wind'?'windPage':name==='data'?'dataPage':name==='survey'?'surveyPage':name==='models'?'modelsPage':name==='archive'?'archivePage':name)+"\\("));
  for(let i=0;i<6;i++)assert.match(src,new RegExp("function wind"+i+"\\("));
  assert.match(src,/calibrationMarkup/);
- assert.doesNotMatch(src,/\bfetch\s*\(/);
+ assert.match(src,/window\.fetch\('\.\/data\/survey-summary\.json'/);
+ assert.doesNotMatch(src,/window\.fetch\(['"]https?:\/\//);
+ // Only the versioned same-origin anonymous survey aggregate may be retrieved.
 });
 test('macro baseline matches publicly reported 2025 structure',()=>{
  assert.equal(E.DATA.p+E.DATA.s+E.DATA.t,1005.45);
