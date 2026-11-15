@@ -75,7 +75,7 @@ test('synthetic survey review requires multiple method criteria, not one p value
  assert.equal(x.total,7);
  assert.ok(x.green>=0&&x.green<=7);
  assert.ok(x.thresholds.every(row=>Number.isFinite(row.value)&&row.guide&&row.explanation));
- assert.match(x.warning,/尚未与SmartPLS/);
+ assert.match(x.warning,/SmartPLS等价性/);
  assert.match(Viz.quality(x),/HTMT最大值/);
 });
 test('observation ledger distinguishes public rows from synthetic evidence absent',()=>{
