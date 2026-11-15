@@ -7,10 +7,13 @@ on:
       - "lab.js"
       - "research-core.js"
       - "research-viz.js"
+      - "research-v3.js"
+      - "research-v3-viz.js"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
       - "tests/research-methods.test.cjs"
+      - "tests/research-v3.test.cjs"
       - ".github/workflows/pages-interactive.yml"
   pull_request:
     paths:
@@ -19,10 +22,13 @@ on:
       - "lab.js"
       - "research-core.js"
       - "research-viz.js"
+      - "research-v3.js"
+      - "research-v3-viz.js"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
       - "tests/research-methods.test.cjs"
+      - "tests/research-v3.test.cjs"
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -35,6 +41,8 @@ jobs:
       - run: node --check lab.js
       - run: node --check research-core.js
       - run: node --check research-viz.js
+      - run: node --check research-v3.js
+      - run: node --check research-v3-viz.js
       - run: node --test tests/*.test.cjs
       - name: Protect prior mockups
         run: |
