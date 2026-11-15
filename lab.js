@@ -14,6 +14,12 @@ let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
 let current=null;
+let memoSurveyKey='',memoSurveyResult=null;
+function getSurvey(){
+ const key=state.seed+':'+sampleSize;
+ if(key!==memoSurveyKey||!memoSurveyResult){memoSurveyResult=E.survey({...state,sampleSize});memoSurveyKey=key;}
+ return memoSurveyResult;
+}
 const stage=document.getElementById('stage'),overlay=document.getElementById('calibrationOverlay');
 const money=n=>Number(n).toLocaleString('zh-CN',{maximumFractionDigits:1,minimumFractionDigits:0});
 const decimal=(n,d=1)=>Number(n).toFixed(d);
@@ -253,7 +259,7 @@ function dataPage(r){
  '<p class="footnote">有数字未验证、年份或口径变更时，应优先改事实基准，而不是用调整模型来掩盖冲突。</p></article></div>';
 }
 function surveyPage(r){
- const m=E.survey({...state,sampleSize});
+ const m=getSurvey();
  const path=(n)=>'<div class="metric-line"><span>'+n+'</span><b class="cyan">'+decimal(m.paths[n],3)+' <small class="muted">['+decimal(m.intervals[n][0],2)+', '+decimal(m.intervals[n][1],2)+']</small></b></div>';
  return heading('03 / SYNTHETIC FIELD SURVEY','真正算一次路径，而不是画几根箭头。',
  '固定随机种子合成问卷，改变样本规模并重新估计。演示的是“有调查数据后可以怎样检验机制”，不是博罗企业实测结论。',
