@@ -240,13 +240,13 @@ test('V5 archives show evidence gates and note non-immutable local storage',()=>
 });
 
 
-test('visual-first survey clearly refuses to synthesize media-based Likert answers',()=>{
+test('visual-first survey separates synthetic ordinal scenarios from unobserved real attitudes',()=>{
  const v=boot('survey');
- assert.match(v.stage.innerHTML,/公开世界留下了什么痕迹/);
+ assert.match(v.stage.innerHTML,/公开世界有什么迹象/);
  assert.match(v.stage.innerHTML,/群体真实倾向/);
- assert.match(v.stage.innerHTML,/未知/);
- assert.match(v.stage.innerHTML,/真实问卷回答/);
- assert.match(v.stage.innerHTML,/0份/);
+ assert.match(v.stage.innerHTML,/未测量/);
+ assert.match(v.stage.innerHTML,/真实问卷/);
+ assert.match(v.stage.innerHTML,/0 <small>份/);
  assert.match(v.stage.innerHTML,/更多图表与研究依据/);
  assert.match(v.stage.innerHTML,/HTMT诊断/); // previous survey computations remain available, collapsed
 });
@@ -254,7 +254,7 @@ test('switching public evidence topics shows independent source lineage and unkn
  const v=boot('survey');
  v.listeners.click({target:{closest(sel){return sel==='[data-survey-topic]'?{dataset:{surveyTopic:'agriculture'}}:null;}}});
  assert.match(v.stage.innerHTML,/网上较少发声的农户/);
- assert.match(v.stage.innerHTML,/保持未知，不打分/);
+ assert.match(v.stage.innerHTML,/没有可核验的公开材料|尚无可核验/);
  v.listeners.click({target:{closest(sel){return sel==='[data-survey-topic]'?{dataset:{surveyTopic:'tourism'}}:null;}}});
  assert.match(v.stage.innerHTML,/游客人次同比/);
  assert.match(v.stage.innerHTML,/媒体引述平台数据/);
@@ -280,7 +280,7 @@ test('V7 dual-track survey controls modify scenario and retain zero real respons
  assert.match(v.stage.innerHTML,/class="active" data-survey-mechanism="friction"/);
  v.listeners.change({target:{closest(sel){return sel==='[data-survey-pressure]'?{value:'0.8'}:null;}}});
  assert.match(v.stage.innerHTML,/value="0.8"/);
- assert.match(v.stage.innerHTML,/真人问卷尚未接入/);
+ assert.match(v.stage.innerHTML,/真实问卷尚未接入/);
 });
 test('V7 user-triggered transfer sends SCENARIO condition into a specific wind view',()=>{
  const v=boot('survey');
