@@ -127,12 +127,52 @@ function sample(seed,n){
  return rows;
 }
 function estimate(rows){
- const sa=z(rows.map(r=>mean(r.SA))),su=z(rows.map(r=>mean(r.SU))),op=z(rows.map(r=>mean(r.OP)));
- const a=pearson(sa,su),b=pearson(sa,op),c=pearson(su,op);
- const den=Math.max(.001,1-a*a),direct=(b-a*c)/den,indirect=(c-a*b)/den;
+ /* Exploratory Mode-A PLS scores with centroid-scheme inner proxies.
+    Not SmartPLS equivalence certified, not causal inference. */
+ const names=['SA','SU','OP'],xs={},weights={};
+ for(const name of names){
+  const columns=rows[0][name].map((_,j)=>z(rows.map(r=>r[name][j])));
+  xs[name]=rows.map((_,i)=>columns.map(c=>c[i]));
+  weights[name]=columns.map(()=>1/Math.sqrt(columns.length));
+ }
+ let iteration=0,converged=false;
+ function getScores(){
+  const scores={};
+  for(const name of names){
+   const v=xs[name].map(row=>row.reduce((sum,value,j)=>sum+value*weights[name][j],0));
+   scores[name]=z(v);
+  }
+  return scores;
+ }
+ for(iteration=0;iteration<90;iteration++){
+  const scores=getScores(),updated={};let maxDelta=0;
+  for(const name of names){
+   const neighbors=names.filter(k=>k!==name);
+   const proxy=scores[name].map((_,i)=>neighbors.reduce((sum,k)=>sum+(pearson(scores[name],scores[k])>=0?1:-1)*scores[k][i],0));
+   let values=weights[name].map((_,j)=>xs[name].reduce((sum,row,i)=>sum+row[j]*proxy[i],0));
+   const mag=Math.sqrt(values.reduce((sum,v)=>sum+v*v,0))||1;
+   values=values.map(v=>v/mag);
+   if(values.reduce((sum,v)=>sum+v,0)<0)values=values.map(v=>-v);
+   const delta=Math.sqrt(values.reduce((sum,v,i)=>sum+(v-weights[name][i])**2,0));
+   maxDelta=Math.max(delta,maxDelta);
+   updated[name]=values;
+  }
+  for(const name of names)weights[name]=updated[name];
+  if(maxDelta<1e-7){converged=true;break;}
+ }
+ const scores=getScores();
+ const a=pearson(scores.SA,scores.SU),b=pearson(scores.SA,scores.OP),c=pearson(scores.SU,scores.OP);
+ const den=Math.max(1e-5,1-a*a),direct=(b-a*c)/den,indirect=(c-a*b)/den;
+ const ave={};
+ for(const name of names){
+  const colCount=xs[name][0].length;
+  const loadings=Array.from({length:colCount},(_,j)=>pearson(xs[name].map(r=>r[j]),scores[name]));
+  ave[name]=mean(loadings.map(v=>v*v));
+ }
  return {paths:{'SA→SU':a,'SA→OP':direct,'SU→OP':indirect},
   r2:{SU:a*a,OP:clamp(direct*b+indirect*c,0,1)},
-  alpha:{SA:alpha(rows.map(r=>r.SA)),SU:alpha(rows.map(r=>r.SU)),OP:alpha(rows.map(r=>r.OP))}};
+  alpha:{SA:alpha(rows.map(r=>r.SA)),SU:alpha(rows.map(r=>r.SU)),OP:alpha(rows.map(r=>r.OP))},
+  ave,converged,iterations:iteration+1};
 }
 function survey(input){
  const s=normalize(input),n=Math.floor(clamp(saneNumber((input||{}).sampleSize,300),100,500));
@@ -143,7 +183,7 @@ function survey(input){
   const x=estimate(bs);paths.forEach(name=>results[name].push(x.paths[name]));
  }
  const intervals={};paths.forEach(k=>intervals[k]=[quantile(results[k],.025),quantile(results[k],.975)]);
- return {...fit,n,intervals,bootstrap:120,source:'300例合成问卷生成机制；构念均分OLS + Bootstrap，不是SmartPLS，也不是博罗的实测SEM结果'};
+ return {...fit,n,intervals,bootstrap:120,source:'固定种子合成问卷；探索性Mode-A PLS内外权重估计 + 120次Bootstrap，未经SmartPLS逐项等价验证，非实测结论'};
 }
 function tea(receive=75,pay=12,daily=10){
  const gap=Math.max(0,receive-pay),money=gap*daily;
