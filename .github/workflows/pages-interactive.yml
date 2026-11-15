@@ -1,0 +1,33 @@
+name: Online lab checks
+on:
+  push:
+    paths:
+      - "index.html"
+      - "engine.js"
+      - "lab.js"
+      - "lab.css"
+      - "tests/browser-engine.test.cjs"
+      - ".github/workflows/pages-interactive.yml"
+  pull_request:
+    paths:
+      - "index.html"
+      - "engine.js"
+      - "lab.js"
+      - "lab.css"
+      - "tests/browser-engine.test.cjs"
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --check engine.js
+      - run: node --check lab.js
+      - run: node --test tests/browser-engine.test.cjs
+      - name: Protect prior mockups
+        run: |
+          test -f mockups-portal.html
+          test -f mockups/final_054b.html
+          test -f web/index.html
