@@ -77,8 +77,15 @@ function survey(ctx){
  '<div><small>合成样本数量</small><strong>'+m.n+'</strong></div>'+
  '<div><small>bootstrap次数</small><strong>'+m.bootstrap+'</strong></div></div>'+
  V.quality(q)+
+ '<div class="v5-survey-matrix"><div class="eyebrow">ITEM LOADINGS / RHO-C</div><h3>十个合成题项的外载荷与构念复合信度</h3>'+
+ ['SA','SU','OP'].map(name=>'<div class="v5-item-row"><b>'+name+'</b>'+
+ m.loadings[name].map((v,i)=>'<span class="'+(Math.abs(v)<.70?'bad':'good')+'">题'+(i+1)+' '+f(v,2)+'</span>').join('')+
+ '<strong>ρc '+f(m.rhoC[name],3)+'</strong></div>').join('')+
+ '<h3>路径的增量解释效应 f²（合成条件）</h3><div class="v5-f2-row">'+
+ Object.keys(m.f2).map(key=>'<div><span>'+esc(key)+'</span><b>'+f(m.f2[key],3)+'</b></div>').join('')+'</div>'+
+ '<p class="footnote">f²基于同一合成模型的R²与删去某条解释路径后的简化比较，不是政策效应量。ρc与外载荷属于反映式测量假定；没有实测调查或专业软件逐项等价校验。</p></div>'+
  '<details><summary><b>质量标准怎样用于论文，而不是颜色打分？</b></summary>'+
- '<p class="footnote">应根据反映式/形成式测量类型分别评估题项载荷、信度、AVE、HTMT区间、VIF和预测误差。当前合成Mode-A算法尚未与SmartPLS等价验证，也没有真实调查抽样框、无响应偏差和共同方法偏差检查；不可仅靠五项提示指标自称量表成立。</p></details></section>';
+ '<p class="footnote">应根据反映式/形成式测量类型分别评估题项载荷、信度、AVE、HTMT区间、VIF和预测误差。当前合成Mode-A算法尚未与SmartPLS等价验证，也没有真实调查抽样框、无响应偏差和共同方法偏差检查；不可仅靠七项提示指标自称量表成立。</p></details></section>';
 }
 function models(ctx){
  const cut=Number.isFinite(ctx.sel.cut)?ctx.sel.cut:10,n=D.networkTrial(cut);
