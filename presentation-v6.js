@@ -36,6 +36,24 @@ function v4Slider(key,label,value,unit='%'){
  return '<div class="sliderrow v6-slider"><label>'+esc(label)+' <output>'+n(value,0)+unit+'</output></label>'+
  '<input aria-label="'+esc(label)+'" type="range" data-v4-control="'+key+'" min="0" max="100" step="5" value="'+value+'"></div>';
 }
+function headline(page,view=0){
+ const titles={
+ home:['看看博罗正在发生什么','一个重要变化，一个值得追问的问题'],
+ mission:['变化地图','看得见的信号，能够选择的下一步'],
+ data:['产业的真实变化','让年份与结构自己说话'],
+ survey:['企业为什么会行动','关系图告诉你不同条件会怎样联动'],
+ models:['产业连接会怎样变化','试着断开一环，看谁受到影响'],
+ archive:['我的研究快照','比较改变前后，保留重要发现']
+ };
+ const w=[
+ ['目标差距','哪些变化会改变目标的距离？'],['工业接力','不同产业为何会走向不同方向？'],
+ ['服务价值','生产增长后，价值能留下多少？'],['农业周转','农产品卖出去，现金何时回来？'],
+ ['压力测试','几个条件同时改变，哪里容易出问题？'],['下一步关注','哪些信号值得回到现实核实？']
+ ];
+ const t=page==='wind'?(w[view]||w[0]):titles[page]||titles.home;
+ return '<header class="pagehead v6-pagehead"><div><div class="eyebrow">博罗 · 变化现场</div><h1>'+esc(t[0])+'</h1><p>'+esc(t[1])+'</p></div>'+
+ (page==='wind'?'<button type="button" data-action="calibration" class="secondary v6-action">调整更多条件</button>':'')+'</header>';
+}
 function visual(page,ctx){
  const {state:s,r,view=0,cut=10,local=30,va=35,records=0,tea={receive:75,pay:12,daily:10},sampleSize=300}=ctx;
  if(page==='home'){
@@ -153,6 +171,6 @@ function visual(page,ctx){
  }
  return '';
 }
-root.BoluoPresentationV6={visual};
+root.BoluoPresentationV6={headline,visual};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.BoluoPresentationV6;
 })(typeof window!=='undefined'?window:globalThis);
