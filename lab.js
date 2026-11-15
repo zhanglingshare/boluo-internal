@@ -490,6 +490,9 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
+ const historical=e.target.closest('[data-history]');if(historical){historyMode=historical.dataset.history;draw();return;}
+ const variable=e.target.closest('[data-variable]');if(variable){selectedVariable=variable.dataset.variable;draw();return;}
+ const service=e.target.closest('[data-service-node]');if(service){selectedNetworkNode=service.dataset.serviceNode;draw();return;}
  const viewButton=e.target.closest('[data-view]');if(viewButton){navigate('wind',Number(viewButton.dataset.view));return;}
  const p=e.target.closest('[data-page]');if(p){navigate(p.dataset.page);return;}
  const preset=e.target.closest('[data-preset]');if(preset){state.scenario=preset.dataset.preset;draw();return;}
@@ -519,6 +522,8 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',function(e){
+ const research=e.target.closest('[data-research]');
+ if(research){if(research.dataset.research==='cut')cutCount=Number(research.value);else cutMode=research.value;draw();return;}
  const control=e.target.closest('[data-set]');if(!control)return;
  const k=control.dataset.set,raw=control.value,val=Number(raw);
  if(k==='scenario'){state.scenario=raw;}
@@ -531,7 +536,7 @@ document.addEventListener('change',function(e){
  else if(Object.prototype.hasOwnProperty.call(E.EFFECTS,k)){state.knobs[k]=val;}
  draw();
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('[data-variable], [data-service-node]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
 window.addEventListener('hashchange',()=>{
  const p=(location.hash||'#home').slice(1).split('/');
  if(p[0]==='wind'&&p[1]!==undefined&&Number.isInteger(Number(p[1])))view=Math.max(0,Math.min(5,Number(p[1])));
