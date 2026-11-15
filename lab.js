@@ -7,6 +7,8 @@ const V3=window.BoluoV3, V3V=window.BoluoV3Viz;
 const V4=window.BoluoV4, V4V=window.BoluoV4Viz;
 const V5=window.BoluoV5, V5V=window.BoluoV5Viz, V5UI=window.BoluoV5UI;
 const V6=window.BoluoPresentationV6;
+const SurveyBridge=window.BoluoSurveyBridge;
+if(!SurveyBridge||!window.BoluoSurveyBridgeUI){document.getElementById('stage').textContent='调查情景模块加载失败，请刷新页面。';return;}
 if(!V6){document.getElementById('stage').textContent='页面视觉层加载失败，请刷新页面。';return;}
 if(!V5||!V5V||!V5UI){document.getElementById('stage').textContent='V5研究论证模块加载失败，请刷新页面。';return;}
 if(!V4||!V4V){document.getElementById('stage').textContent='产业结构V4模块加载失败，请刷新页面。';return;}
@@ -25,6 +27,8 @@ let methodFilter='全部';
 let v5Tabs={},v5Focus='H1',v5Cut=10;
 let v6Expanded={};
 let surveySignalTopic='industry';
+let surveyPressure=.4,surveyMechanism='expansion';
+let realSurveyFeed={schema_version:'1.0',status:'pending',datasets:[]};
 let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
@@ -787,7 +791,8 @@ function draw(){
  const closeHeader=content.indexOf('</header>');
  const expanded=v6Expanded[studyKey]===true;
  const v6Context={state,r:current,view,survey:V5ctx.survey,cut:v5Cut,local:v4Local,va:v4VA,improve:v4Improve,
-   tea:V5ctx.tea,records:records.length,signalTopic:surveySignalTopic,sampleSize};
+   tea:V5ctx.tea,records:records.length,signalTopic:surveySignalTopic,sampleSize,seed:state.seed,
+   surveyPressure,surveyMechanism,realSurveyFeed};
  const previousContent=closeHeader>=0?content.slice(closeHeader+9):content;
  stage.innerHTML=V6.headline(page,view)+V6.visual(page,v6Context)+
   '<details class="v6-depth" id="v6-depth" '+(expanded?'open':'')+'><summary><span class="v6-expand-icon">＋</span><span>更多图表与研究依据</span><small>按需查看详细数据、交互与方法边界</small></summary>'+
@@ -817,6 +822,9 @@ document.addEventListener('toggle',function(e){
  }
 },true);
 document.addEventListener('click',function(e){
+ const surveyMechanismButton=e.target.closest('[data-survey-mechanism]');if(surveyMechanismButton){
+  surveyMechanism=surveyMechanismButton.dataset.surveyMechanism==='friction'?'friction':'expansion';draw();return;
+ }
  const topic=e.target.closest('[data-survey-topic]');if(topic){surveySignalTopic=topic.dataset.surveyTopic;draw();return;}
  const v5tab=e.target.closest('[data-v5-tab]');if(v5tab){v5Tabs[v5tab.dataset.v5Page]=v5tab.dataset.v5Tab;draw();return;}
  const v5focus=e.target.closest('[data-v5-focus]');if(v5focus){v5Focus=v5focus.dataset.v5Focus;draw();return;}
@@ -842,6 +850,15 @@ document.addEventListener('click',function(e){
  const act=action.dataset.action,id=action.dataset.id;
  if(act==='calibration'){document.getElementById('calibrationContent').innerHTML=calibrationMarkup();overlay.hidden=false;document.body.style.overflow='hidden';return;}
  if(act==='close-calibration'){overlay.hidden=true;document.body.style.overflow='';return;}
+ if(act==='survey-to-wind'){
+  // A user-selected WHAT-IF parameter, never a calibrated OSINT effect.
+  const key=({industry:'manufacturing',tourism:'services',talent:'talent',agriculture:'agriculture'})[surveySignalTopic];
+  if(key&&Object.prototype.hasOwnProperty.call(E.EFFECTS,key)){
+   const impact=surveyPressure*(surveyMechanism==='friction'?-1:1);
+   state.knobs[key]=Math.max(-1,Math.min(1,impact));
+   navigate('wind',({industry:1,tourism:2,talent:4,agriculture:3})[surveySignalTopic]);
+  }return;
+ }
  if(act==='go-wind'){navigate('wind',0);return;}
  if(act==='go-models'){navigate('models');return;}
  if(act==='go-data'){navigate('data');return;}
@@ -864,6 +881,9 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',function(e){
+ const pressure=e.target.closest('[data-survey-pressure]');if(pressure){
+  surveyPressure=Math.max(-1,Math.min(1,Number(pressure.value)));draw();return;
+ }
  const v5cut=e.target.closest('[data-v5-cut]');if(v5cut){v5Cut=Number(v5cut.value);draw();return;}
  const v4input=e.target.closest('[data-v4-control]');if(v4input){
  const value=Number(v4input.value);if(v4input.dataset.v4Control==='local'){v4Local=value;v4Improve=Math.min(v4Improve,100-v4Local);}
@@ -899,4 +919,14 @@ window.addEventListener('hashchange',()=>{
 const first=location.hash.slice(1).split('/');
 if(first[0]==='wind'&&first[1])view=Math.max(0,Math.min(5,Number(first[1])||0));
 draw();
+// Real surveys are ingested as anonymized aggregates from a versioned same-origin
+// feed. Pending state runs offline; no invented replies or required accounts.
+if(typeof window.fetch==='function'){
+ window.fetch('./data/survey-summary.json',{cache:'no-store'})
+  .then(response=>{if(!response.ok)throw new Error('survey feed unavailable');return response.json();})
+  .then(feed=>{
+   const check=SurveyBridge.checkSurveyFeed(feed);
+   if(check.ok){realSurveyFeed=feed;if(page==='survey')draw();}
+  }).catch(()=>{/* optional feed: remain in the honest pending state */});
+}
 })();
