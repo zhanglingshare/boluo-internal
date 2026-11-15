@@ -148,7 +148,8 @@ function estimate(rows){
   const scores=getScores(),updated={};let maxDelta=0;
   for(const name of names){
    const neighbors=names.filter(k=>k!==name);
-   const proxy=scores[name].map((_,i)=>neighbors.reduce((sum,k)=>sum+(pearson(scores[name],scores[k])>=0?1:-1)*scores[k][i],0));
+   const signs=neighbors.map(k=>pearson(scores[name],scores[k])>=0?1:-1);
+   const proxy=scores[name].map((_,i)=>neighbors.reduce((sum,k,j)=>sum+signs[j]*scores[k][i],0));
    let values=weights[name].map((_,j)=>xs[name].reduce((sum,row,i)=>sum+row[j]*proxy[i],0));
    const mag=Math.sqrt(values.reduce((sum,v)=>sum+v*v,0))||1;
    values=values.map(v=>v/mag);
