@@ -398,7 +398,7 @@ function dataPage(r){
  '数据划成 A/B/C 层，宏观基数不与合成企业关系混称。导入与导出本阶段不做，使用仓库既有公开信息和可复现合成样本。',
  btn('go-survey','继续：看模拟调查 ↗','primary'))+
  historicalPanel()+v3PriceBridgePanel()+v3DataPanel()+
- '<section class="stats">'+stat('2025 GDP',money(d.gdp)+' 亿','公开地区生产总值','cyan')+
+ '<details class="card gap"><summary><b>原版2025宏观清单与来源</b> · 点击展开</summary>'+ '<section class="stats">'+stat('2025 GDP',money(d.gdp)+' 亿','公开地区生产总值','cyan')+
  stat('2025规上工业增加值增幅','+8.7%','增幅，不是产业增加值占GDP的比例','good')+
  stat('2025固定资产投资','-18.8%','与工业增长方向相反','bad')+
  stat('2025房地产开发投资','-47.6%','仅为投资分项的增速','bad')+'</section>'+
@@ -418,7 +418,7 @@ function dataPage(r){
  line('C · 问卷路径','300企业样本，合成','gold')+
  line('C · 茶季现金流','参数演示，非实地采集','gold')+'</article>'+
  '<article class="card"><h3>直接查看来源</h3>'+d.sources.map(s=>'<div class="source-item"><a href="'+s.url+'" target="_blank" rel="noopener noreferrer">'+html(s.name)+' ↗</a>'+badge(html(s.tag),s.tag.startsWith('A')?'real':'')+'</div>').join('')+
- '<p class="footnote">有数字未验证、年份或口径变更时，应优先改事实基准，而不是用调整模型来掩盖冲突。</p></article></div>';
+ '<p class="footnote">有数字未验证、年份或口径变更时，应优先改事实基准，而不是用调整模型来掩盖冲突。</p></article></div></details>';
 }
 function surveyPage(r){
  const m=getSurvey();
