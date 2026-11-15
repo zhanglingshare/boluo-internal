@@ -7,6 +7,7 @@ on:
       - "lab.js"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
+      - "tests/lab-render.test.cjs"
       - ".github/workflows/pages-interactive.yml"
   pull_request:
     paths:
@@ -15,6 +16,7 @@ on:
       - "lab.js"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
+      - "tests/lab-render.test.cjs"
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -25,7 +27,7 @@ jobs:
           node-version: "22"
       - run: node --check engine.js
       - run: node --check lab.js
-      - run: node --test tests/browser-engine.test.cjs
+      - run: node --test tests/*.test.cjs
       - name: Protect prior mockups
         run: |
           test -f mockups-portal.html
