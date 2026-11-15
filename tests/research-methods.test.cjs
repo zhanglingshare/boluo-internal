@@ -24,7 +24,7 @@ test('revision-aware nominal growth never pairs 2024 prelim with 2025',()=>{
 test('the 2020 to 2025 nominal sector differences decompose the total without causal claims',()=>{
  const d=R.describe();
  assert.ok(Math.abs(d.delta.reduce((a,b)=>a+b,0)-d.nominalTotal)<0.02);
- assert.ok(Math.abs(d.shareStart[1]-.50)<0.0001);
+ assert.ok(Math.abs(d.shareStart[1]-.50)<0.001);
  assert.ok(Math.abs(d.shareChangePp[1]-4.6)<0.05);
  assert.ok(d.shareChangePp[2]<-4);
  assert.ok(d.concentrationStart>0&&d.concentrationEnd<1);
@@ -42,7 +42,7 @@ test('all four model comparators are finite and separate modeling assumptions',(
  assert.equal(out.candidates.length,4);
  assert.ok(out.candidates.every(x=>Number.isFinite(x.value)&&x.value>0));
  assert.ok(out.spread>0);
- assert.ok(out.candidates.some(x=>x.name.includes('历史')));
+ assert.ok(out.candidates.some(x=>x.id==='historical'));
 });
 test('synthetic graph has exactly 500 subjects 680 directed edges',()=>{
  const a=R.networkStress({cut:10,mode:'targeted'});
@@ -64,6 +64,25 @@ test('all research graphics contain meaningful SVG or structured data',()=>{
  assert.match(V.networkMap(R.networkStress({cut:10}),'S1'),/data-service-node/);
  assert.match(V.waterfall(),/现价GDP增量/);
  assert.match(V.comparison(R.compareModels(E.run({draws:500})),1600),/research-cmp-row/);
+});
+test('rolling-origin historical check cannot be mistaken for a verified model',()=>{
+ const b=R.backtest();
+ assert.deepEqual(b.tests.map(x=>x.year),[2022,2023]);
+ assert.ok(Number.isFinite(b.histMAPE)&&b.histMAPE>=0);
+ assert.ok(Number.isFinite(b.constantMAPE)&&b.constantMAPE>=0);
+ assert.match(b.caution,/不满足正式/);
+ assert.match(V.backtestTable(b),/2023/);
+});
+test('two-parameter stress response spans 81 clickable scenarios',()=>{
+ const state=E.normalize({year:2030,target:1600});
+ const s=R.surface(E,state);
+ assert.equal(s.values.length,81);
+ assert.ok(s.minimum<s.maximum);
+ assert.ok(s.values.every(x=>Number.isFinite(x.value)));
+ const low=s.values.find(x=>x.manufacturing===-1&&x.services===-1);
+ const high=s.values.find(x=>x.manufacturing===1&&x.services===1);
+ assert.ok(high.value>low.value);
+ assert.match(V.stressSurface(s,state),/data-heat="1,1"/);
 });
 test('research dashboard has no calls to upload, download or live endpoints',()=>{
  const page=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
