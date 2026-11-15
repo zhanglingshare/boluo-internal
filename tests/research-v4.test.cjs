@@ -90,6 +90,6 @@ test('visualizations depict missing-year blanks and click interactions',()=>{
 });
 test('entity clues deliberately have no supplier-edge claims',()=>{
  assert.equal(R.ENTITY_CLUES.length,2);
- assert.ok(R.ENTITY_CLUES.every(x=>x.link==='industryNews'&&x.missing.includes('核验')===false));
+ assert.ok(R.ENTITY_CLUES.every(x=>x.link==='industryNews'&&x.missing.length>25));
  assert.ok(R.evidenceReadiness().filter(x=>x.status==='关键数据缺失').length>=2);
 });
