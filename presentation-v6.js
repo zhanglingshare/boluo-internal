@@ -85,15 +85,24 @@ function visual(page,ctx){
    '<div class="v6-actions">'+action('go-models','看看产业连接','primary')+'</div>';
  }
  if(page==='survey'){
-  const m=ctx.survey,paths=m.paths;
-  const vals=[['服务可得 → 实际使用',paths['SA→SU']],['服务可得 → 经营表现',paths['SA→OP']],['使用 → 经营表现',paths['SU→OP']]];
-  return head('经营行为 / 数据演示','服务容易获得，企业就一定会用吗？','这里是可重新生成的合成问卷，不能当作博罗企业的真实回答。')+
-   panel('三条关系的方向与强弱', '<div class="v6-relationship">'+vals.map(x=>
-    '<div><span>'+esc(x[0])+'</span><div class="v6-bartrack"><i class="'+(x[1]<0?'loss':'gain')+'" style="width:'+Math.max(1,Math.min(100,Math.abs(x[1])*100))+'%"></i></div>'+
-    '<b>'+(x[1]>0?'+':'')+n(x[1],2)+'</b></div>').join('')+'</div>')+
-   '<div class="v6-controls">'+slider('sampleSize','演示样本',sampleSize,{min:100,max:500,step:25,unit:'份'})+
-   '<div class="v6-actions">'+action('resample','换一组演示样本','primary')+'</div></div>'+
-   '<div class="v6-disclaimer">'+chip('合成样本','model')+chip('仅展示关系，不证明因果','model')+'</div>';
+  const Evidence=root.BoluoSurveyEvidence,topic=Evidence.analyze(ctx.signalTopic||'industry');
+  const tabs='<div class="v6-topic-tabs">'+Evidence.TOPICS.map(t=>'<button type="button" data-survey-topic="'+t.id+'" class="'+(t.id===topic.id?'active':'')+'">'+esc(t.label)+'</button>').join('')+'</div>';
+  const observed=topic.observed.length?topic.observed.map(x=>
+    '<div class="v6-evidence-card"><div><small>'+esc(x.date)+' · '+esc(x.source_type)+'</small><strong>'+esc(x.name)+'</strong>'+
+    '<span>'+esc(x.description)+'</span></div><a href="'+esc(x.source)+'" rel="noopener noreferrer" target="_blank">查原始材料 ↗</a></div>').join(''):
+    '<div class="v6-empty-signals">目前未采集到可核验的对应信号。<b>保持未知，不打分。</b></div>';
+  return head('现实行为与未来问卷','公开世界留下了什么痕迹？','能看到行为，不等于知道每个人怎么想。')+tabs+
+   factsLine([['已核验公开线索',topic.evidenceCount+'条','不同材料不一定独立'],
+    ['不同原始来源',topic.independentOrigins+'类','同一公报不重复计数'],
+    ['真实问卷回答','0份','尚未开展调查'],
+    ['群体真实倾向','未知','不能直接折算1–5分','loss']])+
+   panel('看到的事实，不是替人回答',observed)+
+   '<div class="v6-hypothesis"><b>'+esc(topic.question)+'</b><span>目前还没有可把这些信号转化为群体态度的有效校准。</span></div>'+
+   '<details class="v6-quiet-depth"><summary>还可以怎样解释这些变化？</summary>'+
+   '<div class="v6-alt-list">'+topic.interpretations.map(x=>'<div>'+esc(x)+'</div>').join('')+'</div>'+
+   '<p>下一步最缺：'+esc(topic.gap)+'</p></details>'+
+   '<div class="v6-disclaimer">'+chip('公开数据 ≠ 意见调查','model')+chip('未采集社交媒体评论样本','model')+
+   chip('下一阶段用真人问卷验证','observed')+'</div>';
  }
  if(page==='models'){
   const x=V5.networkTrial(cut);
