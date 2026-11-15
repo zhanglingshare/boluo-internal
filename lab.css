@@ -166,3 +166,14 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
 .v4-baseline-diff em{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px}
 .v4-baseline-diff em.good{background:rgba(61,142,99,.3);color:#7fe0a8}
 .v4-baseline-diff em.gold{background:rgba(158,120,45,.3);color:#f2ca7e}
+
+/* V4-05 风洞基准对照条 */
+.v4-wind-baseline{background:rgba(31,72,110,.25);border:1px solid var(--stroke);border-left:3px solid #6a93b8;border-radius:10px;padding:12px 16px;margin-bottom:17px}
+.v4-wind-baseline.on{border-left-color:#f6c453;background:rgba(72,58,31,.22)}
+.v4-wind-baseline .wb-cell{display:inline-flex;align-items:baseline;gap:6px;background:rgba(15,35,58,.5);padding:6px 12px;border-radius:8px}
+.v4-wind-baseline .wb-cell small{color:var(--muted);font-size:10px}
+.v4-wind-baseline .wb-cell strong{font-variant-numeric:tabular-nums;font-size:13px}
+.v4-wind-baseline .wb-cell strong i{font-style:normal;color:var(--muted);font-size:11px;margin:0 3px}
+.v4-wind-baseline .wb-cell em{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px}
+.v4-wind-baseline .wb-cell em.good{background:rgba(61,142,99,.3);color:#7fe0a8}
+.v4-wind-baseline .wb-cell em.gold{background:rgba(158,120,45,.3);color:#f2ca7e}

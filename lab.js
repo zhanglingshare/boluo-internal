@@ -50,8 +50,9 @@ function stack(vals){
  const sum=vals.reduce((a,b)=>a+b,0);
  return '<div class="stack" aria-label="一二三产业结构"><span class="p" style="width:'+(100*vals[0]/sum)+'%"></span><span class="s" style="width:'+(100*vals[1]/sum)+'%"></span><span class="t" style="width:'+(100*vals[2]/sum)+'%"></span></div>';
 }
-function chart(r){
+function chart(r,baseline){
  const h=r.history,W=850,H=255,l=58,right=15,top=15,base=218;
+ const bl=baseline||null;
  const ymin=Math.min(E.DATA.gdp*.93,...h.map(x=>x.p10))*.93;
  const ymax=Math.max(state.target*1.04,...h.map(x=>x.p90))*1.045;
  const x=i=>l+i*(W-l-right)/(h.length-1),y=n=>base-(n-ymin)/(ymax-ymin)*(base-top);
@@ -66,6 +67,8 @@ function chart(r){
  '<line x1="'+l+'" x2="'+(W-right)+'" y1="'+y(state.target)+'" y2="'+y(state.target)+'" stroke="#f6b96e" stroke-width="2" stroke-dasharray="8 7"/>'+
  '<text x="'+(W-right-5)+'" y="'+(y(state.target)-9)+'" text-anchor="end" fill="#ffc17a" font-size="12">'+state.target+' 对照线</text>'+
  '<circle cx="'+x(h.length-1)+'" cy="'+y(h[h.length-1].total)+'" r="5" fill="#77ebff" stroke="#11324c" stroke-width="2"/>'+
+ (bl?'<polyline points="'+h.map((v,i)=>decimal(x(i),1)+','+decimal(y(bl.history[i].total),1)).join(' ')+'" fill="none" stroke="#8fa4bd" stroke-width="1.8" stroke-dasharray="7 6" opacity=".8"/>'+
+  '<text x="'+(x(1)+2)+'" y="'+(y(bl.history[1].total)-8)+'" fill="#9db1c8" font-size="11">原始情景中位数</text>':'')+
  years+'</svg>';
 }
 function hist(r){
@@ -618,6 +621,10 @@ function sensitivityBars(s){
  return '<div class="tornado">'+s.map(x=>'<div class="torn-row"><span class="micro">'+x.name+'</span><div class="track"><div class="minus" style="width:'+(Math.max(0,-Math.min(x.minus,x.plus))/top*47)+'%"></div><div class="plus" style="width:'+(Math.max(0,Math.max(x.minus,x.plus))/top*47)+'%"></div></div><b>'+decimal(x.span)+' 亿</b></div>').join('')+'</div>';
 }
 
+function windBaselineRun(){
+ return windBaselineMemo&&windBaselineMemo.scenario===DEFAULT.scenario?windBaselineMemo:(windBaselineMemo=E.run(DEFAULT));
+}
+let windBaselineMemo=null;
 function windNav(){
  const names=['05-0 目标与现实','05-1 工业','05-2 专业服务','05-3 农业','05-4 情景与压力','05-5 行动跟踪'];
  return '<div class="view-tabs" role="tablist" aria-label="风洞六个视图">'+names.map((name,i)=>'<button role="tab" aria-selected="'+(view===i)+'" class="'+(view===i?'active':'')+'" type="button" data-view="'+i+'">'+name+'</button>').join('')+'</div>';
@@ -627,7 +634,22 @@ function windPage(r){
  const explain=['从2025年公开基数出发，模拟每年的三产增加值，画出分位带与目标差距。','只改变工业条件，观察二产增加值、服务与总量如何同步响应。','专业服务与制造扩能相互关联，但目前关系边均为合成。','农业增加值与现金流断点是不同层面的观察，不能直接相加。','在合理区间内改变五个条件，显示局部敏感度和条件分布。','把模拟中暴露的薄弱环节，转成可核实的观察清单。'];
  return heading('05 / LIVE CONDITIONAL WIND TUNNEL',titles[view],explain[view],btn('calibration','⚙ 校准全部参数','primary'))+
  windNav()+'<section class="card" style="margin-bottom:17px">'+layoutControls()+'</section>'+
+ windBaselineBar(r)+
  (view===0?wind0(r):view===1?wind1(r):view===2?wind2(r):view===3?wind3(r):view===4?wind4(r):wind5(r));
+}
+function windBaselineBar(r){
+ const b=E.run(DEFAULT),c=r;
+ const knobsOff=Object.keys(E.EFFECTS).every(k=>!(state.knobs[k]));
+ const scenarioOff=state.scenario===DEFAULT.scenario;
+ const same=knobsOff&&scenarioOff;
+ const dp=c.total.p50-b.total.p50,dhit=c.hit-b.hit;
+ return '<section class="v4-wind-baseline'+(same?'':' on')+'"><div class="row wrap" style="gap:10px"><span class="micro"><b>原始情景</b>（'+E.PRESETS[DEFAULT.scenario].name+' · 全部滑杆归零）</span>'+
+ '<span class="wb-cell"><small>P50</small><strong>'+money(b.total.p50)+' <i>→</i> '+money(c.total.p50)+' 亿</strong>'+(same?'':'<em class="'+(dp>=0?'good':'gold')+'">'+sign(dp)+'</em>')+'</span>'+
+ '<span class="wb-cell"><small>达标占比</small><strong>'+perc(b.hit)+' <i>→</i> '+perc(c.hit)+'</strong>'+(same?'':'<em class="'+(dhit>=0?'good':'gold')+'">'+(dhit>=0?'+':'')+Math.round(dhit*100)/100+'pp</em>')+'</span>'+
+ (same?'<span class="micro muted">当前即原始情景，拨动滑杆或切换情景即出现对照。</span>':
+ '<span class="micro muted">← 为原始情景，右侧为当前条件；差额由固定随机种子重算得出，不是两次随意抽样。</span>')+
+ (same?'':'<button type="button" class="tiny-btn" data-action-wind="reset-baseline">↺ 回到原始情景</button>')+
+ '</div></section>';
 }
 function wind0(r){
  const base=E.DATA,sector=r.sector;
@@ -636,7 +658,7 @@ function wind0(r){
  stat('目标差额',sign(-r.gap)+' 亿','中位数减去对照目标',r.gap>0?'bad':'good')+
  stat('模型样本达标占比',perc(r.hit),'取决于增长与波动假设','')+
  stat('结构接近1:5:4占比',perc(r.structural),'内部假设结构线，并非硬性指标','')+'</section>'+
- '<section class="grid2"><article class="card"><h3>从 2025 走向 '+state.year+'：不是一条预测直线</h3>'+chart(r)+
+ '<section class="grid2"><article class="card"><h3>从 2025 走向 '+state.year+'：不是一条预测直线</h3>'+chart(r,windBaselineRun())+
  '<div class="chartkey"><span><b style="background:var(--cyan)"></b>条件中位数</span><span><b style="background:var(--blue)"></b>P10–P90范围</span><span><b style="background:var(--gold)"></b>对照目标</span></div>'+
  '<div class="three-gauge"><div><small class="muted">P10</small><b>'+money(r.total.p10)+'</b></div><div><small class="muted">P50</small><b class="cyan">'+money(r.total.p50)+'</b></div><div><small class="muted">P90</small><b>'+money(r.total.p90)+'</b></div></div></article>'+
  '<article class="card"><h3>同一个经济体，三次产业如何移位？</h3><p class="micro">2025年已公布事实</p>'+stack([base.p,base.s,base.t])+
@@ -817,6 +839,7 @@ document.addEventListener('click',function(e){
  const v4metric=e.target.closest('[data-v4-metric]');if(v4metric){v4Metric=v4metric.dataset.v4Metric;draw();return;}
  const v4peer=e.target.closest('[data-v4-peer]');if(v4peer){v4Peer=v4peer.dataset.v4Peer;draw();return;}
  const v4year=e.target.closest('[data-v4-year]');if(v4year){const v=v4year.dataset.v4Year;v4Year=(v==='clear'||v==='null'||Number(v)===v4Year)?null:Number(v)||null;draw();return;}
+ const wbReset=e.target.closest('[data-action-wind="reset-baseline"]');if(wbReset){state.scenario=DEFAULT.scenario;state.knobs={};draw();return;}
  const v4heat=e.target.closest('[data-v4-heat]');if(v4heat){const x=v4heat.dataset.v4Heat.split(',').map(Number);if(x.length===2&&x.every(Number.isFinite)){v4Local=x[0];v4VA=x[1];v4Improve=Math.min(v4Improve,100-v4Local);draw();}return;}
  const filter=e.target.closest('[data-method-filter]');if(filter){methodFilter=filter.dataset.methodFilter;draw();return;}
  const v3lens=e.target.closest('[data-v3-lens]');if(v3lens){dataLens=v3lens.dataset.v3Lens;draw();return;}
@@ -862,6 +885,7 @@ document.addEventListener('input',function(e){
  const out=control.parentElement.querySelector('output[data-live]');if(out){
   const val=Number(control.value),k=control.dataset.set;
   out.textContent=['receive','pay'].includes(k)?val+' 天':k==='daily'?val+' 万元':k==='sampleSize'?val+' 份':sign(val);
+  if(Object.prototype.hasOwnProperty.call(E.EFFECTS,k)){state.knobs[k]=val;draw();return;}
  }
 });
 document.addEventListener('change',function(e){
