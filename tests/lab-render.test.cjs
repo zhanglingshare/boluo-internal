@@ -12,12 +12,14 @@ const V4V=require('../research-v4-viz.js');
 const V5=require('../research-v5.js');globalThis.BoluoV5=V5;
 const V5V=require('../research-v5-viz.js');globalThis.BoluoV5Viz=V5V;
 const V5UI=require('../research-v5-ui.js');
+const SurveyEvidence=require('../survey-evidence-v1.js');
+const V6=require('../presentation-v6.js');
 const js=fs.readFileSync(path.resolve(__dirname,'../lab.js'),'utf8');
 function boot(route){
  const nodes={};const listeners={};
  function element(id){if(!nodes[id])nodes[id]={innerHTML:'',textContent:'',style:{},hidden:true};return nodes[id];}
  const location={hash:'#'+route};
- const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoV5:V5,BoluoV5Viz:V5V,BoluoV5UI:V5UI,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
+ const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoV5:V5,BoluoV5Viz:V5V,BoluoV5UI:V5UI,BoluoSurveyEvidence:SurveyEvidence,BoluoPresentationV6:V6,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
  const document={body:{style:{}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
  const storage=new Map();
  const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}};
@@ -233,4 +235,33 @@ test('V5 archives show evidence gates and note non-immutable local storage',()=>
  assert.match(v.stage.innerHTML,/顶级研究的终点/);
  assert.match(v.stage.innerHTML,/尚缺实证/);
  assert.match(v.stage.innerHTML,/localStorage/);
+});
+
+
+test('visual-first survey clearly refuses to synthesize media-based Likert answers',()=>{
+ const v=boot('survey');
+ assert.match(v.stage.innerHTML,/公开世界留下了什么痕迹/);
+ assert.match(v.stage.innerHTML,/群体真实倾向/);
+ assert.match(v.stage.innerHTML,/未知/);
+ assert.match(v.stage.innerHTML,/真实问卷回答/);
+ assert.match(v.stage.innerHTML,/0份/);
+ assert.match(v.stage.innerHTML,/更多图表与研究依据/);
+ assert.match(v.stage.innerHTML,/HTMT诊断/); // previous survey computations remain available, collapsed
+});
+test('switching public evidence topics shows independent source lineage and unknowns',()=>{
+ const v=boot('survey');
+ v.listeners.click({target:{closest(sel){return sel==='[data-survey-topic]'?{dataset:{surveyTopic:'agriculture'}}:null;}}});
+ assert.match(v.stage.innerHTML,/网上较少发声的农户/);
+ assert.match(v.stage.innerHTML,/保持未知，不打分/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-survey-topic]'?{dataset:{surveyTopic:'tourism'}}:null;}}});
+ assert.match(v.stage.innerHTML,/游客人次同比/);
+ assert.match(v.stage.innerHTML,/媒体引述平台数据/);
+});
+test('V6 lead is graphical-first, old quantitative detail is preserved inside disclosure',()=>{
+ for(const route of ['home','data','models','wind/0','wind/2','wind/3','wind/4','archive']){
+  const v=boot(route);
+  assert.match(v.stage.innerHTML,/v6-lead/,route);
+  assert.match(v.stage.innerHTML,/v6-depth-content/,route);
+  assert.match(v.stage.innerHTML,/v5-study-strip/,route);
+ }
 });
