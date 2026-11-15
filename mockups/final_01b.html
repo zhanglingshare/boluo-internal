@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+*{box-sizing:border-box;margin:0}
+body{margin:0;background:#000;font-family:-apple-system,"SF Pro Text","HarmonyOS Sans SC","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+.pg{width:1600px;height:900px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
+--ink:#F5F5F7;--sub:rgba(235,235,245,.62);--sub2:rgba(235,235,245,.38);--sub3:rgba(235,235,245,.26);--hair:rgba(255,255,255,.075);
+--fill1:rgba(255,255,255,.060);--fill2:rgba(255,255,255,.042);--fill3:rgba(255,255,255,.030);--winbg:rgba(22,23,28,.58);
+--blue:#0A84FF;--blueT:rgba(10,132,255,.18);--green:#30D158;--gold:#FFB340;--red:#FF453A;--cyan:#5AC8FA;
+--shadow:0 40px 100px rgba(0,0,0,.6)}
+.desk{position:absolute;inset:0;background:radial-gradient(1300px 760px at 80% 6%,#0d1322,#050608 70%)}
+.blob{position:absolute;border-radius:50%;filter:blur(100px)}
+.b1{width:620px;height:620px;left:62%;top:-20%;background:rgba(10,132,255,.24)}
+.b2{width:520px;height:520px;left:-10%;top:52%;background:rgba(90,200,250,.15)}
+.b3{width:460px;height:460px;left:34%;top:66%;background:rgba(48,209,88,.12)}
+.win{color:var(--ink);position:relative;width:1560px;height:856px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:var(--winbg);backdrop-filter:blur(64px) saturate(1.6);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+.tbar{height:52px;flex:none;display:flex;align-items:center;gap:15px;padding:0 18px;border-bottom:1px solid var(--hair);background:rgba(255,255,255,.025)}
+.lights{display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%}
+.lights .r{background:#FF5F57}.lights .y{background:#FEBC2E}.lights .g{background:#28C840}
+.wtitle{font-size:13.5px;font-weight:600;color:var(--sub)}.tbar .sp{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;height:27px;padding:0 12px;border-radius:999px;background:var(--fill1);font-size:11.5px;color:var(--sub)}
+.chip b{color:var(--ink);font-weight:600;font-feature-settings:"tnum"}.chip.warn b{color:var(--gold)}.chip.ok b{color:var(--green)}
+.main{flex:1;display:grid;grid-template-columns:248px 1fr;min-height:0}
+.side{background:rgba(255,255,255,.028);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+.sgroup{font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--sub3);padding:12px 12px 7px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:8px;font-size:13px;color:var(--sub);font-weight:500}
+.nav .ic{width:22px;height:22px;border-radius:6px;background:var(--fill1);display:grid;place-items:center;font-size:10.5px;color:var(--sub);flex:none}
+.nav.on{background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(10,132,255,.4)}
+.nav.on .ic{background:rgba(255,255,255,.22);color:#fff}
+.nav .bdg{margin-left:auto;font-size:10px;font-weight:700;padding:1.5px 7px;border-radius:999px;background:var(--gold);color:#3a2a00}
+.side .spacer{flex:1}
+.ct{padding:24px 28px 16px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.kicker{font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--blue)}
+.ltitle{font-size:30px;font-weight:750;letter-spacing:-.022em;line-height:1.15}
+.sub{font-size:13px;color:var(--sub);line-height:1.55}
+.panel{background:var(--fill2);border-radius:14px;padding:18px 20px;backdrop-filter:blur(20px)}
+.row{display:flex;align-items:center;gap:10px}
+.hrow{display:flex;align-items:center;gap:11px;padding:10px 2px}.hrow+.hrow{border-top:1px solid var(--hair)}
+.hrow .tx{flex:1}.hrow .tx b{display:block;font-size:13px;font-weight:600;color:var(--ink)}
+.hrow .tx span{display:block;font-size:11px;color:var(--sub2);margin-top:2px}
+.dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10px;flex:none}
+.dot.g{background:rgba(48,209,88,.18);color:var(--green)}.dot.b{background:rgba(10,132,255,.18);color:var(--cyan)}
+.dot.y{background:rgba(255,179,64,.18);color:var(--gold)}.dot.r{background:rgba(255,69,58,.18);color:var(--red)}
+.btn{height:38px;padding:0 20px;border-radius:10px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px}
+.btn.p{color:#fff;background:linear-gradient(180deg,#1a90ff,#006fe0);border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 22px rgba(10,132,255,.35),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn.s{color:var(--ink);background:var(--fill1);border:1px solid var(--hair)}
+.pill{display:inline-flex;align-items:center;height:23px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:600}
+.pill.ok{background:rgba(48,209,88,.15);color:var(--green)}.pill.wait{background:rgba(255,179,64,.14);color:var(--gold)}
+.pill.info{background:rgba(10,132,255,.15);color:var(--cyan)}.pill.bad{background:rgba(255,69,58,.14);color:var(--red)}
+.drow{display:flex;align-items:center;gap:12px;padding:9px 0}.drow+.drow{border-top:1px solid var(--hair)}
+.drow .nm{flex:1;font-size:12.5px;color:var(--sub)}.drow .v{font-size:14px;font-weight:700;font-feature-settings:'tnum'}
+
+#pg01b [style*="grid-template-columns:1fr 1fr"] .panel{display:flex;flex-direction:column;justify-content:center;gap:5px}
+#pg01b [style*="grid-template-columns:1fr 1fr"] .panel b{font-size:16px;line-height:1.45}
+
+#pg01b [style*="grid-template-columns:1fr 1fr"] .panel{align-items:flex-start}
+</style></head><body>
+<section class="pg" id="pg01b"><div class="desk"></div><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<div class="win"><div class="tbar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+<div class="wtitle">博罗产业风洞 — 内部研究版</div><div class="sp"></div><span class="chip">数据 <b>DEMO</b></span><span class="chip">draws <b>2,500</b></span><span class="chip">seed <b>2032</b></span><span class="chip warn">待核 <b>3</b></span></div>
+<div class="main"><aside class="side"><div class="sgroup">研究工作区</div><div class="nav "><span class="ic">◎</span>00 研究总览</div><div class="nav on"><span class="ic">✓</span>01 研究任务</div><div class="nav "><span class="ic">▤</span>02 数据中心</div><div class="nav "><span class="ic">☰</span>03 社会调查</div><div class="nav "><span class="ic">◫</span>04 多模型实验室</div><div class="nav "><span class="ic">◐</span>05 2032 情景风洞</div><div class="nav "><span class="ic">⬒</span>06 研究档案</div><div class="spacer"></div>
+<div class="nav"><span class="ic">⚙</span>校准中心<span class="bdg">3</span></div></aside>
+<div class="ct">
+<div><div class="kicker">RESEARCH TASK · 01</div><div class="ltitle" style="margin-top:5px">2032 三次产业协同发展</div>
+<div class="sub" style="margin-top:5px">以研究问题为起点，而不是先选算法。任务六栏可追溯到数据与模型。</div></div>
+<div style="display:grid;grid-template-columns:1.45fr 1fr;gap:14px;flex:1;min-height:0">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="panel" style="padding:15px 17px"><div class="pill info" style="margin-bottom:9px">研究什么</div><b style="font-size:15px;font-weight:700;line-height:1.4">1:5:4 在什么总量与条件下成立</b><div style="font-size:11px;color:var(--sub2);margin-top:7px">结构目标，非限额 · 三产同增</div></div>
+<div class="panel" style="padding:15px 17px"><div class="pill info" style="margin-bottom:9px">观察对象</div><b style="font-size:15px;font-weight:700;line-height:1.4">三次产业 · 500 合成主体 · 17 镇街</b><div style="font-size:11px;color:var(--sub2);margin-top:7px">宏观数值均为现价增加值</div></div>
+<div class="panel" style="padding:15px 17px"><div class="pill info" style="margin-bottom:9px">需要的数据</div><b style="font-size:15px;font-weight:700;line-height:1.4">统计基准 · 企业问卷 · 采购关系</b><div style="font-size:11px;color:var(--sub2);margin-top:7px">三通道：Demo / 公开 / 授权</div></div>
+<div class="panel" style="padding:15px 17px"><div class="pill wait" style="margin-bottom:9px">要证伪什么</div><b style="font-size:15px;font-weight:700;line-height:1.4;color:var(--gold)">三产 8.05% 是否有分行业证据</b><div style="font-size:11px;color:var(--sub2);margin-top:7px">可证伪表述 · 预注册锁定</div></div>
+<div class="panel" style="padding:15px 17px"><div class="pill info" style="margin-bottom:9px">能输出什么</div><b style="font-size:15px;font-weight:700;line-height:1.4">可行区间 · 条件分布 · 缺口清单</b><div style="font-size:11px;color:var(--sub2);margin-top:7px">条件句，不作预测</div></div>
+<div class="panel" style="padding:15px 17px"><div class="pill info" style="margin-bottom:9px">限制</div><b style="font-size:15px;font-weight:700;line-height:1.4">平减指数未公开 · 调查未回收</b><div style="font-size:11px;color:var(--sub2);margin-top:7px">当前仅名义增速口径</div></div>
+</div>
+<div class="panel" style="display:flex;flex-direction:column;background:rgba(255,179,64,.07);border:1px solid rgba(255,179,64,.35)">
+<div class="row" style="justify-content:space-between"><b style="font-size:13px;font-weight:650;color:var(--gold)">本研究要证伪什么</b><span class="pill wait">已预注册</span></div>
+<div style="font-size:23px;font-weight:750;line-height:1.4;letter-spacing:-.01em;margin-top:12px">「三产名义增速 8.05%」<br>有没有分行业证据支撑？</div>
+<div style="font-size:11.5px;color:var(--sub);line-height:1.65;margin-top:11px">若不支撑，1,500 亿总量下的 1:5:4 不成立——不是推翻目标，是知道它的成立条件。</div>
+<div style="margin-top:auto;padding:12px 14px;border-radius:12px;background:rgba(255,179,64,.12);border:1px solid rgba(255,179,64,.28)">
+<span style="font-size:11px;color:var(--sub);line-height:1.7">推翻：P10 &lt;38% 或缺口 &gt;1.5pp<br>保留：命中率 ≥10% 且双轨复现一致</span></div></div>
+</div>
+<div class="panel" style="display:flex;align-items:center;gap:16px;padding:12px 20px">
+<span style="font-size:12.5px;color:var(--sub);flex:1"><b style="color:var(--ink)">新建研究任务</b>：必填「待检验关系」，否则不能保存。</span>
+<span class="btn p">+ 新建研究任务</span></div>
+
+<div class="row" style="padding:0 4px"><span style="font-size:10.5px;color:var(--sub2)">任务六栏写入 06 档案 · append-only</span>
+<div style="flex:1"></div><span style="font-size:10.5px;color:var(--sub2)">血统 A 12 · B 5 · C 9 · 待核 3</span></div>
+</div></div></div></section></body></html>

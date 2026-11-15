@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+*{box-sizing:border-box;margin:0}
+body{margin:0;background:#000;font-family:-apple-system,"SF Pro Text","HarmonyOS Sans SC","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+.pg{width:1600px;height:900px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
+--ink:#F5F5F7;--sub:rgba(235,235,245,.62);--sub2:rgba(235,235,245,.38);--sub3:rgba(235,235,245,.26);--hair:rgba(255,255,255,.075);
+--fill1:rgba(255,255,255,.060);--fill2:rgba(255,255,255,.042);--fill3:rgba(255,255,255,.030);--winbg:rgba(22,23,28,.58);
+--blue:#0A84FF;--blueT:rgba(10,132,255,.18);--green:#30D158;--gold:#FFB340;--red:#FF453A;--cyan:#5AC8FA;
+--shadow:0 40px 100px rgba(0,0,0,.6)}
+.desk{position:absolute;inset:0;background:radial-gradient(1300px 760px at 80% 6%,#0d1322,#050608 70%)}
+.blob{position:absolute;border-radius:50%;filter:blur(100px)}
+.b1{width:620px;height:620px;left:62%;top:-20%;background:rgba(10,132,255,.24)}
+.b2{width:520px;height:520px;left:-10%;top:52%;background:rgba(90,200,250,.15)}
+.b3{width:460px;height:460px;left:34%;top:66%;background:rgba(48,209,88,.12)}
+.win{color:var(--ink);position:relative;width:1560px;height:856px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:var(--winbg);backdrop-filter:blur(64px) saturate(1.6);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+.tbar{height:52px;flex:none;display:flex;align-items:center;gap:15px;padding:0 18px;border-bottom:1px solid var(--hair);background:rgba(255,255,255,.025)}
+.lights{display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%}
+.lights .r{background:#FF5F57}.lights .y{background:#FEBC2E}.lights .g{background:#28C840}
+.wtitle{font-size:13.5px;font-weight:600;color:var(--sub)}.tbar .sp{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;height:27px;padding:0 12px;border-radius:999px;background:var(--fill1);font-size:11.5px;color:var(--sub)}
+.chip b{color:var(--ink);font-weight:600;font-feature-settings:"tnum"}.chip.warn b{color:var(--gold)}
+.main{flex:1;display:grid;grid-template-columns:248px 1fr;min-height:0}
+.side{background:rgba(255,255,255,.028);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+.sgroup{font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--sub3);padding:12px 12px 7px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:8px;font-size:13px;color:var(--sub);font-weight:500}
+.nav .ic{width:22px;height:22px;border-radius:6px;background:var(--fill1);display:grid;place-items:center;font-size:10.5px;color:var(--sub);flex:none}
+.nav.on{background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(10,132,255,.4)}
+.nav.on .ic{background:rgba(255,255,255,.22);color:#fff}
+.nav .bdg{margin-left:auto;font-size:10px;font-weight:700;padding:1.5px 7px;border-radius:999px;background:var(--gold);color:#3a2a00}
+.side .spacer{flex:1}
+.ct{padding:24px 28px 16px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.kicker{font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--blue)}
+.ltitle{font-size:30px;font-weight:750;letter-spacing:-.022em;line-height:1.15}
+.sub{font-size:13px;color:var(--sub);line-height:1.55}
+.panel{background:var(--fill2);border-radius:14px;padding:18px 20px;backdrop-filter:blur(20px)}
+.row{display:flex;align-items:center;gap:10px}
+.pill{display:inline-flex;align-items:center;height:23px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:600}
+.pill.ok{background:rgba(48,209,88,.15);color:var(--green)}.pill.wait{background:rgba(255,179,64,.14);color:var(--gold)}
+.pill.info{background:rgba(10,132,255,.15);color:var(--cyan)}.pill.bad{background:rgba(255,69,58,.14);color:var(--red)}
+.drow{display:flex;align-items:center;gap:12px;padding:8px 0}.drow+.drow{border-top:1px solid var(--hair)}
+.drow .nm{flex:1;font-size:12px;color:var(--sub)}.drow .v{font-size:13.5px;font-weight:700;font-feature-settings:'tnum'}
+
+#pg06b [style*="padding-left:20px"]{display:flex;flex-direction:column;justify-content:space-around}
+
+#pg06b .panel{display:flex;flex-direction:column}
+</style></head><body>
+<section class="pg" id="pg06b"><div class="desk"></div><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<div class="win"><div class="tbar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+<div class="wtitle">博罗产业风洞 — 内部研究版</div><div class="sp"></div><span class="chip">数据 <b>DEMO</b></span><span class="chip">draws <b>2,500</b></span><span class="chip">seed <b>2032</b></span><span class="chip warn">待核 <b>3</b></span></div>
+<div class="main"><aside class="side"><div class="sgroup">研究工作区</div><div class="nav "><span class="ic">◎</span>00 研究总览</div><div class="nav "><span class="ic">✓</span>01 研究任务</div><div class="nav "><span class="ic">▤</span>02 数据中心</div><div class="nav "><span class="ic">☰</span>03 社会调查</div><div class="nav "><span class="ic">◫</span>04 多模型实验室</div><div class="nav "><span class="ic">◐</span>05 2032 情景风洞</div><div class="nav on"><span class="ic">⬒</span>06 研究档案</div><div class="spacer"></div>
+<div class="nav"><span class="ic">⚙</span>校准中心<span class="bdg">3</span></div></aside>
+<div class="ct">
+<div class="row" style="justify-content:space-between"><div><div class="kicker">RESEARCH ARCHIVE · 06</div>
+<div class="ltitle" style="margin-top:5px">研究档案 · append-only，每个结论可溯源</div></div>
+<span class="pill ok">不可篡改</span></div>
+<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:14px;flex:1;min-height:0">
+<div class="panel" style="display:flex;flex-direction:column;padding:16px 20px"><b style="font-size:13px;font-weight:650;margin-bottom:8px">研究时间线 · 只增不改</b>
+<div style="flex:1;position:relative;padding-left:20px">
+<div style="position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:rgba(255,255,255,.12)"></div>
+<div style="position:relative;margin-bottom:13px"><i style="position:absolute;left:-19px;top:3px;width:10px;height:10px;border-radius:50%;background:#30D158"></i><b style="font-size:12.5px">事前预注册锁定 · 五情景与推翻条件</b><div style="font-size:10.5px;color:var(--sub2);margin-top:2px">seed 2032 · draws 2,500 · 不可绕过</div></div>
+<div style="position:relative;margin-bottom:13px"><i style="position:absolute;left:-19px;top:3px;width:10px;height:10px;border-radius:50%;background:#5AC8FA"></i><b style="font-size:12.5px">数据快照 BOLUO_2032_DEMO_V1</b><div style="font-size:10.5px;color:var(--sub2);margin-top:2px">指纹 f3a9…c21 · 六表 1,760 条</div></div>
+<div style="position:relative;margin-bottom:13px"><i style="position:absolute;left:-19px;top:3px;width:10px;height:10px;border-radius:50%;background:#5AC8FA"></i><b style="font-size:12.5px">双轨对照 · 硬容差内通过</b><div style="font-size:10.5px;color:var(--sub2);margin-top:2px">A/B/C 可比性标识随记录保存</div></div>
+<div style="position:relative;margin-bottom:13px"><i style="position:absolute;left:-19px;top:3px;width:10px;height:10px;border-radius:50%;background:#FFB340"></i><b style="font-size:12.5px">情景结论 · 命中率 12.8%</b><div style="font-size:10.5px;color:var(--sub2);margin-top:2px">含 P10/P90 与归因，不做单点预测</div></div>
+<div style="position:relative"><i style="position:absolute;left:-19px;top:3px;width:10px;height:10px;border-radius:50%;background:#98989D"></i><b style="font-size:12.5px;color:var(--sub)">待 2026Q4 复盘自动追加</b><div style="font-size:10.5px;color:var(--sub2);margin-top:2px">重跑另存，不覆盖本条</div></div>
+</div></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="panel" style="padding:14px 18px"><b style="font-size:12.5px;font-weight:650">快照三元 · 缺一不可</b>
+<div class="drow"><span class="nm">数据指纹</span><span class="v" style="font-size:12px">f3a9…c21</span></div>
+<div class="drow"><span class="nm">run_id</span><span class="v" style="font-size:12px">SCN-41ff…</span></div>
+<div class="drow" style="border-bottom:none"><span class="nm">模型版本</span><span class="v" style="font-size:12px">PLS v0.9</span></div></div>
+<div class="panel" style="padding:14px 18px;background:rgba(255,69,58,.07);border:1px solid rgba(255,69,58,.3)">
+<span style="font-size:11px;color:var(--sub);line-height:1.7">开放问题三项：2032 总量未确认、平减指数未公开、1:5:4 口径待确认——不关闭，不假装已解决。</span></div>
+</div></div>
+
+<div class="row" style="padding:0 4px"><span style="font-size:10.5px;color:var(--sub2)">导出档案 CSV / 报告 PDF / 快照 · 修改只追加新版本</span>
+<div style="flex:1"></div><span style="font-size:10.5px;color:var(--sub2)">血统 A 12 · B 5 · C 9 · 待核 3</span></div>
+</div></div></div></section></body></html>

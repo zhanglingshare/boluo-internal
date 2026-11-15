@@ -1,0 +1,88 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+*{box-sizing:border-box;margin:0}
+body{margin:0;background:#000;font-family:-apple-system,"SF Pro Text","HarmonyOS Sans SC","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+.pg{width:1600px;height:900px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
+--ink:#F5F5F7;--sub:rgba(235,235,245,.62);--sub2:rgba(235,235,245,.38);--sub3:rgba(235,235,245,.26);--hair:rgba(255,255,255,.075);
+--fill1:rgba(255,255,255,.060);--fill2:rgba(255,255,255,.042);--fill3:rgba(255,255,255,.030);--winbg:rgba(22,23,28,.58);
+--blue:#0A84FF;--blueT:rgba(10,132,255,.18);--green:#30D158;--gold:#FFB340;--red:#FF453A;--cyan:#5AC8FA;
+--shadow:0 40px 100px rgba(0,0,0,.6)}
+.desk{position:absolute;inset:0;background:radial-gradient(1300px 760px at 80% 6%,#0d1322,#050608 70%)}
+.blob{position:absolute;border-radius:50%;filter:blur(100px)}
+.b1{width:620px;height:620px;left:62%;top:-20%;background:rgba(10,132,255,.24)}
+.b2{width:520px;height:520px;left:-10%;top:52%;background:rgba(90,200,250,.15)}
+.b3{width:460px;height:460px;left:34%;top:66%;background:rgba(48,209,88,.12)}
+.win{color:var(--ink);position:relative;width:1560px;height:856px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:var(--winbg);backdrop-filter:blur(64px) saturate(1.6);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+.tbar{height:52px;flex:none;display:flex;align-items:center;gap:15px;padding:0 18px;border-bottom:1px solid var(--hair);background:rgba(255,255,255,.025)}
+.lights{display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%}
+.lights .r{background:#FF5F57}.lights .y{background:#FEBC2E}.lights .g{background:#28C840}
+.wtitle{font-size:13.5px;font-weight:600;color:var(--sub)}.tbar .sp{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;height:27px;padding:0 12px;border-radius:999px;background:var(--fill1);font-size:11.5px;color:var(--sub)}
+.chip b{color:var(--ink);font-weight:600;font-feature-settings:"tnum"}.chip.warn b{color:var(--gold)}
+.main{flex:1;display:grid;grid-template-columns:248px 1fr;min-height:0}
+.side{background:rgba(255,255,255,.028);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+.sgroup{font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--sub3);padding:12px 12px 7px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:8px;font-size:13px;color:var(--sub);font-weight:500}
+.nav .ic{width:22px;height:22px;border-radius:6px;background:var(--fill1);display:grid;place-items:center;font-size:10.5px;color:var(--sub);flex:none}
+.nav.on{background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(10,132,255,.4)}
+.nav.on .ic{background:rgba(255,255,255,.22);color:#fff}
+.nav .bdg{margin-left:auto;font-size:10px;font-weight:700;padding:1.5px 7px;border-radius:999px;background:var(--gold);color:#3a2a00}
+.side .spacer{flex:1}
+.ct{padding:24px 28px 16px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.kicker{font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--blue)}
+.ltitle{font-size:30px;font-weight:750;letter-spacing:-.022em;line-height:1.15}
+.sub{font-size:13px;color:var(--sub);line-height:1.55}
+.panel{background:var(--fill2);border-radius:14px;padding:18px 20px;backdrop-filter:blur(20px)}
+.row{display:flex;align-items:center;gap:10px}
+.pill{display:inline-flex;align-items:center;height:23px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:600}
+.pill.ok{background:rgba(48,209,88,.15);color:var(--green)}.pill.wait{background:rgba(255,179,64,.14);color:var(--gold)}
+.pill.info{background:rgba(10,132,255,.15);color:var(--cyan)}.pill.bad{background:rgba(255,69,58,.14);color:var(--red)}
+.drow{display:flex;align-items:center;gap:12px;padding:8px 0}.drow+.drow{border-top:1px solid var(--hair)}
+.drow .nm{flex:1;font-size:12px;color:var(--sub)}.drow .v{font-size:13.5px;font-weight:700;font-feature-settings:'tnum'}
+
+#pg054b [style*="flex-direction:column;justify-content:center"]{justify-content:space-around;gap:14px}
+#pg054b .panel .row i{height:16px}
+#pg054b .panel .row .nm{font-size:12.5px}
+
+#pg054b [style*="flex-direction:column;justify-content:center"]{justify-content:space-around !important;gap:14px !important}
+</style></head><body>
+<section class="pg" id="pg054b"><div class="desk"></div><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<div class="win"><div class="tbar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+<div class="wtitle">博罗产业风洞 — 内部研究版</div><div class="sp"></div><span class="chip">数据 <b>DEMO</b></span><span class="chip">draws <b>2,500</b></span><span class="chip">seed <b>2032</b></span><span class="chip warn">待核 <b>3</b></span></div>
+<div class="main"><aside class="side"><div class="sgroup">研究工作区</div><div class="nav "><span class="ic">◎</span>00 研究总览</div><div class="nav "><span class="ic">✓</span>01 研究任务</div><div class="nav "><span class="ic">▤</span>02 数据中心</div><div class="nav "><span class="ic">☰</span>03 社会调查</div><div class="nav "><span class="ic">◫</span>04 多模型实验室</div><div class="nav on"><span class="ic">◐</span>05 2032 情景风洞</div><div class="nav "><span class="ic">⬒</span>06 研究档案</div><div class="spacer"></div>
+<div class="nav"><span class="ic">⚙</span>校准中心<span class="bdg">3</span></div></aside>
+<div class="ct">
+<div class="row" style="justify-content:space-between"><div><div class="kicker">SCENARIOS & STRESS · 05-4</div>
+<div class="ltitle" style="margin-top:5px">情景与压力 · 本研究的主角</div></div>
+<span class="pill wait">预注册已锁定 · 五情景不可替换</span></div>
+<div class="panel" style="background:linear-gradient(135deg,rgba(10,132,255,.14),rgba(255,179,64,.08));border:1px solid rgba(10,132,255,.32);display:flex;align-items:center;gap:26px;padding:22px 28px">
+<div><div style="font-size:13px;color:var(--sub);font-weight:600">balanced 情景 · 1:5:4 结构命中率</div>
+<div style="font-size:96px;font-weight:820;line-height:1;letter-spacing:-.035em;color:var(--cyan);margin-top:8px;font-feature-settings:'tnum'">12.8%</div></div>
+<div style="flex:1;font-size:12.5px;color:var(--sub);line-height:1.8">
+2,500 抽样中仅 12.8% 同时满足三产占比容差；<b style="color:var(--ink)">这是条件概率，不是成功概率</b>。<br>
+口号要变成研究结论，就得回答「剩下 87.2% 卡在哪」——而不是把 12.8% 藏起来。</div>
+<div style="text-align:right;font-size:11px;color:var(--sub2);line-height:1.9">P50 1,762.4<br>P10 1,615.3 · P90 1,919.4<br>seed 2032</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;min-height:0">
+<div class="panel" style="display:flex;flex-direction:column;padding:15px 18px"><b style="font-size:12.5px;font-weight:650;margin-bottom:8px">五情景命中率（%）</b>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px">
+<div class="row"><span style="width:78px;font-size:11.5px;color:var(--sub)">balanced</span><div style="flex:1;height:13px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden"><i style="display:block;width:32%;height:100%;background:#30D158"></i></div><b style="width:42px;text-align:right;font-size:12px;font-feature-settings:'tnum'">12.8</b></div>
+<div class="row"><span style="width:78px;font-size:11.5px;color:var(--sub)">industrial</span><div style="flex:1;height:13px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden"><i style="display:block;width:9.5%;height:100%;background:#FF453A"></i></div><b style="width:42px;text-align:right;font-size:12px;font-feature-settings:'tnum'">3.8</b></div>
+<div class="row"><span style="width:78px;font-size:11.5px;color:var(--sub)">agriculture</span><div style="flex:1;height:13px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden"><i style="display:block;width:48.7%;height:100%;background:#30D158"></i></div><b style="width:42px;text-align:right;font-size:12px;font-feature-settings:'tnum'">19.5</b></div>
+<div class="row"><span style="width:78px;font-size:11.5px;color:var(--sub)">service</span><div style="flex:1;height:13px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden"><i style="display:block;width:18%;height:100%;background:#FFB340"></i></div><b style="width:42px;text-align:right;font-size:12px;font-feature-settings:'tnum'">7.2</b></div>
+<div class="row"><span style="width:78px;font-size:11.5px;color:var(--sub)">stress</span><div style="flex:1;height:13px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden"><i style="display:block;width:48%;height:100%;background:#FF453A"></i></div><b style="width:42px;text-align:right;font-size:12px;font-feature-settings:'tnum'">19.2</b></div>
+</div></div>
+<div class="panel" style="display:flex;flex-direction:column;padding:15px 18px"><b style="font-size:12.5px;font-weight:650;margin-bottom:8px">龙卷风敏感性 · ±0.5（pp）</b>
+<svg viewBox="0 0 620 230" style="flex:1;width:100%">
+<g font-size="11" fill="rgba(235,235,245,.6)">
+<text x="140" y="36" text-anchor="end">agriculture</text><rect x="150" y="25" width="150" height="14" rx="7" fill="#FFB340"/><text x="308" y="37">13.0</text>
+<text x="140" y="78" text-anchor="end">manufacturing</text><rect x="150" y="67" width="88" height="14" rx="7" fill="#FF453A"/><text x="246" y="79">7.6 反向</text>
+<text x="140" y="120" text-anchor="end">project_delay</text><rect x="150" y="109" width="81" height="14" rx="7" fill="#5AC8FA"/><text x="239" y="121">7.0</text>
+<text x="140" y="162" text-anchor="end">talent</text><rect x="150" y="151" width="56" height="14" rx="7" fill="#5AC8FA"/><text x="214" y="163">4.8</text>
+<text x="140" y="204" text-anchor="end">services</text><rect x="150" y="193" width="38" height="14" rx="7" fill="#30D158"/><text x="196" y="205">3.3</text>
+<line x1="150" y1="18" x2="150" y2="214" stroke="rgba(255,255,255,.25)" stroke-dasharray="4 4"/>
+</g></svg></div>
+</div>
+
+<div class="row" style="padding:0 4px"><span style="font-size:10.5px;color:var(--sub2)">seed 2032 · draws 2,500 · 情景库不存在压一个换一个</span>
+<div style="flex:1"></div><span style="font-size:10.5px;color:var(--sub2)">血统 A 12 · B 5 · C 9 · 待核 3</span></div>
+</div></div></div></section></body></html>
