@@ -5,12 +5,14 @@ const E=require('../engine.js');
 const R=require('../research-core.js');
 globalThis.BoluoResearch=R;
 const RV=require('../research-viz.js');
+const V3=require('../research-v3.js');globalThis.BoluoV3=V3;
+const V3V=require('../research-v3-viz.js');
 const js=fs.readFileSync(path.resolve(__dirname,'../lab.js'),'utf8');
 function boot(route){
  const nodes={};const listeners={};
  function element(id){if(!nodes[id])nodes[id]={innerHTML:'',textContent:'',style:{},hidden:true};return nodes[id];}
  const location={hash:'#'+route};
- const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
+ const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
  const document={body:{style:{}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
  const storage=new Map();
  const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}};
@@ -88,4 +90,36 @@ test('clicking a two-parameter heatmap cell really updates the simulation',()=>{
  v.listeners.click({target:{closest(sel){return sel==='[data-heat]'?{dataset:{heat:'1,1'}}:null;}}});
  assert.notEqual(v.nodes.topRun.textContent,before);
  assert.match(v.stage.innerHTML,/双变量压力面/);
+});
+
+
+test('V3 data microscope navigates four rich, measured evidence lenses',()=>{
+ const v=boot('data');
+ assert.match(v.stage.innerHTML,/增长速度 × 产业体量/);
+ const before=v.stage.innerHTML;
+ const lens=(key)=>v.listeners.click({target:{closest(sel){return sel==='[data-v3-lens]'?{dataset:{v3Lens:key}}:null;}}});
+ lens('targets');assert.match(v.stage.innerHTML,/2025计划 vs 实际/);
+ lens('signals');assert.match(v.stage.innerHTML,/跨系统公开信号/);
+ lens('audit');assert.match(v.stage.innerHTML,/社零基期不一致/);
+ assert.notEqual(before,v.stage.innerHTML);
+});
+test('V3 actual industry bubble selects the correct observed sector',()=>{
+ const v=boot('data');
+ v.listeners.click({target:{closest(sel){return sel==='[data-v3-industry]'?{dataset:{v3Industry:'2'}}:null;}}});
+ assert.match(v.stage.innerHTML,/橡胶塑料/);
+ assert.match(v.stage.innerHTML,/-4.2%/);
+});
+test('V3 hypothesis competition and second-order cut controls really update the model page',()=>{
+ const v=boot('models');
+ assert.match(v.stage.innerHTML,/FALSIFICATION LAB/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-v3-question]'?{dataset:{v3Question:'H3'}}:null;}}});
+ assert.match(v.stage.innerHTML,/经济增长是否改善普通人收入/);
+ v.listeners.change({target:{closest(sel){return sel==='[data-v3-control]'?{dataset:{v3Control:'threshold'},value:'1'}:null;}}});
+ assert.match(v.stage.innerHTML,/失去1项服务/);
+ assert.match(v.stage.innerHTML,/农业供应关联/);
+});
+test('V3 scenario page distinguishes shock variation from parameter uncertainty',()=>{
+ const v=boot('wind/4');
+ assert.match(v.stage.innerHTML,/两种完全不同的不确定性/);
+ assert.match(v.stage.innerHTML,/参数知识不足/);
 });
