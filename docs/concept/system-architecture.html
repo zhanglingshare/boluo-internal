@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-canvas-width="1600" data-canvas-height="1200" style="width:1600px;height:1200px;">
+<head>
+<meta charset="UTF-8">
+<title>博罗决策模拟系统 · 系统结构概念图</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    width:1600px; height:1200px;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Source Han Sans SC","Helvetica Neue",Arial,sans-serif;
+    color:#E6ECF7;
+    background:
+      radial-gradient(1200px 700px at 78% -10%, rgba(34,211,238,0.10), transparent 60%),
+      radial-gradient(1000px 800px at 12% 110%, rgba(99,102,241,0.12), transparent 60%),
+      #0A0F1D;
+    -webkit-font-smoothing:antialiased;
+  }
+  .grid-texture{position:absolute;inset:0;pointer-events:none;opacity:.35;
+    background-image:linear-gradient(rgba(148,163,184,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.05) 1px,transparent 1px);
+    background-size:44px 44px;}
+  main{position:relative;width:1600px;height:1200px;padding:30px 44px 26px;display:flex;flex-direction:column;}
+
+  /* ---------- 顶部 ---------- */
+  .top{display:flex;justify-content:space-between;align-items:flex-end;}
+  .sys-name{font-size:34px;font-weight:800;letter-spacing:.5px;line-height:1.1;}
+  .sys-name .tag{display:inline-block;margin-left:12px;font-size:14px;font-weight:600;color:#67E8F9;
+    border:1px solid rgba(103,232,249,.35);border-radius:6px;padding:3px 9px;vertical-align:middle;letter-spacing:1px;}
+  .proj{text-align:right;font-size:15px;color:#9FB0CC;line-height:1.5;}
+  .proj b{color:#CBD8EF;font-size:17px;font-weight:700;}
+  .principle{margin-top:13px;padding:11px 18px;border-radius:10px;
+    background:linear-gradient(90deg,rgba(251,191,36,.14),rgba(251,191,36,.04));
+    border:1px solid rgba(251,191,36,.28);font-size:16px;font-weight:600;color:#FCD34D;display:flex;align-items:center;gap:12px;}
+  .principle .dot{width:8px;height:8px;border-radius:50%;background:#FBBF24;flex:none;}
+  .principle span{color:#D7E0F0;font-weight:500;}
+
+  /* ---------- 通用层 ---------- */
+  .layer{position:relative;margin-top:14px;border:1px solid rgba(148,163,184,.16);border-radius:14px;
+    background:linear-gradient(180deg,rgba(23,31,54,.85),rgba(16,23,42,.85));padding:12px 16px 14px;}
+  .layer-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .layer-no{font-size:13px;font-weight:700;color:#0A0F1D;background:#67E8F9;border-radius:5px;padding:2px 7px;letter-spacing:1px;}
+  .layer-title{font-size:18px;font-weight:700;letter-spacing:.5px;}
+  .layer-sub{font-size:13px;color:#8AA0C2;}
+  .layer-head .line{flex:1;height:1px;background:linear-gradient(90deg,rgba(148,163,184,.25),transparent);}
+
+  /* 应用层 */
+  .apps{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;}
+  .app{border:1px solid rgba(148,163,184,.18);border-radius:10px;background:rgba(30,41,66,.55);padding:12px 8px;text-align:center;}
+  .app .n{font-size:13px;color:#67E8F9;font-weight:700;letter-spacing:1px;}
+  .app .t{margin-top:6px;font-size:16px;font-weight:600;}
+
+  /* 情景引擎（焦点） */
+  .bridge{border:1px solid rgba(103,232,249,.35);
+    background:linear-gradient(180deg,rgba(14,42,53,.9),rgba(12,28,42,.9));
+    box-shadow:0 0 0 1px rgba(34,211,238,.08),0 10px 30px -12px rgba(34,211,238,.35);}
+  .bridge .layer-no{background:#22D3EE;}
+  .flow{display:flex;align-items:stretch;gap:0;}
+  .step{flex:1;position:relative;text-align:center;padding:13px 10px;border:1px solid rgba(103,232,249,.25);border-radius:10px;background:rgba(8,27,38,.6);}
+  .step .k{font-size:13px;color:#7DD3FC;font-weight:700;}
+  .step .v{margin-top:5px;font-size:16px;font-weight:700;}
+  .step .d{margin-top:4px;font-size:12.5px;color:#93B4C4;line-height:1.4;}
+  .arrow{display:flex;align-items:center;justify-content:center;width:38px;flex:none;color:#22D3EE;font-size:15px;}
+  .formula{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+    font-size:16px;font-weight:700;}
+  .formula .pill{border:1px solid rgba(251,191,36,.4);background:rgba(251,191,36,.12);color:#FCD34D;border-radius:8px;padding:7px 14px;}
+  .formula .op{color:#94A3B8;font-size:18px;}
+  .formula .res{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.14);color:#6EE7B7;}
+  .gate{margin-top:9px;text-align:center;font-size:13px;color:#9FB8C8;}
+
+  /* 双轨 */
+  .tracks{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .track{border:1px solid rgba(148,163,184,.2);border-radius:10px;padding:12px 14px;background:rgba(30,41,66,.5);}
+  .track h4{margin:0 0 9px;font-size:15.5px;display:flex;align-items:center;gap:8px;}
+  .badge{font-size:12px;font-weight:700;border-radius:5px;padding:2px 7px;}
+  .b-code{color:#67E8F9;background:rgba(34,211,238,.14);border:1px solid rgba(34,211,238,.35);}
+  .b-soft{color:#C4B5FD;background:rgba(129,140,248,.16);border:1px solid rgba(129,140,248,.4);}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{font-size:13.5px;color:#D6E0F2;border:1px solid rgba(148,163,184,.22);border-radius:7px;padding:5px 9px;background:rgba(15,23,42,.5);}
+  .compare{margin-top:11px;display:flex;gap:10px;}
+  .cmp{flex:1;text-align:center;font-size:13.5px;border-radius:8px;padding:8px 6px;border:1px solid rgba(148,163,184,.2);background:rgba(15,23,42,.55);}
+  .cmp b{display:block;font-size:14.5px;color:#E6ECF7;margin-bottom:3px;}
+  .cmp span{color:#93A8C6;}
+
+  /* 数据底座 */
+  .grades{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .grade{border-radius:10px;padding:11px 12px;border:1px solid;}
+  .grade .g{font-size:13px;font-weight:800;letter-spacing:1px;}
+  .grade .gt{margin-top:5px;font-size:15px;font-weight:700;}
+  .grade .gd{margin-top:3px;font-size:12.5px;line-height:1.4;}
+  .gA{border-color:rgba(52,211,153,.4);background:rgba(16,52,44,.6);} .gA .g{color:#34D399;}
+  .gB{border-color:rgba(34,211,238,.4);background:rgba(12,44,54,.6);} .gB .g{color:#22D3EE;}
+  .gC{border-color:rgba(251,191,36,.4);background:rgba(52,42,16,.6);} .gC .g{color:#FBBF24;}
+  .gD{border-color:rgba(148,163,184,.35);background:rgba(38,45,58,.6);} .gD .g{color:#94A3B8;}
+  .data-meta{margin-top:12px;display:flex;gap:10px;align-items:stretch;}
+  .meta-box{flex:1;border:1px solid rgba(148,163,184,.2);border-radius:9px;padding:10px 12px;background:rgba(15,23,42,.5);}
+  .meta-box .mh{font-size:12.5px;color:#8AA0C2;margin-bottom:5px;letter-spacing:.5px;}
+  .meta-box .mv{font-size:14.5px;font-weight:600;line-height:1.5;}
+  .mono{font-variant-numeric:tabular-nums;color:#7DD3FC;}
+
+  /* 底部 */
+  .footer{margin-top:12px;display:flex;justify-content:space-between;align-items:center;
+    border:1px solid rgba(148,163,184,.18);border-radius:10px;background:rgba(15,23,42,.6);padding:12px 18px;}
+  .footer .f{font-size:14px;color:#C3D0E6;font-weight:600;display:flex;align-items:center;gap:8px;}
+  .footer .f .fd{width:7px;height:7px;border-radius:50%;background:#67E8F9;}
+  .legend{font-size:12.5px;color:#7E90AE;}
+</style>
+</head>
+<body style="width:1600px;height:1200px;">
+<div class="grid-texture"></div>
+<main data-canvas-root style="width:1600px;height:1200px;">
+
+  <div class="top">
+    <div class="sys-name">博罗决策模拟系统<span class="tag">内部版 · PRIVATE</span></div>
+    <div class="proj">核心研究项目<br><b>博罗2032 · 三次产业协同发展实验</b></div>
+  </div>
+
+  <div class="principle">
+    <span class="dot"></span>
+    最高原则：结构是副产品，不是目标
+    <span>——对实质质量负责，不对比例数字负责；绝不"为结构而结构"</span>
+  </div>
+
+  <!-- 应用层 -->
+  <section class="layer">
+    <div class="layer-head">
+      <span class="layer-no">L4</span><span class="layer-title">研究工作台 · 应用层</span>
+      <span class="layer-sub">统一工作台，不做分散网站</span><span class="line"></span>
+    </div>
+    <div class="apps">
+      <div class="app"><div class="n">00</div><div class="t">总览</div></div>
+      <div class="app"><div class="n">01</div><div class="t">研究任务</div></div>
+      <div class="app"><div class="n">02</div><div class="t">数据中心</div></div>
+      <div class="app"><div class="n">03</div><div class="t">社会调查</div></div>
+      <div class="app"><div class="n">04</div><div class="t">多模型实验室</div></div>
+      <div class="app"><div class="n">05</div><div class="t">情景风洞</div></div>
+      <div class="app"><div class="n">06</div><div class="t">研究档案</div></div>
+    </div>
+  </section>
+
+  <!-- 情景引擎（焦点） -->
+  <section class="layer bridge">
+    <div class="layer-head">
+      <span class="layer-no">L3</span><span class="layer-title">情景引擎 · 那座桥</span>
+      <span class="layer-sub">模型结果不直接改 GDP</span><span class="line"></span>
+    </div>
+    <div class="flow">
+      <div class="step"><div class="k">01</div><div class="v">经济基准</div><div class="d">可信 GDP 与产业增加值</div></div>
+      <div class="arrow">—▶</div>
+      <div class="step"><div class="k">02</div><div class="v">发展条件</div><div class="d">项目产能·需求·人才·资源约束</div></div>
+      <div class="arrow">—▶</div>
+      <div class="step"><div class="k">03</div><div class="v">作用关系</div><div class="d">有证据估计 / 标记的假设</div></div>
+      <div class="arrow">—▶</div>
+      <div class="step"><div class="k">04</div><div class="v">结果核算</div><div class="d">增加值·结构·就业·不确定性</div></div>
+    </div>
+    <div class="formula">
+      <span class="pill">关联系数</span><span class="op">×</span>
+      <span class="pill">可本地化系数</span><span class="op">=</span>
+      <span class="pill res">本地真实增量</span>
+    </div>
+    <div class="gate">进入条件：适用性审查 · 量纲校准 · 时间尺度；县外供应商承接的部分计为漏损，不进本地增加值</div>
+  </section>
+
+  <!-- 双轨计算 -->
+  <section class="layer">
+    <div class="layer-head">
+      <span class="layer-no">L2</span><span class="layer-title">双轨计算 · 多模型对照</span>
+      <span class="layer-sub">编程批量 × 专业软件金标准</span><span class="line"></span>
+    </div>
+    <div class="tracks">
+      <div class="track">
+        <h4><span class="badge b-code">程序引擎 · 轻算</span>可复现 · 批量</h4>
+        <div class="chips">
+          <span class="chip">描述统计</span><span class="chip">PLS-SEM</span><span class="chip">回归检验</span>
+          <span class="chip">网络 SNA</span><span class="chip">蒙特卡洛</span><span class="chip">产业核算</span>
+        </div>
+      </div>
+      <div class="track">
+        <h4><span class="badge b-soft">专业软件 · 重算</span>金标准仲裁</h4>
+        <div class="chips">
+          <span class="chip">CB-SEM</span><span class="chip">复杂 bootstrap</span><span class="chip">信效度检验</span>
+          <span class="chip">SPSS</span><span class="chip">SmartPLS</span><span class="chip">结果回灌</span>
+        </div>
+      </div>
+    </div>
+    <div class="compare">
+      <div class="cmp"><b>复现型</b><span>同方法 · 容差内数值一致</span></div>
+      <div class="cmp"><b>互补型</b><span>不同方法 · 比较解释不排名</span></div>
+      <div class="cmp"><b>汇聚型</b><span>多证据 · 形成证据链</span></div>
+    </div>
+  </section>
+
+  <!-- 数据底座 -->
+  <section class="layer">
+    <div class="layer-head">
+      <span class="layer-no">L1</span><span class="layer-title">数据底座 · 统一契约</span>
+      <span class="layer-sub">不可变快照 · 全程可追溯</span><span class="line"></span>
+    </div>
+    <div class="grades">
+      <div class="grade gA"><div class="g">A 硬数据</div><div class="gt">锚点约束</div><div class="gd">公报·普查·行政记录，唯一直接进核算</div></div>
+      <div class="grade gB"><div class="g">B 软数据</div><div class="gt">机制路径</div><div class="gd">问卷·潜变量，永不直接生成 GDP</div></div>
+      <div class="grade gC"><div class="g">C 假设</div><div class="gt">情景探索</div><div class="gd">研究者设定条件，不覆盖 A 事实</div></div>
+      <div class="grade gD"><div class="g">D 证据不足</div><div class="gt">暴露缺口</div><div class="gd">明确未知，不硬填不编造</div></div>
+    </div>
+    <div class="data-meta">
+      <div class="meta-box"><div class="mh">治理机制</div><div class="mv">统一数据契约 · 不可变快照 · 版本 / hash</div></div>
+      <div class="meta-box"><div class="mh">运行模式</div><div class="mv">Demo · 混合验证 · 仅真实数据</div></div>
+      <div class="meta-box"><div class="mh">唯一内置 Demo</div><div class="mv mono">BOLUO_2032_DEMO_V1</div></div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <div class="f"><span class="fd"></span>可复现研究档案</div>
+    <div class="f"><span class="fd"></span>全链路证据追溯</div>
+    <div class="f"><span class="fd"></span>本地 / 内网部署</div>
+    <div class="f"><span class="fd"></span>数据不出本机</div>
+    <div class="legend">Demo 只验证工程正确性，不证明模型有效性 · 真实数据须全部重新估计</div>
+  </div>
+
+</main>
+</body>
+</html>

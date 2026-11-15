@@ -5,14 +5,20 @@ const R=root.BoluoV4;if(!R)return;
 const colors=['#68d8f2','#e5ba7b','#9f98f7','#6dd0a7','#f0879c'];
 const esc=s=>String(s).replace(/[&<>"']/g,k=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[k]));
 const fmt=(n,d=1)=>Number(n).toFixed(d);
-function industryHistory(selected='electronics'){
+function industryHistory(selected='electronics',year=null){
  const W=850,H=310,L=62,RIGHT=90,T=20,B=257;
  const x=i=>L+(W-L-RIGHT)*i/5,y=v=>B-v/29*(B-T);
  let out='<svg class="linechart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="2020至2025五行业增加值份额变化，缺失年份不连线">';
  for(let i=0;i<=5;i++){const yy=y(i*5);out+='<line x1="'+L+'" x2="'+(W-RIGHT+15)+'" y1="'+yy+'" y2="'+yy+'" stroke="#426488" opacity=".3"/>'+
  '<text x="52" y="'+(yy+4)+'" text-anchor="end" fill="#acc3d6" font-size="11">'+i*5+'%</text>';
  }
- R.YEARS.forEach((item,i)=>{out+='<text x="'+x(i)+'" y="290" text-anchor="middle" fill="#aabfd4" font-size="12">'+item.year+'</text>';});
+ R.YEARS.forEach((item,i)=>{
+  const activeY=item.year===year,half=(W-L-RIGHT)/10;
+  if(activeY)out+='<rect x="'+(x(i)-half)+'" y="'+T+'" width="'+half*2+'" height="'+(B-T)+'" fill="#2b6f9e" opacity=".14"/>';
+  out+='<g data-v4-year="'+item.year+'" role="button" tabindex="0" class="research-node">'+
+  '<rect x="'+(x(i)-half+2)+'" y="272" width="'+(half*2-4)+'" height="36" fill="transparent"/>'+
+  '<text x="'+x(i)+'" y="290" text-anchor="middle" fill="'+(activeY?'#fff':'#aabfd4')+'" font-size="'+(activeY?14:12)+'" font-weight="'+(activeY?800:400)+'">'+item.year+'</text></g>';
+ });
  R.INDUSTRIES.forEach((industry,j)=>{
   const active=industry.id===selected,fill=colors[j];let group=[],segments=[];
   R.YEARS.forEach((row,i)=>{
@@ -22,8 +28,9 @@ function industryHistory(selected='electronics'){
   if(group.length>1)segments.push(group.join(' '));
   segments.forEach(p=>out+='<polyline points="'+p+'" stroke="'+fill+'" stroke-width="'+(active?4.5:1.9)+'" opacity="'+(active?1:.43)+'" fill="none" stroke-linejoin="round"/>');
   R.YEARS.forEach((row,i)=>{const v=row.shares[j];if(v===null)return;
+    const yActive=year!==null&&row.year===year;
     out+='<g data-v4-industry="'+industry.id+'" tabindex="0" role="button" class="research-node">'+
-    '<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(active?6:4)+'" fill="'+fill+'" opacity="'+(active?1:.60)+'"><title>'+row.year+' '+industry.name+'：'+v+'%</title></circle></g>';
+    '<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(active?(yActive?8:6):4)+'" fill="'+fill+'" opacity="'+(active?1:.60)+'" stroke="'+(yActive?'#fff':'none')+'" stroke-width="'+(yActive?2:0)+'"><title>'+row.year+' '+industry.name+'：'+v+'%</title></circle></g>';
   });
   const last=R.YEARS[5].shares[j];
   out+='<text x="'+(x(5)+10)+'" y="'+(y(last)+4)+'" font-size="'+(active?13:11)+'" fill="'+fill+'" opacity="'+(active?1:.8)+'">'+esc(industry.name.slice(0,4))+'</text>';
@@ -31,10 +38,16 @@ function industryHistory(selected='electronics'){
  out+='<text x="58" y="12" fill="#a7c2d6" font-size="11">规上工业增加值份额 (%)</text></svg>';
  return out;
 }
-function industryHeatmap(selected='electronics',metric='shares'){
+function industryHeatmap(selected='electronics',metric='shares',year=null){
  const W=780,H=290,L=132,T=30,CW=94,CH=37;
  let out='<svg class="linechart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="五类重点工业行业2020至2025按年份的'+(metric==='shares'?'份额':'同比增速')+'矩阵，缺失为虚线空白">';
- R.YEARS.forEach((row,i)=>out+='<text x="'+(L+CW*i+CW/2)+'" y="19" text-anchor="middle" fill="#adc9df" font-size="12">'+row.year+'</text>');
+ R.YEARS.forEach((row,i)=>{
+  const activeY=row.year===year,half=CW/2;
+  if(activeY)out+='<rect x="'+(L+CW*i)+'" y="'+T+'" width="'+(CW-1)+'" height="'+(CH*5-2)+'" fill="#2b6f9e" opacity=".13"/>';
+  out+='<g data-v4-year="'+row.year+'" role="button" tabindex="0" class="research-node">'+
+  '<rect x="'+(L+CW*i)+'" y="4" width="'+(CW-5)+'" height="22" fill="transparent"/>'+
+  '<text x="'+(L+CW*i+CW/2)+'" y="19" text-anchor="middle" fill="'+(activeY?'#fff':'#adc9df')+'" font-size="'+(activeY?13:12)+'" font-weight="'+(activeY?800:400)+'" text-decoration="'+(activeY?'underline':'none')+'">'+row.year+'</text></g>';
+ });
  R.INDUSTRIES.forEach((industry,j)=>{
   out+='<text x="124" y="'+(T+j*CH+24)+'" fill="'+(industry.id===selected?'#fff':'#aabed3')+'" text-anchor="end" font-size="11">'+esc(industry.name)+'</text>';
   R.YEARS.forEach((row,i)=>{
@@ -45,20 +58,20 @@ function industryHeatmap(selected='electronics',metric='shares'){
     else if(v<0){const k=Math.min(1,Math.abs(v)/30);fill='rgb('+Math.round(95+110*k)+','+Math.round(53+34*k)+','+Math.round(70+42*k)+')';}
     else{const k=Math.min(1,v/30);fill='rgb('+Math.round(33+34*k)+','+Math.round(79+117*k)+','+Math.round(102+103*k)+')';}
    }
-   const xx=L+i*CW,yy=T+j*CH;
+   const xx=L+i*CW,yy=T+j*CH,ySel=year!==null&&row.year===year;
    out+='<g data-v4-industry="'+industry.id+'" role="button" tabindex="0" class="research-node">'+
-    '<rect x="'+xx+'" y="'+yy+'" width="'+(CW-5)+'" height="'+(CH-5)+'" rx="7" fill="'+fill+'" stroke="'+(industry.id===selected?'#eefbff':'#395875')+'" stroke-width="'+(industry.id===selected?'2':'1')+'" '+((v===null||v===undefined)?'stroke-dasharray="4 4"':'')+'/>'+
+    '<rect x="'+xx+'" y="'+yy+'" width="'+(CW-5)+'" height="'+(CH-5)+'" rx="7" fill="'+fill+'" stroke="'+(ySel?'#f6c453':industry.id===selected?'#eefbff':'#395875')+'" stroke-width="'+(ySel?3:industry.id===selected?2:1)+'" '+((v===null||v===undefined)?'stroke-dasharray="4 4"':'')+'/>'+
     '<text x="'+(xx+(CW-5)/2)+'" y="'+(yy+21)+'" fill="'+(v===null||v===undefined?'#8a9fb6':'#fff')+'" text-anchor="middle" font-size="12">'+(v===null||v===undefined?'缺测':(v>0&&metric!=='shares'?'+':'')+fmt(v)+'%')+'</text></g>';
   });
  });
  out+='<text x="137" y="256" fill="#9cafc6" font-size="11">每个数字均来自对应年份公布的规上工业口径；缺测不当作0。</text></svg>';
  return out;
 }
-function sizeHistory(){
+function sizeHistory(year=null){
  let out='<div class="v4-size-timeline">';
  for(const row of R.YEARS){
-  const total=row.sizes.reduce((a,b)=>a+b,0);
-  out+='<div class="v4-size-year"><span>'+row.year+'</span><div class="v4-size-stack">'+row.sizes.map((share,i)=>'<i title="'+['大型','中型','小微'][i]+share+'%" style="background:'+['#689ce7','#64cbbf','#f1bf80'][i]+';width:'+(share/total*100)+'%"></i>').join('')+'</div>'+
+  const total=row.sizes.reduce((a,b)=>a+b,0),activeY=row.year===year;
+  out+='<div class="v4-size-year'+(activeY?' v4-year-active':'')+'" data-v4-year="'+row.year+'" role="button" tabindex="0"><span'+(activeY?' class="v4-year-label"':'')+'>'+row.year+'</span><div class="v4-size-stack">'+row.sizes.map((share,i)=>'<i title="'+['大型','中型','小微'][i]+share+'%" style="background:'+['#689ce7','#64cbbf','#f1bf80'][i]+';width:'+(share/total*100)+'%"></i>').join('')+'</div>'+
   '<span class="v4-mini">'+fmt(row.sizes[0])+' / '+fmt(row.sizes[1])+' / '+fmt(row.sizes[2])+'</span></div>';
  }
  return out+'</div><div class="chartkey"><span><b style="background:#689ce7"></b>大型</span><span><b style="background:#64cbbf"></b>中型</span><span><b style="background:#f1bf80"></b>小微</span></div>';

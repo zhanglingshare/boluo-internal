@@ -18,7 +18,7 @@ let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
 let methodFilter='全部';
-let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20;
+let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20,v4Year=null;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
 function v3Morris(){const key=JSON.stringify(state);if(key!==memoMorrisKey||!memoMorrisValue){memoMorrisValue=V3.morris(E,state);memoMorrisKey=key;}return memoMorrisValue;}
@@ -403,20 +403,33 @@ function v4EvidenceLinks(keys){
  return '<div class="v3-provenance">'+keys.map(key=>'<a href="'+V4.S[key]+'" target="_blank" rel="noopener noreferrer">↗ '+
  html(({b2020:'2020博罗公报',b2021:'2021博罗公报',b2022:'2022博罗公报',b2023:'2023博罗公报',b2024:'2024博罗公报',b2025:'2025博罗公报',huicheng:'惠城公报',huiyang:'惠阳公报',huidong:'惠东公报',longmen:'龙门公报',industryNews:'产业主体公开报道'}[key]||key))+'</a>').join('')+'</div>';
 }
+function v4YearPanel(){
+ const y=V4.YEARS.find(x=>x.year===v4Year);
+ if(!y)return '';
+ const rates=y.rates.map((v,i)=>({name:V4.INDUSTRIES[i].name,v})).filter(x=>x.v!==null);
+ const best=rates.reduce((a,b)=>b.v>a.v?b:a),worst=rates.reduce((a,b)=>b.v<a.v?b:a);
+ return '<div class="v4-year-story gap"><div class="row wrap"><span><b class="cyan">'+y.year+'</b> 年 · 全部图表已同步定位</span>'+
+ badge('当年整体工业增速 '+sign(y.growth)+'%',y.growth>=0?'real':'warn')+
+ '<button type="button" class="secondary tiny-btn" data-v4-year="clear">✕ 取消年份定位</button></div>'+
+ '<p class="micro">'+html(y.note)+'</p>'+
+ '<p class="micro">当年增速最高：<b class="cyan">'+html(best.name)+' '+sign(best.v)+'%</b>；'+(worst.v<0?'唯一负增长：<b class="gold">'+html(worst.name)+' '+sign(worst.v)+'%</b>':'增速最低：'+html(worst.name)+' '+sign(worst.v)+'%')+'。这些是同一年公报内的描述对照，不构成跨年因果解释。</p></div>';
+}
 function v4HistoryPanel(){
  const h=V4.history(v4Industry),selected=V4.INDUSTRIES.find(x=>x.id===v4Industry),first=h.data.find(x=>x.share!==null),last=h.data.slice().reverse().find(x=>x.share!==null);
  const metrics='<div class="research-tabs">'+[['shares','份额变化'],['rates','增速冷暖']].map(([key,name])=>'<button type="button" data-v4-metric="'+key+'" class="'+(v4Metric===key?'active':'')+'">'+name+'</button>').join('')+'</div>';
  const tabs='<div class="v4-industry-pills">'+V4.INDUSTRIES.map(x=>'<button type="button" data-v4-industry="'+x.id+'" class="'+(v4Industry===x.id?'active':'')+'">'+html(x.name)+'</button>').join('')+'</div>';
- const body=v4Metric==='shares'?V4V.industryHistory(v4Industry):V4V.industryHeatmap(v4Industry,'rates');
- return '<div class="grid2"><article class="panel"><h3>六年行业内部史，谁先退后进？</h3>'+tabs+metrics+body+
+ const yearTabs='<div class="v4-year-pills">'+V4.YEARS.map(y=>'<button type="button" data-v4-year="'+y.year+'" class="'+(v4Year===y.year?'active':'')+'">'+y.year+'</button>').join('')+(v4Year?'<button type="button" class="clear" data-v4-year="clear">✕ 取消定位</button>':'')+'</div>';
+ const yearHint='<p class="micro">提示：点选年份，曲线、热力矩阵、规模时间条与证据解读全部同步定位该年；再点同一年取消。</p>';
+ const body=v4Metric==='shares'?V4V.industryHistory(v4Industry,v4Year):V4V.industryHeatmap(v4Industry,'rates',v4Year);
+ return '<div class="grid2"><article class="panel"><h3>六年行业内部史，谁先退后进？</h3>'+tabs+metrics+yearTabs+yearHint+body+v4YearPanel()+
  '<div class="v4-selected-story"><div><span>选中行业</span><strong>'+html(selected.name)+'</strong></div>'+
  '<div><span>最早可核实份额</span><strong>'+first.year+' · '+decimal(first.share)+'%</strong></div>'+
  '<div><span>2025份额</span><strong>'+decimal(last.share)+'%</strong></div>'+
  '<div><span>份额净差异</span><strong class="'+(last.share-first.share>=0?'good':'gold')+'">'+sign(last.share-first.share)+' pp</strong></div></div>'+
  '<p class="footnote">'+html(h.warning)+'</p></article>'+
  '<article class="panel"><h3>行业×年份：不是缺一个数就补一个</h3>'+
- V4V.industryHeatmap(v4Industry,'shares')+
- '<h3 class="gap">企业规模结构：大型份额下降，小微份额上升</h3>'+V4V.sizeHistory()+
+ V4V.industryHeatmap(v4Industry,'shares',v4Year)+
+ '<h3 class="gap">企业规模结构：大型份额下降，小微份额上升</h3>'+V4V.sizeHistory(v4Year)+
  '<div class="research-vintage gap">2020年大型企业增加值占比31.0%，小型+微型合计44.8%；2025年大型19.2%，小微56.8%。这是同类公开占比的描述比较，不是固定企业样本追踪。</div></article></div>'+
  '<details class="gap"><summary class="small"><b>2020—2025六份公报与可比性检查</b> · 点击查看</summary>'+
  V4.YEARS.map(y=>'<div class="source-item"><a href="'+V4.S[y.source]+'" target="_blank" rel="noopener noreferrer">'+y.year+'年博罗工业细分统计 ↗</a>'+
@@ -796,6 +809,7 @@ document.addEventListener('click',function(e){
  const v4industry=e.target.closest('[data-v4-industry]');if(v4industry){v4Industry=v4industry.dataset.v4Industry;draw();return;}
  const v4metric=e.target.closest('[data-v4-metric]');if(v4metric){v4Metric=v4metric.dataset.v4Metric;draw();return;}
  const v4peer=e.target.closest('[data-v4-peer]');if(v4peer){v4Peer=v4peer.dataset.v4Peer;draw();return;}
+ const v4year=e.target.closest('[data-v4-year]');if(v4year){const v=v4year.dataset.v4Year;v4Year=(v==='clear'||v==='null'||Number(v)===v4Year)?null:Number(v)||null;draw();return;}
  const v4heat=e.target.closest('[data-v4-heat]');if(v4heat){const x=v4heat.dataset.v4Heat.split(',').map(Number);if(x.length===2&&x.every(Number.isFinite)){v4Local=x[0];v4VA=x[1];v4Improve=Math.min(v4Improve,100-v4Local);draw();}return;}
  const filter=e.target.closest('[data-method-filter]');if(filter){methodFilter=filter.dataset.methodFilter;draw();return;}
  const v3lens=e.target.closest('[data-v3-lens]');if(v3lens){dataLens=v3lens.dataset.v3Lens;draw();return;}
@@ -861,7 +875,7 @@ document.addEventListener('change',function(e){
  else if(Object.prototype.hasOwnProperty.call(E.EFFECTS,k)){state.knobs[k]=val;}
  draw();
 });
-document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('[data-variable], [data-service-node], [data-heat], [data-v3-industry], [data-v4-industry], [data-v4-peer], [data-v4-heat]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('[data-variable], [data-service-node], [data-heat], [data-v3-industry], [data-v4-industry], [data-v4-peer], [data-v4-heat], [data-v4-year]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
 window.addEventListener('hashchange',()=>{
  const p=(location.hash||'#home').slice(1).split('/');
  if(p[0]==='wind'&&p[1]!==undefined&&Number.isInteger(Number(p[1])))view=Math.max(0,Math.min(5,Number(p[1])));
