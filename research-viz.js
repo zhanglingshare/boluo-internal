@@ -118,6 +118,37 @@ function comparison(model,target){
  '<b>'+money(x.value)+' 亿</b></div>').join('')+
  '</div><p class="micro">蓝线：各假设下的机械结果，黄竖线：对照目标。模型分歧不是可信区间，更不能当作现实发生概率。</p>';
 }
-root.BoluoResearchViz={history,waterfall,shareBars,dag,networkMap,comparison};
+function stressSurface(surf,state){
+ const ax=surf.axis,left=72,top=30,cw=57,ch=34,rows=ax.length;
+ let parts='<svg viewBox="0 0 705 400" class="linechart" role="img" aria-label="制造业升级与服务承接两条件同时变化的2030或2032目标差额热力图。点击单元格即可更新两条件">';
+ parts+='<text x="330" y="18" fill="#aac6df" text-anchor="middle" font-size="12">工业升级情景强度 →</text>';
+ parts+='<text x="23" y="213" transform="rotate(-90,23,213)" fill="#aac6df" text-anchor="middle" font-size="12">专业服务情景强度 →</text>';
+ ax.forEach((v,j)=>{parts+='<text x="'+(left+j*cw+cw/2)+'" y="360" fill="#9cb5cc" text-anchor="middle" font-size="11">'+v.toFixed(2)+'</text>';});
+ ax.forEach((v,i)=>{parts+='<text x="62" y="'+(top+i*ch+21)+'" fill="#9cb5cc" text-anchor="end" font-size="11">'+v.toFixed(2)+'</text>';});
+ surf.values.forEach((p,i)=>{
+  const row=Math.floor(i/9),col=i%9;
+  const norm=(p.value-surf.minimum)/(surf.maximum-surf.minimum||1);
+  const rr=Math.round(128-72*norm),gg=Math.round(73+130*norm),bb=Math.round(83+130*norm);
+  const isActive=Math.abs(p.manufacturing-state.knobs.manufacturing)<.01&&Math.abs(p.services-state.knobs.services)<.01;
+  const x=left+col*cw,y=top+row*ch,fill='rgb('+rr+','+gg+','+bb+')';
+  parts+='<g data-heat="'+p.manufacturing+','+p.services+'" class="research-node" role="button" tabindex="0" aria-label="工业条件'+p.manufacturing+'，服务条件'+p.services+'，无冲击总量'+p.value.toFixed(0)+'亿元">'+
+  '<rect x="'+(x+2)+'" y="'+(y+2)+'" width="'+(cw-4)+'" height="'+(ch-4)+'" rx="5" fill="'+fill+'" fill-opacity=".8" stroke="'+(isActive?'#ffffff':'#193149')+'" stroke-width="'+(isActive?3:1)+'">'+
+  '<title>工业 '+p.manufacturing+' / 服务 '+p.services+'；确定性总量 '+p.value.toFixed(1)+'亿元；距目标 '+p.gap.toFixed(1)+'亿元</title></rect>'+
+  '<text x="'+(x+cw/2)+'" y="'+(y+23)+'" text-anchor="middle" font-size="11" fill="white">'+Math.round(p.value)+'</text></g>';
+ });
+ parts+='<text x="615" y="71" fill="#90a9c6" font-size="11">合成情景</text>'+
+ '<rect x="596" y="90" width="27" height="18" rx="5" fill="rgb(128,73,83)"/><text x="634" y="104" fill="#d0dce9" font-size="11">较低</text>'+
+ '<rect x="596" y="126" width="27" height="18" rx="5" fill="rgb(56,203,213)"/><text x="634" y="140" fill="#d0dce9" font-size="11">较高</text>'+
+ '<text x="598" y="190" fill="#b2cce3" font-size="11">点击单元格</text><text x="598" y="210" fill="#b2cce3" font-size="11">重新运行风洞</text>'+
+ '<text x="75" y="386" fill="#8fa6c2" font-size="11">同一模型的确定性联合响应；无随机扰动，无因果交互项估计</text></svg>';
+ return parts;
+}
+function backtestTable(backtest){
+ return '<table class="research-backtest"><thead><tr><th>留出年</th><th>实际GDP</th><th>历史外推误差</th><th>7.3%基准误差</th></tr></thead><tbody>'+
+ backtest.tests.map(r=>'<tr><td>'+r.year+'</td><td>'+money(r.actual)+' 亿</td><td>'+n(r.histAbsError*100)+'%</td><td>'+n(r.constantAbsError*100)+'%</td></tr>').join('')+
+ '</tbody></table>';
+}
+
+root.BoluoResearchViz={history,waterfall,shareBars,dag,networkMap,comparison,stressSurface,backtestTable};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.BoluoResearchViz;
 })(typeof window!=='undefined'?window:globalThis);
