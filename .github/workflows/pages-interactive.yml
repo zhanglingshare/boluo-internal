@@ -14,6 +14,11 @@ on:
       - "research-v5.js"
       - "research-v5-viz.js"
       - "research-v5-ui.js"
+      - "survey-evidence-v1.js"
+      - "survey-bridge-v1.js"
+      - "survey-bridge-ui-v1.js"
+      - "presentation-v6.js"
+      - "data/survey-summary.json"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
@@ -21,6 +26,7 @@ on:
       - "tests/research-v3.test.cjs"
       - "tests/research-v4.test.cjs"
       - "tests/research-v5.test.cjs"
+      - "tests/survey-bridge.test.cjs"
       - ".github/workflows/pages-interactive.yml"
   pull_request:
     paths:
@@ -36,6 +42,11 @@ on:
       - "research-v5.js"
       - "research-v5-viz.js"
       - "research-v5-ui.js"
+      - "survey-evidence-v1.js"
+      - "survey-bridge-v1.js"
+      - "survey-bridge-ui-v1.js"
+      - "presentation-v6.js"
+      - "data/survey-summary.json"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
@@ -43,6 +54,7 @@ on:
       - "tests/research-v3.test.cjs"
       - "tests/research-v4.test.cjs"
       - "tests/research-v5.test.cjs"
+      - "tests/survey-bridge.test.cjs"
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -62,6 +74,10 @@ jobs:
       - run: node --check research-v5.js
       - run: node --check research-v5-viz.js
       - run: node --check research-v5-ui.js
+      - run: node --check survey-evidence-v1.js
+      - run: node --check survey-bridge-v1.js
+      - run: node --check survey-bridge-ui-v1.js
+      - run: node --check presentation-v6.js
       - run: node --test tests/*.test.cjs
       - name: Protect prior mockups
         run: |
