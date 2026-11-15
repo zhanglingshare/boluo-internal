@@ -2,6 +2,8 @@
 (function(){
 'use strict';
 const E=window.BoluoEngine;
+const R=window.BoluoResearch, RV=window.BoluoResearchViz;
+if(!R||!RV){document.getElementById('stage').textContent='结构研究模块加载失败，请刷新页面。';return;}
 if(!E){document.getElementById('stage').textContent='计算模块加载失败，请刷新页面。';return;}
 const KEY='boluo-internal-lab-v1',ARCHIVE='boluo-internal-snapshots-v1';
 const DEFAULT={year:2030,target:1600,scenario:'balanced',seed:20321111,draws:2500,knobs:{}};
@@ -10,6 +12,7 @@ function safeWrite(k,val){try{localStorage.setItem(k,JSON.stringify(val));return
 let state=E.normalize(safeRead(KEY,DEFAULT));
 let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
+let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
 let current=null;
 const stage=document.getElementById('stage'),overlay=document.getElementById('calibrationOverlay');
 const money=n=>Number(n).toLocaleString('zh-CN',{maximumFractionDigits:1,minimumFractionDigits:0});
@@ -105,11 +108,111 @@ function mission(r){
  '<div class="notice">③ 推演：目标达标比例是条件模拟频率，不是现实成功概率。</div>'+
  '<div class="notice">④ 复核：不同随机种子、不同冲击幅度都要重跑；结论不稳健就标记。</div></div></div>';
 }
+
+/* Methods-workbench: actual observed vintages, diagnostic variable map and
+   synthetic structural network. These diagrams do not assert causal identification. */
+function historicalPanel(){
+ const d=R.describe(),labels={share:'三产份额',levels:'三产增加值',gdp:'GDP与修订'};
+ const tab='<div class="research-tabs">'+Object.keys(labels).map(k=>'<button type="button" data-history="'+k+'" class="'+(historyMode===k?'active':'')+'">'+labels[k]+'</button>').join('')+'</div>';
+ const base='<section class="card research-feature gap"><div class="row wrap"><div><div class="eyebrow">2020—2025 · OBSERVED HISTORICAL SERIES</div><h3>从真实序列看产业结构变化</h3></div>'+badge('历年统计公报｜不同核算版本','real')+'</div>'+
+ tab+'<div class="chartwrap">'+RV.history(historyMode)+'</div>'+
+ '<div class="chartkey"><span><b style="background:#61ddbd"></b>第一产业</span><span><b style="background:#53a8f8"></b>第二产业</span><span><b style="background:#f3c080"></b>第三产业</span></div>'+
+ '<div class="research-kpi">'+
+ '<div><small>2020—2025 GDP现价增量</small><strong class="cyan">+'+money(d.nominalTotal)+' 亿</strong></div>'+
+ '<div><small>第二产业份额变化</small><strong>'+sign(d.shareChangePp[1])+' pp</strong></div>'+
+ '<div><small>第三产业份额变化</small><strong class="gold">'+sign(d.shareChangePp[2])+' pp</strong></div>'+
+ '<div><small>2024 GDP核实修订</small><strong class="gold">+'+money(d.revision)+' 亿</strong></div></div>'+
+ '<div class="research-vintage gap"><b>统计修订断点：</b>2024年原初步GDP 952.24亿元，2025年公布2024年最终核实为970.87亿元；当前可核查的2024三产分项仍属初步口径。图中的2024分项不能和970.87亿元强行配算结构，更不能把2025年实际增速5.5%误当现价增长率。</div>'+
+ '</section>';
+ const structural='<section class="grid2 gap"><article class="card"><h3>2020—2025现价增加值：谁贡献了算术增量？</h3>'+RV.waterfall()+
+ '<p class="footnote">这个瀑布图是<strong>现价数值的会计差分</strong>，而非经价格调整后的实际GDP增长贡献率，也不是因果归因。2023和2024公告存在小额四舍五入差异。</p></article>'+
+ '<article class="card"><h3>份额变化与结构集中度</h3>'+RV.shareBars()+
+ line('三产粗颗粒 HHI（2020）',decimal(d.concentrationStart,3),'')+
+ line('三产粗颗粒 HHI（2025）',decimal(d.concentrationEnd,3),'cyan')+
+ '<p class="footnote">HHI仅针对三次产业三个大类，无法反映电子信息、装备等二产内部产业集中度；因此不能直接判定高新化程度或网络韧性。</p></article></section>';
+ const sources='<details class="card gap"><summary><b>核验历史来源及分产业统计口径</b> <span class="micro">点击展开</span></summary>'+
+ R.HISTORY.map(r=>'<div class="source-item"><a href="'+r.source+'" target="_blank" rel="noopener noreferrer">'+r.year+'年统计公报 ↗</a>'+
+ '<span class="micro">'+r.stage+' · '+r.gdp+'亿元'+(r.finalGdp?' / GDP最终核实'+r.finalGdp+'亿元':'')+'</span></div>').join('')+
+ '</details>';
+ return base+structural+sources;
+}
+function surveyGraph(m){
+ const coef=m.paths;
+ function k(v){return decimal(v,2);}
+ return '<svg class="linechart" viewBox="0 0 780 245" role="img" aria-label="合成问卷探索性路径模型系数图">'+
+ '<defs><marker id="plsarr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10" fill="#66c9f1"/></marker></defs>'+
+ '<path d="M204 117 L325 117" stroke="#67c9f0" stroke-width="3" marker-end="url(#plsarr)"/>'+
+ '<path d="M455 117 L573 117" stroke="#67c9f0" stroke-width="3" marker-end="url(#plsarr)"/>'+
+ '<path d="M204 88 Q385 -40 573 86" fill="none" stroke="#f0bd75" stroke-width="2.5" marker-end="url(#plsarr)"/>'+
+ '<text x="270" y="100" fill="#b7eaff" text-anchor="middle" font-size="14">'+k(coef['SA→SU'])+'</text>'+
+ '<text x="510" y="100" fill="#b7eaff" text-anchor="middle" font-size="14">'+k(coef['SU→OP'])+'</text>'+
+ '<text x="385" y="35" fill="#ffe0aa" text-anchor="middle" font-size="14">'+k(coef['SA→OP'])+'</text>'+
+ [['SA','服务可得',80],['SU','服务使用',326],['OP','经营表现',573]].map(x=>'<rect x="'+x[2]+'" y="90" width="130" height="57" rx="12" fill="#234466" stroke="#71b5e7"/>'+
+ '<text x="'+(x[2]+65)+'" y="112" text-anchor="middle" fill="#fff" font-size="15" font-weight="700">'+x[0]+'</text>'+
+ '<text x="'+(x[2]+65)+'" y="132" text-anchor="middle" fill="#d0e0ed" font-size="12">'+x[1]+'</text>').join('')+
+ '<text x="385" y="220" text-anchor="middle" font-size="12" fill="#9ab0c9">仅合成问卷 · Mode-A路径系数不是GDP贡献或政策因果效应</text></svg>';
+}
+function variableDetail(){
+ const v=R.variable(selectedVariable);
+ return '<div class="research-detail"><div class="row wrap"><div><div class="eyebrow">'+html(v.role)+' / '+html(v.level)+'</div><h3>'+html(v.name)+'</h3></div>'+badge(html(v.status),v.level==='C'?'model':v.status==='缺失'?'warn':'real')+'</div>'+
+ line('研究用途',html(v.theory),'')+
+ line('单位与时期',html(v.unit)+' · '+html(v.period),'')+
+ '<p><b>测量路径：</b>'+html(v.measure)+'</p>'+
+ '<div class="research-vintage"><b>识别警告：</b>'+html(v.warning)+'</div></div>';
+}
+function variablePanel(){
+ return '<section class="card gap research-feature"><div class="row wrap"><div><div class="eyebrow">THEORY → VARIABLE → MEASUREMENT</div><h3>点击变量：它为什么存在，证据在哪里？</h3></div>'+badge('箭头为候选机制，不是已识别因果','model')+'</div>'+
+ RV.dag(selectedVariable)+
+ '<div class="research-variables">'+R.VARIABLES.map(v=>'<button type="button" class="'+(selectedVariable===v.id?'active':'')+'" data-variable="'+v.id+'">'+html(v.name)+' · '+html(v.level)+'</button>').join('')+'</div>'+
+ variableDetail()+
+ '<details class="gap"><summary class="small">查看完整变量筛选规则与研究红线</summary><p class="footnote">每个变量先经：理论必要性 → 观测单位及口径 → 时间位置 → 测量误差 → 混杂与可识别性 → 替代解释 → 预测检验。缺乏真实序列不能以模型重要性排序当成因果变量选择结果。当前只有2020—2025年六个宏观点位，不足以估计包含十多个参数的县域经济结构模型。</p></details></section>';
+}
+function hypothesisPanel(){
+ return '<section class="card gap"><h3>四条竞争性研究假说：可被证伪，才值得运行</h3><div class="research-hypotheses">'+
+ R.HYPOTHESES.map(h=>'<details><summary><span class="cyan">'+h.id+'</span> '+html(h.name)+'</summary>'+
+ '<p><strong>检验：</strong>'+html(h.test)+'</p>'+
+ '<p><strong>替代解释：</strong>'+html(h.alternative)+'</p>'+
+ '<p><strong>现阶段：</strong>'+html(h.result)+'</p></details>').join('')+
+ '</div><p class="footnote">假说是理论组织工具，不代表模型已识别真实原因。单县短年度序列不允许据此宣称博士论文级因果证据。</p></section>';
+}
+function networkResearchPanel(){
+ const result=R.networkStress({cut:cutCount,mode:cutMode});
+ const target=result.top.find(x=>x.id===selectedNetworkNode)||result.top[0];
+ selectedNetworkNode=target.id;
+ return '<section class="card gap research-feature"><div class="row wrap"><div><div class="eyebrow">STRUCTURAL NETWORK ANALYSIS / SYNTHETIC</div><h3>断开服务节点，谁的连接会消失？</h3></div>'+badge('500节点 / 680边 · C级合成','model')+'</div>'+
+ '<div class="research-switch"><label for="cutCount">移除节点数</label>'+
+ '<select id="cutCount" class="select" data-research="cut">'+[0,3,5,10,20,30].map(x=>'<option value="'+x+'" '+(x===cutCount?'selected':'')+'>'+x+' 个</option>').join('')+'</select>'+
+ '<label for="cutMode">攻击策略</label>'+
+ '<select id="cutMode" class="select" data-research="mode"><option value="targeted" '+(cutMode==='targeted'?'selected':'')+'>高交易额优先</option><option value="random" '+(cutMode==='random'?'selected':'')+'>固定种子随机</option></select></div>'+
+ RV.networkMap(result,selectedNetworkNode)+
+ '<div class="research-kpi">'+
+ '<div><small>断开服务关系</small><strong class="bad">'+result.cutEdges+' 条</strong></div>'+
+ '<div><small>合成采购额失联</small><strong>'+money(result.cutValue)+' <span style="font-size:12px">百万元</span></strong></div>'+
+ '<div><small>受影响的服务采购份额</small><strong class="gold">'+perc(result.impactPct)+'</strong></div>'+
+ '<div><small>服务交易集中HHI</small><strong>'+decimal(result.serviceHHI,3)+'</strong></div></div>'+
+ '<div class="grid2 gap"><div class="panel"><h3>选中节点：'+html(target.id)+'</h3>'+line('合成入边数',target.indegree+' 条','')+
+ line('合成入向交易额',money(target.weight)+' 百万元','cyan')+
+ '<p class="footnote">节点位置为聚合可视化，点击图上S编号可查看。指标来自合成网络实际边集，而不是凭文本编造。</p></div>'+
+ '<div class="panel"><h3>机制解释</h3><p class="research-summary">'+(cutMode==='targeted'?'优先移除高采购额服务节点，用于检查集中依赖风险。':'随机移除同样数量的服务节点，用于构造简单对照。')+'这里的“失联”是被删除的合成边及交易金额，不能推导真实经济损失，跨区供应商也未被观测。</p></div></div></section>';
+}
+function modelComparisonPanel(r){
+ const m=R.compareModels(r);
+ return '<section class="card gap"><div class="row wrap"><div><div class="eyebrow">MODEL PLURALISM / ASSUMPTION DISAGREEMENT</div><h3>同一个2030目标，不同机制假设能差多远？</h3></div>'+badge('不合成单一“成功概率”','model')+'</div>'+
+ RV.comparison(m,state.target)+
+ '<div class="research-kpi"><div><small>最高与最低模型输出差距</small><strong>'+money(m.spread)+' 亿</strong></div>'+
+ '<div><small>蒙特卡洛条件P50</small><strong>'+money(r.total.p50)+' 亿</strong></div>'+
+ '<div><small>历史外推使用年份</small><strong>2020–23</strong></div></div>'+
+ '<details class="gap"><summary class="small"><b>各模型假设与局限</b> · 点击展开</summary>'+
+ m.candidates.map(x=>'<div class="source-item"><div><b>'+html(x.name)+'</b><p class="micro">'+html(x.basis)+'</p></div>'+badge(html(x.type),'model')+'</div>').join('')+
+ '</details><div class="research-vintage gap"><b>建模纪律：</b>'+html(m.caution)+' 2020—2023年现价复合增速跨统计版本且样本很短，不能当正式长期趋势估计。</div></section>';
+}
+
 function dataPage(r){
  const d=E.DATA;
  return heading('02 / EVIDENCE DESK','事实先钉牢，未知才好推演。',
  '数据划成 A/B/C 层，宏观基数不与合成企业关系混称。导入与导出本阶段不做，使用仓库既有公开信息和可复现合成样本。',
  btn('go-survey','继续：看模拟调查 ↗','primary'))+
+ historicalPanel()+
  '<section class="stats">'+stat('2025 GDP',money(d.gdp)+' 亿','公开地区生产总值','cyan')+
  stat('2025规上工业增加值增幅','+8.7%','增幅，不是产业增加值占GDP的比例','good')+
  stat('2025固定资产投资','-18.8%','与工业增长方向相反','bad')+
