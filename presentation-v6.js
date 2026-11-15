@@ -84,26 +84,7 @@ function visual(page,ctx){
     '<p class="v6-brief">博罗、惠城、惠阳、惠东与龙门处在不同的产业结构位置，不代表谁更先进。</p>')+
    '<div class="v6-actions">'+action('go-models','看看产业连接','primary')+'</div>';
  }
- if(page==='survey'){
-  const Evidence=root.BoluoSurveyEvidence,topic=Evidence.analyze(ctx.signalTopic||'industry');
-  const tabs='<div class="v6-topic-tabs">'+Evidence.TOPICS.map(t=>'<button type="button" data-survey-topic="'+t.id+'" class="'+(t.id===topic.id?'active':'')+'">'+esc(t.label)+'</button>').join('')+'</div>';
-  const observed=topic.observed.length?topic.observed.map(x=>
-    '<div class="v6-evidence-card"><div><small>'+esc(x.date)+' · '+esc(x.source_type)+'</small><strong>'+esc(x.name)+'</strong>'+
-    '<span>'+esc(x.description)+'</span></div><a href="'+esc(x.source)+'" rel="noopener noreferrer" target="_blank">查原始材料 ↗</a></div>').join(''):
-    '<div class="v6-empty-signals">目前未采集到可核验的对应信号。<b>保持未知，不打分。</b></div>';
-  return head('现实行为与未来问卷','公开世界留下了什么痕迹？','能看到行为，不等于知道每个人怎么想。')+tabs+
-   factsLine([['已核验公开线索',topic.evidenceCount+'条','不同材料不一定独立'],
-    ['不同原始来源',topic.independentOrigins+'类','同一公报不重复计数'],
-    ['真实问卷回答','0份','尚未开展调查'],
-    ['群体真实倾向','未知','不能直接折算1–5分','loss']])+
-   panel('看到的事实，不是替人回答',observed)+
-   '<div class="v6-hypothesis"><b>'+esc(topic.question)+'</b><span>目前还没有可把这些信号转化为群体态度的有效校准。</span></div>'+
-   '<details class="v6-quiet-depth"><summary>还可以怎样解释这些变化？</summary>'+
-   '<div class="v6-alt-list">'+topic.interpretations.map(x=>'<div>'+esc(x)+'</div>').join('')+'</div>'+
-   '<p>下一步最缺：'+esc(topic.gap)+'</p></details>'+
-   '<div class="v6-disclaimer">'+chip('公开数据 ≠ 意见调查','model')+chip('未采集社交媒体评论样本','model')+
-   chip('下一阶段用真人问卷验证','observed')+'</div>';
- }
+ if(page==='survey')return root.BoluoSurveyBridgeUI.render(ctx);
  if(page==='models'){
   const x=V5.networkTrial(cut);
   return head('关系传导 / 情景实验','断掉一个关键连接，会影响多少环节？','调节受扰动的服务节点，观察同一组合成关系的响应。')+
