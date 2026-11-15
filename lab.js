@@ -6,6 +6,8 @@ const R=window.BoluoResearch, RV=window.BoluoResearchViz;
 const V3=window.BoluoV3, V3V=window.BoluoV3Viz;
 const V4=window.BoluoV4, V4V=window.BoluoV4Viz;
 const V5=window.BoluoV5, V5V=window.BoluoV5Viz, V5UI=window.BoluoV5UI;
+const V6=window.BoluoPresentationV6;
+if(!V6){document.getElementById('stage').textContent='页面视觉层加载失败，请刷新页面。';return;}
 if(!V5||!V5V||!V5UI){document.getElementById('stage').textContent='V5研究论证模块加载失败，请刷新页面。';return;}
 if(!V4||!V4V){document.getElementById('stage').textContent='产业结构V4模块加载失败，请刷新页面。';return;}
 if(!V3||!V3V){document.getElementById('stage').textContent='研究V3模块加载失败，请刷新页面。';return;}
@@ -21,6 +23,7 @@ let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',c
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
 let methodFilter='全部';
 let v5Tabs={},v5Focus='H1',v5Cut=10;
+let v6Expanded={};
 let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
@@ -781,7 +784,13 @@ function draw(){
  const V5ctx={state,r:current,sel:V5opts,survey:page==='survey'?getSurvey():null,tea:{receive:recv,pay,daily}};
  const insert=V5UI.studyPanel(studyKey,V5opts)+V5UI.deepPanel(studyKey,V5ctx);
  const closeHeader=content.indexOf('</header>');
- stage.innerHTML=closeHeader>=0?content.slice(0,closeHeader+9)+insert+content.slice(closeHeader+9):insert+content;
+ const expanded=v6Expanded[studyKey]===true;
+ const v6Context={state,r:current,view,survey:V5ctx.survey,cut:v5Cut,local:v4Local,va:v4VA,improve:v4Improve,
+   tea:V5ctx.tea,records:records.length,sampleSize};
+ const previousContent=closeHeader>=0?content.slice(closeHeader+9):content;
+ stage.innerHTML=V6.headline(page,view)+V6.visual(page,v6Context)+
+  '<details class="v6-depth" id="v6-depth" '+(expanded?'open':'')+'><summary><span class="v6-expand-icon">＋</span><span>更多图表与研究依据</span><small>按需查看详细数据、交互与方法边界</small></summary>'+
+  '<div class="v6-depth-content">'+previousContent+insert+'</div></details>';
  document.getElementById('calibrationContent').innerHTML=calibrationMarkup();
 }
 function navigate(target,sub){
@@ -800,6 +809,12 @@ function save(){
  draw();
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
+document.addEventListener('toggle',function(e){
+ if(e.target&&e.target.id==='v6-depth'){
+  const key=page==='wind'?'wind'+view:page;
+  v6Expanded[key]=Boolean(e.target.open);
+ }
+},true);
 document.addEventListener('click',function(e){
  const v5tab=e.target.closest('[data-v5-tab]');if(v5tab){v5Tabs[v5tab.dataset.v5Page]=v5tab.dataset.v5Tab;draw();return;}
  const v5focus=e.target.closest('[data-v5-focus]');if(v5focus){v5Focus=v5focus.dataset.v5Focus;draw();return;}
