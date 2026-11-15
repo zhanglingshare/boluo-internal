@@ -217,7 +217,7 @@ test('V5 synthetic network adversarial compare recalculates on cut change',()=>{
 test('V5 wind views each have purpose-specific calculations',()=>{
  const expect=[
  ['wind/0','仅此产业承担目标后的反解点'],
- ['wind/1','行业增速'],
+ ['wind/1','2025工业增长8.7%'],
  ['wind/2','本地价值'],
  ['wind/3','账期错配'],
  ['wind/4','网格覆盖率'],
