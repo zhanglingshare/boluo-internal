@@ -24,6 +24,7 @@ let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode=
 let methodFilter='全部';
 let v5Tabs={},v5Focus='H1',v5Cut=10;
 let v6Expanded={};
+let surveySignalTopic='industry';
 let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
@@ -786,7 +787,7 @@ function draw(){
  const closeHeader=content.indexOf('</header>');
  const expanded=v6Expanded[studyKey]===true;
  const v6Context={state,r:current,view,survey:V5ctx.survey,cut:v5Cut,local:v4Local,va:v4VA,improve:v4Improve,
-   tea:V5ctx.tea,records:records.length,sampleSize};
+   tea:V5ctx.tea,records:records.length,signalTopic:surveySignalTopic,sampleSize};
  const previousContent=closeHeader>=0?content.slice(closeHeader+9):content;
  stage.innerHTML=V6.headline(page,view)+V6.visual(page,v6Context)+
   '<details class="v6-depth" id="v6-depth" '+(expanded?'open':'')+'><summary><span class="v6-expand-icon">＋</span><span>更多图表与研究依据</span><small>按需查看详细数据、交互与方法边界</small></summary>'+
@@ -816,6 +817,7 @@ document.addEventListener('toggle',function(e){
  }
 },true);
 document.addEventListener('click',function(e){
+ const topic=e.target.closest('[data-survey-topic]');if(topic){surveySignalTopic=topic.dataset.surveyTopic;draw();return;}
  const v5tab=e.target.closest('[data-v5-tab]');if(v5tab){v5Tabs[v5tab.dataset.v5Page]=v5tab.dataset.v5Tab;draw();return;}
  const v5focus=e.target.closest('[data-v5-focus]');if(v5focus){v5Focus=v5focus.dataset.v5Focus;draw();return;}
  const v4lens=e.target.closest('[data-v4-lens]');if(v4lens){v4Lens=v4lens.dataset.v4Lens;draw();return;}
