@@ -13,13 +13,15 @@ const V5=require('../research-v5.js');globalThis.BoluoV5=V5;
 const V5V=require('../research-v5-viz.js');globalThis.BoluoV5Viz=V5V;
 const V5UI=require('../research-v5-ui.js');
 const SurveyEvidence=require('../survey-evidence-v1.js');
+const SurveyBridge=require('../survey-bridge-v1.js');globalThis.BoluoSurveyBridge=SurveyBridge;
+const SurveyBridgeUI=require('../survey-bridge-ui-v1.js');
 const V6=require('../presentation-v6.js');
 const js=fs.readFileSync(path.resolve(__dirname,'../lab.js'),'utf8');
 function boot(route){
  const nodes={};const listeners={};
  function element(id){if(!nodes[id])nodes[id]={innerHTML:'',textContent:'',style:{},hidden:true};return nodes[id];}
  const location={hash:'#'+route};
- const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoV5:V5,BoluoV5Viz:V5V,BoluoV5UI:V5UI,BoluoSurveyEvidence:SurveyEvidence,BoluoPresentationV6:V6,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
+ const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoV5:V5,BoluoV5Viz:V5V,BoluoV5UI:V5UI,BoluoSurveyEvidence:SurveyEvidence,BoluoSurveyBridge:SurveyBridge,BoluoSurveyBridgeUI:SurveyBridgeUI,BoluoPresentationV6:V6,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
  const document={body:{style:{}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
  const storage=new Map();
  const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}};
@@ -264,4 +266,27 @@ test('V6 lead is graphical-first, old quantitative detail is preserved inside di
   assert.match(v.stage.innerHTML,/v6-depth-content/,route);
   assert.match(v.stage.innerHTML,/v5-study-strip/,route);
  }
+});
+
+
+test('V7 dual-track survey controls modify scenario and retain zero real responses',()=>{
+ const v=boot('survey');
+ assert.match(v.stage.innerHTML,/可运行：情景与合成分群/);
+ assert.match(v.stage.innerHTML,/未来调查校验/);
+ assert.match(v.stage.innerHTML,/真实问卷尚未接入/);
+ const original=v.stage.innerHTML;
+ v.listeners.click({target:{closest(sel){return sel==='[data-survey-mechanism]'?{dataset:{surveyMechanism:'friction'}}:null;}}});
+ assert.notEqual(original,v.stage.innerHTML);
+ assert.match(v.stage.innerHTML,/class="active" data-survey-mechanism="friction"/);
+ v.listeners.change({target:{closest(sel){return sel==='[data-survey-pressure]'?{value:'0.8'}:null;}}});
+ assert.match(v.stage.innerHTML,/value="0.8"/);
+ assert.match(v.stage.innerHTML,/真人问卷尚未接入/);
+});
+test('V7 user-triggered transfer sends SCENARIO condition into a specific wind view',()=>{
+ const v=boot('survey');
+ v.listeners.click({target:{closest(sel){return sel==='[data-survey-mechanism]'?{dataset:{surveyMechanism:'friction'}}:null;}}});
+ v.listeners.change({target:{closest(sel){return sel==='[data-survey-pressure]'?{value:'0.6'}:null;}}});
+ v.listeners.click({target:{closest(sel){return sel==='[data-action]'?{dataset:{action:'survey-to-wind'}}:null;}}});
+ assert.match(v.location.hash,/#wind\/1/);
+ assert.match(v.stage.innerHTML,/风洞|制造业|产业|工业/);
 });
