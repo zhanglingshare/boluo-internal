@@ -247,8 +247,8 @@ test('visual-first survey separates synthetic ordinal scenarios from unobserved 
  assert.match(v.stage.innerHTML,/未测量/);
  assert.match(v.stage.innerHTML,/真实问卷/);
  assert.match(v.stage.innerHTML,/0 <small>份/);
- assert.match(v.stage.innerHTML,/更多图表与研究依据/);
- assert.match(v.stage.innerHTML,/HTMT诊断/); // previous survey computations remain available, collapsed
+ assert.match(v.stage.innerHTML,/真正算一次路径/);
+ assert.match(v.stage.innerHTML,/HTMT诊断/); // original survey estimator remains visible below the newly added workbench
 });
 test('switching public evidence topics shows independent source lineage and unknowns',()=>{
  const v=boot('survey');
@@ -259,13 +259,30 @@ test('switching public evidence topics shows independent source lineage and unkn
  assert.match(v.stage.innerHTML,/游客人次同比/);
  assert.match(v.stage.innerHTML,/媒体引述平台数据/);
 });
-test('V6 lead is graphical-first, old quantitative detail is preserved inside disclosure',()=>{
- for(const route of ['home','data','models','wind/0','wind/2','wind/3','wind/4','archive']){
+test('V5 full-page content is restored and never hidden by V6 wrapper',()=>{
+ for(const route of ['home','mission','data','survey','models','wind/0','wind/1','wind/2','wind/3','wind/4','wind/5','archive']){
   const v=boot(route);
-  assert.match(v.stage.innerHTML,/v6-lead/,route);
-  assert.match(v.stage.innerHTML,/v6-depth-content/,route);
   assert.match(v.stage.innerHTML,/v5-study-strip/,route);
+  assert.doesNotMatch(v.stage.innerHTML,/v6-depth|v6-depth-content|v6-pagehead/,route);
+  assert.match(v.stage.innerHTML,/class="pagehead"/,route);
  }
+});
+test('V2-V5 charts, method diagnostics and original controls are rendered in the open',()=>{
+ const data=boot('data').stage.innerHTML;
+ assert.match(data,/2024年原初步GDP/);
+ assert.match(data,/六年行业内部史/);
+ assert.match(data,/2025规上工业/);
+ const models=boot('models').stage.innerHTML;
+ assert.match(models,/本地价值留存/);
+ assert.match(models,/产业|SNA|网络/);
+ const survey=boot('survey').stage.innerHTML;
+ assert.match(survey,/真正算一次路径/);
+ assert.match(survey,/HTMT诊断/);
+ assert.match(survey,/合成企业问卷/);
+ assert.match(survey,/公开世界有什么迹象/);
+ const wind=boot('wind/4').stage.innerHTML;
+ assert.match(wind,/情景与压力/);
+ assert.match(wind,/81|联合压力/);
 });
 
 
