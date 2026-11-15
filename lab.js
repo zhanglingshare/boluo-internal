@@ -417,7 +417,19 @@ function surveyPage(r){
  line('SA · 平均方差提取 AVE',decimal(m.ave.SA,3),'')+
  line('SU · 平均方差提取 AVE',decimal(m.ave.SU,3),'')+
  line('OP · 平均方差提取 AVE',decimal(m.ave.OP,3),'')+
- '<div class="actions">'+btn('resample','换一个随机种子，再研究','secondary')+'</div></article></div>';
+ '<div class="actions">'+btn('resample','换一个随机种子，再研究','secondary')+'</div></article></div>'+
+ '<div class="grid2 gap"><article class="card"><h3>区分效度：HTMT诊断</h3>'+
+ line('SA / SU',decimal(m.htmt.SA_SU,3),'')+
+ line('SA / OP',decimal(m.htmt.SA_OP,3),'')+
+ line('SU / OP',decimal(m.htmt.SU_OP,3),'')+
+ line('经营表现模型两个解释构念的VIF',decimal(m.vifOP,3),'')+
+ '<div class="research-vintage gap">HTMT根据合成问卷题项跨构念与构念内部相关性计算，VIF只适用于当前经营表现方程的两个构念。不能只看单一阈值就宣布量表有效，更不能冒充SmartPLS检验结果。</div></article>'+
+ '<article class="card"><h3>样本内解释力 ≠ 留出样本预测能力</h3>'+
+ '<div class="research-kpi"><div><small>80/20留出样本 · 训练 / 检验</small><strong>'+m.holdout.train+' / '+m.holdout.test+'</strong></div>'+
+ '<div><small>测试集RMSE</small><strong>'+decimal(m.holdout.rmse,3)+'</strong></div>'+
+ '<div><small>训练均值基准RMSE</small><strong>'+decimal(m.holdout.meanBaselineRMSE,3)+'</strong></div>'+
+ '<div><small>相对均值基准预测得分</small><strong class="'+(m.holdout.skill<0?'bad':'cyan')+'">'+decimal(m.holdout.skill,3)+'</strong></div></div>'+
+ '<div class="research-vintage gap">'+html(m.holdout.method)+'。该对照使用构念题项的均分与独立线性回归，不能称为PLSpredict或完成PLS-SEM的样本外验证。</div></article></div>';
 }
 function networkSvg(net){
  const w=660,h=330;
