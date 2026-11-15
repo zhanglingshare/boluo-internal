@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "status": "pending",
+  "updated_at": null,
+  "notice": "No real survey has yet been fielded. Replace with verified anonymous group aggregates only after an authorized survey and methodological checks.",
+  "datasets": [],
+  "example_schema": {
+    "topic": "industry",
+    "item_id": "business_outlook",
+    "scale_min": 1,
+    "scale_max": 5,
+    "fieldwork_start": "YYYY-MM-DD",
+    "fieldwork_end": "YYYY-MM-DD",
+    "population": "博罗县相关企业经营主体及从业群体",
+    "sampling_frame": "Describe covered units and exclusions",
+    "sampling_method": "Describe probability or nonprobability selection and weighting",
+    "groups": [
+      {
+        "id": "large",
+        "n": 0,
+        "weight": 0,
+        "mean": null
+      }
+    ]
+  }
+}
