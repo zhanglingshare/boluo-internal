@@ -4,6 +4,8 @@
 const E=window.BoluoEngine;
 const R=window.BoluoResearch, RV=window.BoluoResearchViz;
 const V3=window.BoluoV3, V3V=window.BoluoV3Viz;
+const V4=window.BoluoV4, V4V=window.BoluoV4Viz;
+if(!V4||!V4V){document.getElementById('stage').textContent='产业结构V4模块加载失败，请刷新页面。';return;}
 if(!V3||!V3V){document.getElementById('stage').textContent='研究V3模块加载失败，请刷新页面。';return;}
 if(!R||!RV){document.getElementById('stage').textContent='结构研究模块加载失败，请刷新页面。';return;}
 if(!E){document.getElementById('stage').textContent='计算模块加载失败，请刷新页面。';return;}
@@ -16,6 +18,7 @@ let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
 let methodFilter='全部';
+let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
 function v3Morris(){const key=JSON.stringify(state);if(key!==memoMorrisKey||!memoMorrisValue){memoMorrisValue=V3.morris(E,state);memoMorrisKey=key;}return memoMorrisValue;}
@@ -90,6 +93,7 @@ function home(r){
  '从公开的2025年基准出发，用可改变的条件测试产业接力。不是“预测博罗”，而是逼出最值得追问的结构问题。',
  btn('go-wind','进入可运行风洞 ↗','primary'))+
  '<section class="hero"><div class="hero-panel"><div class="eyebrow">THE STRUCTURAL CONTRADICTION</div><h2><span class="bad">-18.8%</span> <strong>+8.7%</strong></h2><p>2025年固定资产投资下降、规上工业增加值却增长。两者口径不同，也不能直接推断因果关系。这是值得进一步检查的信号。</p>'+badge('A/B｜公开统计','real')+' '+badge('不等于结构性断裂已获证实','model')+'</div><div class="hero-panel"><div class="eyebrow">'+state.year+' / CONDITIONAL TEST</div><h2>'+money(r.total.p50)+' <strong>亿</strong></h2><p>当前情景中位数，P10–P90：'+money(r.total.p10)+'–'+money(r.total.p90)+' 亿元。<br>对照 '+money(state.target)+' 亿，差距 <b class="'+(r.gap>0?'bad':'good')+'">'+sign(-r.gap)+' 亿元</b>。</p><div class="actions">'+btn('go-wind','改变假设 ↗','primary')+btn('save','保存此刻研究','secondary')+'</div></div></section>'+
+v4HomePanel()+
  '<section class="stats">'+stat('2025 GDP / 公开统计',money(d.gdp)+' 亿','一产 '+d.p+' · 二产 '+d.s+' · 三产 '+d.t,'cyan')+
  stat(state.year+'目标差额',money(state.target-d.gdp)+' 亿','对照目标减去2025基数','gold')+
  stat('所需五年复合增幅',decimal(rate)+'%','名义口径的算术门槛，非官方增速','')+
@@ -392,12 +396,113 @@ function v3AgriculturePanel(){
  v3Sources(['stat'])+'</section>';
 }
 
+
+/* V4 evidence-structured analysis. Public observations are never equated to
+   supplier purchases, and cross-county snapshots are not matched controls. */
+function v4EvidenceLinks(keys){
+ return '<div class="v3-provenance">'+keys.map(key=>'<a href="'+V4.S[key]+'" target="_blank" rel="noopener noreferrer">↗ '+
+ html(({b2020:'2020博罗公报',b2021:'2021博罗公报',b2022:'2022博罗公报',b2023:'2023博罗公报',b2024:'2024博罗公报',b2025:'2025博罗公报',huicheng:'惠城公报',huiyang:'惠阳公报',huidong:'惠东公报',longmen:'龙门公报',industryNews:'产业主体公开报道'}[key]||key))+'</a>').join('')+'</div>';
+}
+function v4HistoryPanel(){
+ const h=V4.history(v4Industry),selected=V4.INDUSTRIES.find(x=>x.id===v4Industry),first=h.data.find(x=>x.share!==null),last=h.data.slice().reverse().find(x=>x.share!==null);
+ const metrics='<div class="research-tabs">'+[['shares','份额变化'],['rates','增速冷暖']].map(([key,name])=>'<button type="button" data-v4-metric="'+key+'" class="'+(v4Metric===key?'active':'')+'">'+name+'</button>').join('')+'</div>';
+ const tabs='<div class="v4-industry-pills">'+V4.INDUSTRIES.map(x=>'<button type="button" data-v4-industry="'+x.id+'" class="'+(v4Industry===x.id?'active':'')+'">'+html(x.name)+'</button>').join('')+'</div>';
+ const body=v4Metric==='shares'?V4V.industryHistory(v4Industry):V4V.industryHeatmap(v4Industry,'rates');
+ return '<div class="grid2"><article class="panel"><h3>六年行业内部史，谁先退后进？</h3>'+tabs+metrics+body+
+ '<div class="v4-selected-story"><div><span>选中行业</span><strong>'+html(selected.name)+'</strong></div>'+
+ '<div><span>最早可核实份额</span><strong>'+first.year+' · '+decimal(first.share)+'%</strong></div>'+
+ '<div><span>2025份额</span><strong>'+decimal(last.share)+'%</strong></div>'+
+ '<div><span>份额净差异</span><strong class="'+(last.share-first.share>=0?'good':'gold')+'">'+sign(last.share-first.share)+' pp</strong></div></div>'+
+ '<p class="footnote">'+html(h.warning)+'</p></article>'+
+ '<article class="panel"><h3>行业×年份：不是缺一个数就补一个</h3>'+
+ V4V.industryHeatmap(v4Industry,'shares')+
+ '<h3 class="gap">企业规模结构：大型份额下降，小微份额上升</h3>'+V4V.sizeHistory()+
+ '<div class="research-vintage gap">2020年大型企业增加值占比31.0%，小型+微型合计44.8%；2025年大型19.2%，小微56.8%。这是同类公开占比的描述比较，不是固定企业样本追踪。</div></article></div>'+
+ '<details class="gap"><summary class="small"><b>2020—2025六份公报与可比性检查</b> · 点击查看</summary>'+
+ V4.YEARS.map(y=>'<div class="source-item"><a href="'+V4.S[y.source]+'" target="_blank" rel="noopener noreferrer">'+y.year+'年博罗工业细分统计 ↗</a>'+
+ '<span class="micro">'+html(y.note)+'</span></div>').join('')+'</details>';
+}
+function v4PeersPanel(){
+ const comp=V4.compare(v4Peer);
+ const chosen=comp.peer,shares=comp.shares.map(x=>x*100);
+ return '<div class="grid2"><article class="panel"><h3>2025惠州五地三次产业结构坐标</h3>'+
+ V4V.ternary(v4Peer)+
+ '<div class="v4-peer-pills">'+V4.REGIONS.filter(x=>x.id!=='boluo').map(x=>'<button type="button" data-v4-peer="'+x.id+'" class="'+(v4Peer===x.id?'active':'')+'">'+x.name+'</button>').join('')+'</div>'+
+ '<p class="footnote">'+html(comp.caveat)+'</p></article>'+
+ '<article class="panel"><h3>博罗与'+html(chosen.name)+'：分别站在产业三角形什么位置？</h3>'+
+ '<div class="research-kpi"><div><small>博罗2025现价GDP</small><strong>'+money(comp.boluo.gdp)+'亿</strong></div>'+
+ '<div><small>'+html(chosen.name)+'现价GDP</small><strong>'+money(chosen.gdp)+'亿</strong></div>'+
+ '<div><small>三产结构距离 √JSD</small><strong class="cyan">'+decimal(comp.jsDistance,3)+'</strong></div></div>'+
+ V4V.compareBars(v4Peer)+
+ '<div class="research-vintage gap">比较的是2025年结构占比，不是两地谁经济发展质量更高。距离采用三部门组成比例的Jensen-Shannon差异平方根，不能解释为贸易距离或价值流。</div>'+
+ '<h3 class="gap">博罗相对其余四地合计结构的专业化LQ</h3>'+V4V.lq(comp)+
+ '<div class="line-sep"></div>'+line(chosen.name+'实际GDP增速',decimal(chosen.realGrowth)+'%','')+
+ line(chosen.name+'规上工业增速',decimal(chosen.industrialGrowth)+'%','')+
+ line(chosen.name+'固定资产投资增速',chosen.investGrowth===null?'未核实':sign(chosen.investGrowth)+'%',chosen.investGrowth===null?'gold':'')+
+ '<p class="footnote">未核实的指标保持空白；不以其他地区简单替代博罗经济结构的政策反事实。</p></article></div>'+
+ '<div class="panel gap"><h3>四个地区距离博罗有多远？</h3>'+
+ comp.distances.map(x=>'<div class="v4-distance"><span>'+x.name+'</span><div class="v4-distance-track"><i style="width:'+Math.min(100,x.distance/.45*100)+'%"></i></div>'+
+ '<b>'+decimal(x.distance,3)+'</b></div>').join('')+
+ '<p class="footnote">这里只衡量三次产业组成差异。作为县域的惠东、龙门和作为城区的惠城、惠阳有不同区域功能，不构成直接的因果对照组。</p></div>'+
+ v4EvidenceLinks(['b2025','huicheng','huiyang','huidong','longmen']);
+}
+function v4DataPanel(){
+ return '<section class="card research-feature gap"><div class="row wrap"><div><div class="eyebrow">V4 / HISTORICAL INDUSTRY & PEER STRUCTURE</div><h3>一条产业历史线 · 一个惠州比较坐标</h3></div>'+
+ badge('2020—2025历史 + 2025横截面','real')+'</div>'+
+ '<div class="research-tabs">'+[['history','六年工业内部史'],['peers','惠州五地结构坐标']].map(([key,name])=>
+ '<button type="button" data-v4-lens="'+key+'" class="'+(v4Lens===key?'active':'')+'">'+name+'</button>').join('')+'</div>'+
+ (v4Lens==='history'?v4HistoryPanel():v4PeersPanel())+'</section>';
+}
+function v4RetentionPanel(){
+ const m=V4.retention({local:v4Local,va:v4VA,improve:v4Improve}),heat=V4V.retentionHeat(m);
+ const sliders=[
+ ['local','假设服务采购在本地的比例',v4Local,'%','0','100','5'],
+ ['va','假设本地服务供应商增加值率',v4VA,'%','0','100','5'],
+ ['improve','假设本地采购提升幅度',v4Improve,'个百分点','0',String(100-v4Local),'5']
+ ];
+ return '<section class="card research-feature gap"><div class="row wrap"><div><div class="eyebrow">LOCAL VALUE CAPTURE / IDENTIFICATION BOUNDARY</div><h3>制造业扩张，真正留在博罗的价值有多少？</h3></div>'+badge('规范化100单位 · 不是GDP','model')+'</div>'+
+ '<div class="research-vintage">真实本地采购比例和服务供应商增加值率尚无可信的县域观测。现在先建立会计机制：假设每100单位制造企业专业服务采购支出，分别流向本地与外地。本图的“本地增加值”只由假设计算，不能冒充博罗实际统计。</div>'+
+ '<div class="grid2 gap"><article class="panel"><h3>改变假设，观察本地留存</h3>'+
+ sliders.map(([id,name,val,unit,min,max,step])=>'<div class="sliderrow"><label>'+name+' <output data-live-v4="'+id+'">'+val+unit+'</output></label>'+
+ '<input type="range" data-v4-control="'+id+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+val+'"></div>').join('')+
+ '<div class="research-kpi gap"><div><small>本地服务采购支付</small><strong>'+decimal(m.localPay)+' 单位</strong></div>'+
+ '<div><small>跨地区采购支付</small><strong>'+decimal(m.external)+' 单位</strong></div>'+
+ '<div><small>本地服务增加值（假设）</small><strong class="cyan">'+decimal(m.added)+' 单位</strong></div>'+
+ '<div><small>采购转移情景增量</small><strong class="gold">+'+decimal(m.delta)+' 单位</strong></div></div>'+
+ '<p class="footnote">新增本地采购份额只是在固定服务采购预算下改动分配，不证明政策可直接实现，也不考虑资源约束、替代成本或重复核算。</p></article>'+
+ '<article class="panel"><h3>这100单位假设采购，沿着谁流动？</h3>'+V4V.flow(m)+
+ '<div class="notice gap"><b>部分识别：</b>若本地采购率未知，即使暂时固定增加值率为'+m.va+'%，本地服务增加值仅能落在0到'+decimal(m.trivialBounds[1])+'假设单位之间。没有实测采购额，无法得出县域总量。</div></article></div>'+
+ '<div class="panel gap"><h3>121种采购结构：哪些组合才会出现高本地价值留存？</h3>'+heat+
+ '<p class="footnote">图中横轴是本地采购百分比、纵轴是供应商增加值率，格内数值是每100假设采购单位中形成本地增加值的数量。点击格子更新条件；所有结果是会计恒等关系而不是从真实数据估计的产业网络模型。</p></div>'+
+ '<div class="research-vintage gap">'+html(m.caution)+'</div></section>';
+}
+function v4ReadinessPanel(){
+ const rows=V4.evidenceReadiness();
+ return '<section class="card gap"><div class="row wrap"><div><div class="eyebrow">EVIDENCE & IDENTIFICATION GATE</div><h3>真实产业网络，已看到什么？关键还缺什么？</h3></div>'+badge('不推定未经证实的企业交易','warn')+'</div>'+
+ '<div class="v4-evidence-grid">'+rows.map(x=>'<div class="v4-evidence"><div class="row wrap"><b>'+html(x.title)+'</b>'+badge(html(x.status),x.status.includes('缺失')?'warn':'real')+'</div>'+
+ '<p><strong>现有：</strong>'+html(x.observable)+'</p>'+
+ '<p><strong>还需：</strong>'+html(x.need)+'</p>'+
+ '<p class="micro">'+html(x.reason)+'</p></div>').join('')+'</div>'+
+ '<div class="line-sep"></div><h3>公开报道提及的产业主体 ≠ 真实采购关系</h3><div class="grid2">'+
+ V4.ENTITY_CLUES.map(x=>'<div class="notice"><b>'+html(x.name)+'</b><p>'+html(x.observed)+'</p>'+
+ '<p class="micro"><strong>待核：</strong>'+html(x.missing)+'</p></div>').join('')+'</div>'+
+ '<div class="research-vintage gap">本研究数据集中，目前有2个公开点名的企业线索，但没有足够可靠的实际交易边可用于SNA。旧版500主体680边始终是合成网络，绝不能让用户误认为这两家真实企业与模拟节点发生了采购。</div>'+
+ v4EvidenceLinks(['industryNews'])+'</section>';
+}
+function v4HomePanel(){
+ return '<section class="grid3 gap"><div class="tile"><small>2020→2025 · 工业内部结构</small><div class="big-num cyan">24.2% → 23.2%</div><p>电子设备制造份额并非单调上升，2023年曾降到18.6%。</p>'+btn('go-data','查看六年行业曲线','tiny-btn')+'</div>'+
+ '<div class="tile"><small>2020→2025 · 企业规模</small><div class="big-num gold">31.0% → 19.2%</div><p>大型企业增加值占比下降，不代表头部企业退出；需要识别规模分组变动。</p>'+btn('go-data','查看企业结构变化','tiny-btn')+'</div>'+
+ '<div class="tile"><small>2025 · 惠州五地</small><div class="big-num cyan">54.6%</div><p>博罗第二产业GDP份额。与惠阳65%、惠城27.6%放在同一结构坐标对照。</p>'+btn('go-data','比较五地结构','tiny-btn')+'</div></section>';
+}
+
 function dataPage(r){
  const d=E.DATA;
  return heading('02 / EVIDENCE DESK','事实先钉牢，未知才好推演。',
  '数据划成 A/B/C 层，宏观基数不与合成企业关系混称。导入与导出本阶段不做，使用仓库既有公开信息和可复现合成样本。',
  btn('go-survey','继续：看模拟调查 ↗','primary'))+
- historicalPanel()+v3PriceBridgePanel()+v3DataPanel()+
+ v4DataPanel()+
+ '<details class="card gap"><summary><b>宏观三产历史与2024修订</b> · 点击展开</summary>'+historicalPanel()+'</details>'+
+ v3PriceBridgePanel()+v3DataPanel()+
  '<details class="card gap"><summary><b>原版2025宏观清单与来源</b> · 点击展开</summary>'+ '<section class="stats">'+stat('2025 GDP',money(d.gdp)+' 亿','公开地区生产总值','cyan')+
  stat('2025规上工业增加值增幅','+8.7%','增幅，不是产业增加值占GDP的比例','good')+
  stat('2025固定资产投资','-18.8%','与工业增长方向相反','bad')+
@@ -469,7 +574,7 @@ function networkSvg(net){
  return output+'</svg>';
 }
 function modelsPage(r){
- const net=R.networkStress({cut:cutCount,mode:cutMode}),m=E.survey({...state,sampleSize});
+ const net=R.networkStress({cut:cutCount,mode:cutMode}),m=getSurvey();
  return heading('04 / STRUCTURAL RESEARCH','真正的结构分析，不止画一张网。',
  '从可证伪的理论机制与变量测量开始，连接产业网络的实际计算、竞争性模型对照与条件敏感性。请始终区分真实历史和合成关系。',
  btn('go-wind','进入情景风洞 ↗','primary'))+
@@ -478,7 +583,7 @@ function modelsPage(r){
  stat('合成企业主体',net.nodes+' 个','其中制造300 / 服务120 / 农业80','')+
  stat('合成网络连接',net.edges+' 条','有向采购/供货边，非实测','')+
  stat('问卷路径重抽样','120 次','探索性Mode-A PLS，合成问卷','')+'</section>'+
- hypothesisPanel()+v3QuestionPanel()+variablePanel()+networkResearchPanel()+v3CascadePanel()+modelComparisonPanel(r)+backtestPanel()+v3MorrisPanel()+
+ hypothesisPanel()+v3QuestionPanel()+variablePanel()+v4RetentionPanel()+v4ReadinessPanel()+networkResearchPanel()+v3CascadePanel()+modelComparisonPanel(r)+backtestPanel()+v3MorrisPanel()+
  '<section class="grid2 gap"><article class="card"><h3>社会调查：为什么不能直接转成GDP？</h3>'+surveyGraph(m)+
  line('合成 SA→SU 路径',decimal(m.paths['SA→SU'],3),'')+
  line('合成 SA→OP 路径',decimal(m.paths['SA→OP'],3),'')+
@@ -551,7 +656,7 @@ function wind1(r){
 }
 function wind2(r){
  const n=E.network(state),services=r.sector[2];
- return v3ServicePanel()+'<section class="stats">'+stat('2025第三产业增加值','349.00 亿','已公布的现价增加值','cyan')+
+ return v3ServicePanel()+'<div class="notice gap"><b>值得追问：</b>制造业产值增加，多少专业服务采购真正留在本地？当前没有真实采购网络可识别该比例。'+btn('go-models','打开每100单位采购的价值流实验','tiny-btn')+'</div>'+'<section class="stats">'+stat('2025第三产业增加值','349.00 亿','已公布的现价增加值','cyan')+
  stat('模拟专业服务采购边',n.serviceEdges+' 条','合成关系图，C级','')+
  stat(state.year+'第三产业中位数',money(services.p50)+' 亿','由当前条件计算','gold')+
  stat('服务承接指数',decimal(n.capacity,2),'合成网络压力指标','')+'</section>'+
@@ -687,6 +792,11 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
+ const v4lens=e.target.closest('[data-v4-lens]');if(v4lens){v4Lens=v4lens.dataset.v4Lens;draw();return;}
+ const v4industry=e.target.closest('[data-v4-industry]');if(v4industry){v4Industry=v4industry.dataset.v4Industry;draw();return;}
+ const v4metric=e.target.closest('[data-v4-metric]');if(v4metric){v4Metric=v4metric.dataset.v4Metric;draw();return;}
+ const v4peer=e.target.closest('[data-v4-peer]');if(v4peer){v4Peer=v4peer.dataset.v4Peer;draw();return;}
+ const v4heat=e.target.closest('[data-v4-heat]');if(v4heat){const x=v4heat.dataset.v4Heat.split(',').map(Number);if(x.length===2&&x.every(Number.isFinite)){v4Local=x[0];v4VA=x[1];v4Improve=Math.min(v4Improve,100-v4Local);draw();}return;}
  const filter=e.target.closest('[data-method-filter]');if(filter){methodFilter=filter.dataset.methodFilter;draw();return;}
  const v3lens=e.target.closest('[data-v3-lens]');if(v3lens){dataLens=v3lens.dataset.v3Lens;draw();return;}
  const v3industry=e.target.closest('[data-v3-industry]');if(v3industry){selectedIndustry=Number(v3industry.dataset.v3Industry);draw();return;}
@@ -726,6 +836,11 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',function(e){
+ const v4input=e.target.closest('[data-v4-control]');if(v4input){
+ const value=Number(v4input.value);if(v4input.dataset.v4Control==='local'){v4Local=value;v4Improve=Math.min(v4Improve,100-v4Local);}
+ if(v4input.dataset.v4Control==='va')v4VA=value;
+ if(v4input.dataset.v4Control==='improve')v4Improve=value;
+ draw();return;}
  const v3input=e.target.closest('[data-v3-control]');if(v3input){const key=v3input.dataset.v3Control;
  if(key==='domain')v3Domain=v3input.value;
  if(key==='cut')cascadeCut=Number(v3input.value);
@@ -746,7 +861,7 @@ document.addEventListener('change',function(e){
  else if(Object.prototype.hasOwnProperty.call(E.EFFECTS,k)){state.knobs[k]=val;}
  draw();
 });
-document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('[data-variable], [data-service-node], [data-heat], [data-v3-industry]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('[data-variable], [data-service-node], [data-heat], [data-v3-industry], [data-v4-industry], [data-v4-peer], [data-v4-heat]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow='';}});
 window.addEventListener('hashchange',()=>{
  const p=(location.hash||'#home').slice(1).split('/');
  if(p[0]==='wind'&&p[1]!==undefined&&Number.isInteger(Number(p[1])))view=Math.max(0,Math.min(5,Number(p[1])));
