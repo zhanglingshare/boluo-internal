@@ -204,3 +204,15 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
 .of-need b{font-size:11px}
 .v4-osint-legend{color:var(--muted);margin-top:10px}
 .v4-osint-card .tag.warn{background:rgba(158,120,45,.3);color:#f2ca7e}
+
+/* V4-00/01/06 七区接力条 */
+.v4-relay{background:rgba(15,35,58,.35);border:1px solid var(--stroke);border-radius:14px;padding:14px}
+.v4-relay-track{display:flex;flex-wrap:wrap;gap:8px}
+.v4-relay-step{flex:1 1 100px;min-width:100px;background:rgba(31,72,110,.35);border:1px solid var(--stroke);border-radius:10px;padding:9px 10px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:2px;transition:border-color .2s,background .2s}
+.v4-relay-step:hover{background:#245b91}
+.v4-relay-step.current{border-color:#7fd0ff;background:rgba(43,111,158,.45)}
+.v4-relay-step .rs-num{font-size:10px;color:var(--muted);letter-spacing:.08em;font-weight:700}
+.v4-relay-step .rs-t{font-size:13px;font-weight:700;color:#dff1ff}
+.v4-relay-step .rs-d{font-size:10.5px;color:#8fa8bd}
+.v4-relay-step .rs-mark{font-size:9.5px;color:#f2ca7e;background:rgba(158,120,45,.25);border-radius:4px;padding:1px 5px;margin-top:2px;align-self:flex-start}
+.v4-relay .micro{margin-top:10px;color:var(--muted)}

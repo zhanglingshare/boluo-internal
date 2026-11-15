@@ -97,6 +97,7 @@ function home(r){
  btn('go-wind','进入可运行风洞 ↗','primary'))+
  '<section class="hero"><div class="hero-panel"><div class="eyebrow">THE STRUCTURAL CONTRADICTION</div><h2><span class="bad">-18.8%</span> <strong>+8.7%</strong></h2><p>2025年固定资产投资下降、规上工业增加值却增长。两者口径不同，也不能直接推断因果关系。这是值得进一步检查的信号。</p>'+badge('A/B｜公开统计','real')+' '+badge('不等于结构性断裂已获证实','model')+'</div><div class="hero-panel"><div class="eyebrow">'+state.year+' / CONDITIONAL TEST</div><h2>'+money(r.total.p50)+' <strong>亿</strong></h2><p>当前情景中位数，P10–P90：'+money(r.total.p10)+'–'+money(r.total.p90)+' 亿元。<br>对照 '+money(state.target)+' 亿，差距 <b class="'+(r.gap>0?'bad':'good')+'">'+sign(-r.gap)+' 亿元</b>。</p><div class="actions">'+btn('go-wind','改变假设 ↗','primary')+btn('save','保存此刻研究','secondary')+'</div></div></section>'+
 v4HomePanel()+
+ v4RelayBar()+
  '<section class="stats">'+stat('2025 GDP / 公开统计',money(d.gdp)+' 亿','一产 '+d.p+' · 二产 '+d.s+' · 三产 '+d.t,'cyan')+
  stat(state.year+'目标差额',money(state.target-d.gdp)+' 亿','对照目标减去2025基数','gold')+
  stat('所需五年复合增幅',decimal(rate)+'%','名义口径的算术门槛，非官方增速','')+
@@ -135,6 +136,7 @@ function mission(r){
  return heading('01 / QUESTION & FALSIFICATION','这次，我们究竟要证伪什么？',
  '先区分目标、证据、机制和未知量。每个研究假说都应能被现实数据推翻，而不是让模型永远给出漂亮答案。',
  btn('go-data','下一站：看证据 ↗','primary'))+
+ v4RelayBar()+
  '<div class="grid2"><article class="card"><h3>问题 A · 产业接力能否跨越目标门槛？</h3>'+line('2025公开基准',money(E.DATA.gdp)+' 亿元','')+
  line(state.year+'对照目标',money(state.target)+' 亿元','gold')+
  line('所需年均名义增幅',perc(h),'cyan')+
@@ -512,6 +514,22 @@ function v4ReadinessPanel(){
  '<div class="research-vintage gap">本研究数据集中，目前有2个公开点名的企业线索，但没有足够可靠的实际交易边可用于SNA。旧版500主体680边始终是合成网络，绝不能让用户误认为这两家真实企业与模拟节点发生了采购。</div>'+
  v4EvidenceLinks(['industryNews'])+'</section>';
 }
+function v4RelayBar(){
+ const steps=[
+  {n:'00',t:'总览',d:'结构矛盾',page:'home'},
+  {n:'01',t:'任务',d:'可证伪问题',page:'mission'},
+  {n:'02',t:'数据',d:'六年真实史',page:'data',mark:'年份联动'},
+  {n:'03',t:'调查',d:'问卷+OSINT',page:'survey',mark:'新增'},
+  {n:'04',t:'模型',d:'价值流实验',page:'models',mark:'即时对照'},
+  {n:'05',t:'风洞',d:'基准对照',page:'wind',mark:'同坐标'},
+  {n:'06',t:'档案',d:'可复现',page:'archive'}
+ ];
+ return '<section class="v4-relay gap"><div class="v4-relay-track">'+steps.map(s=>
+  '<button type="button" class="v4-relay-step'+(page===s.page?' current':'')+'" data-page="'+s.page+'">'+
+  '<span class="rs-num">'+s.n+'</span><span class="rs-t">'+s.t+'</span><span class="rs-d">'+s.d+'</span>'+
+  (s.mark?'<span class="rs-mark">'+s.mark+'</span>':'')+'</button>').join('')+
+ '</div><p class="micro">七区接力：事实先钉牢（02），问卷与情报分层（03），机制可算（04），条件可比（05），全程可复现（06）。</p></section>';
+}
 function v4HomePanel(){
  return '<section class="grid3 gap"><div class="tile"><small>2020→2025 · 工业内部结构</small><div class="big-num cyan">24.2% → 23.2%</div><p>电子设备制造份额并非单调上升，2023年曾降到18.6%。</p>'+btn('go-data','查看六年行业曲线','tiny-btn')+'</div>'+
  '<div class="tile"><small>2020→2025 · 企业规模</small><div class="big-num gold">31.0% → 19.2%</div><p>大型企业增加值占比下降，不代表头部企业退出；需要识别规模分组变动。</p>'+btn('go-data','查看企业结构变化','tiny-btn')+'</div>'+
@@ -800,6 +818,7 @@ function archivePage(r){
  return heading('06 / REPRODUCIBLE RESEARCH','每一次改动，都能再跑一遍。',
  '不使用导入、导出，也不假装云端协同。实验快照只存在当前浏览器中，保存条件、种子、目标与计算摘要，并可重新打开及对照。',
  btn('save','＋ 保存当前情景','primary'))+
+ v4RelayBar()+
  '<section class="stats">'+stat('当前实验 ID',r.runId,'由模型输入确定的简短指纹','cyan')+
  stat('抽样次数',money(state.draws),'改变后会重新计算','')+
  stat('保存的浏览器快照',records.length+' 份','只保存在此设备内','')+
