@@ -123,3 +123,19 @@ test('V3 scenario page distinguishes shock variation from parameter uncertainty'
  assert.match(v.stage.innerHTML,/两种完全不同的不确定性/);
  assert.match(v.stage.innerHTML,/参数知识不足/);
 });
+
+
+test('doctoral-method admission panel is filterable and forbids unsupported causal estimates',()=>{
+ const v=boot('mission');
+ assert.match(v.stage.innerHTML,/14种研究方法/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-method-filter]'?{dataset:{methodFilter:'证据不足'}}:null;}}});
+ assert.match(v.stage.innerHTML,/双重差分DiD/);
+ assert.doesNotMatch(v.stage.innerHTML,/蒙特卡洛压力/);
+});
+test('synthetic survey exposes measurement quality and honest holdout errors',()=>{
+ const v=boot('survey');
+ assert.match(v.stage.innerHTML,/HTMT诊断/);
+ assert.match(v.stage.innerHTML,/经营表现模型两个解释构念的VIF/);
+ assert.match(v.stage.innerHTML,/留出样本预测能力/);
+ assert.match(v.stage.innerHTML,/不能称为PLSpredict/);
+});
