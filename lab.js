@@ -5,6 +5,8 @@ const E=window.BoluoEngine;
 const R=window.BoluoResearch, RV=window.BoluoResearchViz;
 const V3=window.BoluoV3, V3V=window.BoluoV3Viz;
 const V4=window.BoluoV4, V4V=window.BoluoV4Viz;
+const V5=window.BoluoV5, V5V=window.BoluoV5Viz, V5UI=window.BoluoV5UI;
+if(!V5||!V5V||!V5UI){document.getElementById('stage').textContent='V5研究论证模块加载失败，请刷新页面。';return;}
 if(!V4||!V4V){document.getElementById('stage').textContent='产业结构V4模块加载失败，请刷新页面。';return;}
 if(!V3||!V3V){document.getElementById('stage').textContent='研究V3模块加载失败，请刷新页面。';return;}
 if(!R||!RV){document.getElementById('stage').textContent='结构研究模块加载失败，请刷新页面。';return;}
@@ -18,6 +20,7 @@ let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
 let methodFilter='全部';
+let v5Tabs={},v5Focus='H1',v5Cut=10;
 let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
@@ -772,7 +775,13 @@ function draw(){
  if(['home','mission','data','survey','models','wind','archive'].includes(hashpage))page=hashpage;
  document.querySelectorAll('[data-page]').forEach(el=>{const active=el.getAttribute('data-page')===page;el.classList.toggle('active',active);if(el.matches('.navitem'))el.setAttribute('aria-current',active?'page':'false');});
  document.getElementById('topRun').textContent='LIVE · '+current.runId.toUpperCase()+' · '+state.draws.toLocaleString('zh-CN')+' 条';
- stage.innerHTML=page==='home'?home(current):page==='mission'?mission(current):page==='data'?dataPage(current):page==='survey'?surveyPage(current):page==='models'?modelsPage(current):page==='wind'?windPage(current):archivePage(current);
+ const content=page==='home'?home(current):page==='mission'?mission(current):page==='data'?dataPage(current):page==='survey'?surveyPage(current):page==='models'?modelsPage(current):page==='wind'?windPage(current):archivePage(current);
+ const studyKey=page==='wind'?'wind'+view:page;
+ const V5opts={studyTab:v5Tabs[studyKey],focus:v5Focus,cut:v5Cut};
+ const V5ctx={state,r:current,sel:V5opts,survey:page==='survey'?getSurvey():null,tea:{receive:recv,pay,daily}};
+ const insert=V5UI.studyPanel(studyKey,V5opts)+V5UI.deepPanel(studyKey,V5ctx);
+ const closeHeader=content.indexOf('</header>');
+ stage.innerHTML=closeHeader>=0?content.slice(0,closeHeader+9)+insert+content.slice(closeHeader+9):insert+content;
  document.getElementById('calibrationContent').innerHTML=calibrationMarkup();
 }
 function navigate(target,sub){
@@ -792,6 +801,8 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
+ const v5tab=e.target.closest('[data-v5-tab]');if(v5tab){v5Tabs[v5tab.dataset.v5Page]=v5tab.dataset.v5Tab;draw();return;}
+ const v5focus=e.target.closest('[data-v5-focus]');if(v5focus){v5Focus=v5focus.dataset.v5Focus;draw();return;}
  const v4lens=e.target.closest('[data-v4-lens]');if(v4lens){v4Lens=v4lens.dataset.v4Lens;draw();return;}
  const v4industry=e.target.closest('[data-v4-industry]');if(v4industry){v4Industry=v4industry.dataset.v4Industry;draw();return;}
  const v4metric=e.target.closest('[data-v4-metric]');if(v4metric){v4Metric=v4metric.dataset.v4Metric;draw();return;}
@@ -836,6 +847,7 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',function(e){
+ const v5cut=e.target.closest('[data-v5-cut]');if(v5cut){v5Cut=Number(v5cut.value);draw();return;}
  const v4input=e.target.closest('[data-v4-control]');if(v4input){
  const value=Number(v4input.value);if(v4input.dataset.v4Control==='local'){v4Local=value;v4Improve=Math.min(v4Improve,100-v4Local);}
  if(v4input.dataset.v4Control==='va')v4VA=value;
