@@ -82,3 +82,17 @@ test('input normalization prevents out-of-range calculations',()=>{
  assert.equal(s.knobs.manufacturing,1);
  assert.equal(s.knobs.project_delay,0);
 });
+
+
+test('synthetic HTMT, two-predictor VIF and holdout predictions are computed, not placeholders',()=>{
+ const m=E.survey({sampleSize:125,seed:317});
+ assert.deepEqual(Object.keys(m.htmt).sort(),['SA_OP','SA_SU','SU_OP']);
+ for(const h of Object.values(m.htmt))assert.ok(Number.isFinite(h)&&h>0&&h<4);
+ assert.ok(m.vifOP>=1&&m.vifOP<20);
+ assert.equal(m.holdout.train,100);
+ assert.equal(m.holdout.test,25);
+ assert.ok(Number.isFinite(m.holdout.rmse)&&m.holdout.rmse>0);
+ assert.ok(Number.isFinite(m.holdout.meanBaselineRMSE));
+ assert.ok(Number.isFinite(m.holdout.skill));
+ assert.match(m.holdout.method,/非PLSpredict/);
+});
