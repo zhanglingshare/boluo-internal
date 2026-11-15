@@ -89,3 +89,10 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
 .v3-uncert-target{position:absolute;top:-5px;bottom:-5px;width:2px;background:#f38e9d;border-left:1px solid #f38e9d}
 @media(max-width:800px){.v3-uncert-row{grid-template-columns:1fr}.v3-uncert-row b{text-align:left}.v3-uncert-track{min-height:24px}.v3-conflict-list{grid-template-columns:1fr}.v3-rank div{flex:1}}
 @media(max-width:520px){.v3-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.v3-tabs button{min-width:0}.v3-size-row{grid-template-columns:70px minmax(0,1fr) 40px 48px}.v3-divergent{grid-template-columns:65px 1fr 51px}.v3-signal-row{grid-template-columns:84px 1fr 48px}.v3-plan-label{font-size:10px}}
+
+
+.v3-price-equation{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:15px 0}
+.v3-price-equation>span:not(.v3-arrow){border-radius:10px;background:rgba(32,83,125,.20);border:1px solid var(--stroke);padding:12px 14px;font-size:11px;color:var(--sub);flex:1;min-width:144px}
+.v3-price-equation b{display:block;color:var(--ink);font-size:16px;margin-top:6px}
+.v3-price-equation .v3-arrow{color:var(--cyan);font-size:20px}
+@media(max-width:650px){.v3-price-equation{display:grid;grid-template-columns:1fr}.v3-price-equation .v3-arrow{text-align:center;transform:rotate(90deg)}}
