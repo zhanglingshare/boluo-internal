@@ -1,0 +1,13 @@
+{
+  "name": "boluo-room",
+  "version": "0.1.0",
+  "private": true,
+  "description": "博罗智能体议事厅 P0 编排器：消息信封 + 证据分视图 + inReplyTo 闭环",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node tests/acceptance.test.cjs"
+  },
+  "engines": { "node": ">=18" }
+}
