@@ -1,7 +1,7 @@
 # 博罗内部研究版：在线验收说明
 
 在线工作台：https://zhanglingshare.github.io/boluo-internal/
-原13张高保真设计入口：https://zhanglingshare.github.io/boluo-internal/mockups-portal.html
+原13张高保真页面保留在 mockups/ 目录（旧门户 mockups-portal.html 已应要求删除）。
 
 ## 当前交付范围
 当前阶段完整覆盖：研究总览 → 研究任务 → 证据中心 → 合成调查 → 多模型实验 → 6个风洞视图 → 研究档案与条件对比。校准抽屉可调整合理区间内的参数、对照年份和目标、随机种子与轨迹数。全部计算在浏览器执行，无数据上传。
@@ -30,7 +30,7 @@
 8. 在「05-5行动跟踪」获得需要进一步核实的具体线索。
 9. 打开「校准」改变目标、年份、抽样次数和种子，数值重新计算。
 10. 在「06研究档案」保存、恢复、对照本地快照，刷新网页仍可恢复；清理浏览器站点数据后会丢失。
-11. 视觉原型在mockups/中保持原样，旧入口备份为mockups-portal.html。
+11. 视觉原型在mockups/中保持原样；旧门户 mockups-portal.html 已应要求删除。
 
 ## 自动质量门
 GitHub Actions: Online lab checks。

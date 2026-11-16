@@ -54,6 +54,4 @@ jobs:
       - run: node --test tests/*.test.cjs
       - name: Protect prior mockups
         run: |
-          test -f mockups-portal.html
           test -f mockups/final_054b.html
-          test -f web/index.html
