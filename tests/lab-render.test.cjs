@@ -185,7 +185,7 @@ test('dynamic research cards render across the existing workspaces',()=>{
  const home=boot('home');
  assert.match(home.stage.innerHTML,/动态研判台/);
  assert.match(home.stage.innerHTML,/1 : 5 : 4/);
- assert.match(home.stage.innerHTML,/不按三次产业增加值占比计算达标率/);
+ assert.match(home.stage.innerHTML,/不是三次产业增加值占比/);
  assert.match(home.stage.innerHTML,/已核实高等级预警/);
  assert.match(home.stage.innerHTML,/工业增长与投资下行同时出现/);
  for(const [route,needle] of [['data','证据冲突'],['models','真实企业关系图'],['wind/0','当前风洞总量对照线'],['archive','复盘机制']]){
