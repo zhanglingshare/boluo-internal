@@ -628,7 +628,7 @@ function adapterRecordCard(item,all){
  const grade='<span class="adapter-grade '+html(String(r.evidence_grade||'').toLowerCase())+'">'+html(r.evidence_grade||'?')+'级</span>';
  const actions='<div class="adapter-actions"><button type="button" class="tiny-btn" data-adapter-map-save="'+html(r.id)+'">保存映射</button>'+
  (status==='已批准'?'<button type="button" class="tiny-btn ghost" data-adapter-status="待审核" data-adapter-id="'+html(r.id)+'">撤销批准</button>':
-  '<button type="button" class="tiny-btn primary" data-adapter-status="已批准" data-adapter-id="'+html(r.id)+'" '+(item.validation.ok?'':'disabled')+'>批准进入证据层</button>')+
+  '<button type="button" class="tiny-btn primary" data-adapter-status="已批准" data-adapter-id="'+html(r.id)+'" '+(item.validation.ok&&status!=='待保存'&&status!=='待映射'?'':'disabled')+'>批准进入证据层</button>')+
  '<button type="button" class="tiny-btn ghost" data-adapter-status="退回补资料" data-adapter-id="'+html(r.id)+'">退回补资料</button></div>';
  return '<article class="adapter-record" data-adapter-card="'+html(r.id)+'"><div class="adapter-record-head"><div><div class="adapter-meta">'+grade+' <span>'+html(r.period)+' · '+html(r.geography)+'</span><span>'+html(r.record_type==='survey_aggregate'?'匿名调查汇总':'指标观察')+'</span></div><h3>'+html(r.indicator)+'</h3></div><span class="adapter-status '+adapterStatusClass(status)+'">'+html(status)+'</span></div>'+
  '<div class="adapter-value">'+html(r.value)+' <small>'+html(r.unit)+'</small></div><p class="adapter-source">'+html(r.source_name)+' · '+html(r.scope)+' '+url+'</p>'+
