@@ -118,7 +118,7 @@ function builtIn(ctx,storage){
  return out;
 }
 function importedIssues(rows,storage){
- const usable=(rows||[]).filter(x=>x.evidence_grade!=='D');
+ const usable=(rows||[]).filter(x=>x.evidence_grade==='A'||x.evidence_grade==='B');
  const out=[],groups=new Map();
  usable.forEach(x=>{const k=[x.record_type,x.indicator,x.geography,x.industry||'',x.scope,x.unit].join('|');if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x);});
  groups.forEach((items,key)=>{
@@ -127,26 +127,26 @@ function importedIssues(rows,storage){
    if(same.length>1){
     const vals=same.map(x=>x.value),spread=Math.max(...vals)-Math.min(...vals),base=Math.max(1,...vals.map(Math.abs)),threshold=same[0].unit==='%'?1:base*.05;
     if(spread>threshold){
-     out.push(issue({id:'import-conflict-'+hash(key+'|'+period),kind:'conflict',tier:'review',area:'data',title:'同一指标出现不同来源数值',metric:same[0].indicator+' · '+period,summary:'相同地区、统计范围和期次下出现不同数值。先核对口径，不自动选取较大或较新的数。',evidence:same.map(x=>x.source_name+'：'+x.value+' '+x.unit+'（'+x.evidence_grade+'级）'),alternatives:['统计范围或样本范围不同','初步值与修订值不同','单位或计算方法不同','来源转录错误'],falsifier:'回到原始表并确认范围、版本和单位后，差异可能消失或需要保留为版本差。',nextStep:'核对来源原表、统计时点、样本范围、单位和修订状态。',grade:'导入数据 · 待复核',source:'本地导入汇总数据',destination:'data'},storage));
+     out.push(issue({id:'import-conflict-'+hash(key+'|'+period),kind:'conflict',tier:'review',area:'data',title:'同一指标出现不同来源数值',metric:same[0].indicator+' · '+period,summary:'相同地区、统计范围和期次下出现不同数值。先核对口径，不自动选取较大或较新的数。',evidence:same.map(x=>x.source_name+'：'+x.value+' '+x.unit+'（'+x.evidence_grade+'级）'),alternatives:['统计范围或样本范围不同','初步值与修订值不同','单位或计算方法不同','来源转录错误'],falsifier:'回到原始表并确认范围、版本和单位后，差异可能消失或需要保留为版本差。',nextStep:'核对来源原表、统计时点、样本范围、单位和修订状态。',grade:'导入数据 · 待复核',source:'本地导入汇总数据',sourceLinks:same.filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'data'},storage));
     }
    }
   });
   if(items[0].record_type==='metric'){
    const series=items.slice().sort((a,b)=>a.period.localeCompare(b.period));
-   if(series.length>=5){
+   if(series.length>=5&&new Set(series.map(x=>x.period)).size===series.length){
     const deltas=[];for(let i=1;i<series.length;i++)deltas.push(series[i].value-series[i-1].value);
     const mid=median(deltas),mad=median(deltas.map(x=>Math.abs(x-mid))),last=deltas[deltas.length-1];
     const threshold=Math.max(2.5*mad,series[0].unit==='%'?1:Math.max(.01,Math.abs(mid)*2));
     if(Math.abs(last-mid)>threshold){
      const latest=series[series.length-1],prev=series[series.length-2];
-     out.push(issue({id:'import-anomaly-'+hash(key),kind:'anomaly',tier:'watch',area:'data',title:'发现一项时间序列异常候选',metric:latest.indicator+' '+(last>0?'+':'')+last.toFixed(2)+' '+latest.unit,summary:latest.geography+' '+latest.indicator+' 在'+prev.period+'至'+latest.period+'的变化，偏离该序列此前变化节奏。当前仅是统计筛查候选。',evidence:['历史变化中位数 '+mid.toFixed(2)+' '+latest.unit,'历史变化MAD '+mad.toFixed(2)+' '+latest.unit,'最新变化 '+last.toFixed(2)+' '+latest.unit,'有效期次数 '+series.length],alternatives:['真实结构变化','统计口径或样本范围改变','一次性冲击或季节因素','录入、单位或版本错误'],falsifier:'核对原始来源、口径与后续期次；若修订后回归常态或后续反转，不应保留为持续异常。',nextStep:'复核最新数据并补充同期行业、企业规模或相关指标作交叉验证。',grade:'本地导入 · 统计候选',source:'MAD稳健变化筛查（仅用于线索排序）',destination:'data'},storage));
+     out.push(issue({id:'import-anomaly-'+hash(key),kind:'anomaly',tier:'watch',area:'data',title:'发现一项时间序列异常候选',metric:latest.indicator+' '+(last>0?'+':'')+last.toFixed(2)+' '+latest.unit,summary:latest.geography+' '+latest.indicator+' 在'+prev.period+'至'+latest.period+'的变化，偏离该序列此前变化节奏。当前仅是统计筛查候选。',evidence:['历史变化中位数 '+mid.toFixed(2)+' '+latest.unit,'历史变化MAD '+mad.toFixed(2)+' '+latest.unit,'最新变化 '+last.toFixed(2)+' '+latest.unit,'有效期次数 '+series.length],alternatives:['真实结构变化','统计口径或样本范围改变','一次性冲击或季节因素','录入、单位或版本错误'],falsifier:'核对原始来源、口径与后续期次；若修订后回归常态或后续反转，不应保留为持续异常。',nextStep:'复核最新数据并补充同期行业、企业规模或相关指标作交叉验证。',grade:'本地导入 · 统计候选',source:'MAD稳健变化筛查（仅用于线索排序）',sourceLinks:[prev,latest].filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'data'},storage));
     }
    }
   }
  });
  const survey=usable.filter(x=>x.record_type==='survey_aggregate');
  survey.forEach(x=>{
-  out.push(issue({id:'import-survey-'+x.id,kind:'survey',tier:'review',area:'survey',title:'新增一条匿名调查汇总观察',metric:x.indicator+' · '+x.value+' '+x.unit,summary:x.period+'，'+x.geography+'，样本量n='+x.sample_n+'。'+(x.sample_n<30?'样本量较小，只作描述性线索。':'样本量本身不能证明代表性，仍需检查抽样框、覆盖和权重。'),evidence:['统计方式：'+x.aggregation,'总体定义：'+x.population,'抽样框：'+x.sample_frame,'缺失率：'+x.missing_rate+'%','来源：'+x.source_name],alternatives:['样本覆盖偏向某类企业','行业、规模或地区构成变化','真实经营态度或表现变化'],falsifier:'若抽样框、权重或缺失处理改变，结果可能发生变化；需与后续批次和公开指标对照。',nextStep:'按行业、规模和地区分层复核，检查缺失率与样本覆盖后再进入模型。',grade:'匿名调查汇总 · '+x.evidence_grade,source:x.source_name,destination:'survey'},storage));
+  out.push(issue({id:'import-survey-'+x.id,kind:'survey',tier:'review',area:'survey',title:'新增一条匿名调查汇总观察',metric:x.indicator+' · '+x.value+' '+x.unit,summary:x.period+'，'+x.geography+'，样本量n='+x.sample_n+'。'+(x.sample_n<30?'样本量较小，只作描述性线索。':'样本量本身不能证明代表性，仍需检查抽样框、覆盖和权重。'),evidence:['统计方式：'+x.aggregation,'总体定义：'+x.population,'抽样框：'+x.sample_frame,'缺失率：'+x.missing_rate+'%','来源：'+x.source_name],alternatives:['样本覆盖偏向某类企业','行业、规模或地区构成变化','真实经营态度或表现变化'],falsifier:'若抽样框、权重或缺失处理改变，结果可能发生变化；需与后续批次和公开指标对照。',nextStep:'按行业、规模和地区分层复核，检查缺失率与样本覆盖后再进入模型。',grade:'匿名调查汇总 · '+x.evidence_grade,source:x.source_name,sourceLinks:x.source_url?[{label:x.source_name,url:x.source_url}]:[],destination:'survey'},storage));
  });
  return out;
 }
