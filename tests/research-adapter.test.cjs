@@ -73,3 +73,13 @@ test('proposal cannot use evidence mapped to an unrelated variable or an out-of-
  p.parameter='manufacturing';p.after=E.normalize({...base,knobs:{...base.knobs,manufacturing:1.5}});
  assert.equal(A.saveProposal(p,items,E,st).ok,false);
 });
+
+test('scenario proposal must preserve all non-selected model inputs',()=>{
+ const st=storage(),x=row(),all=[x];
+ A.setMapping(x.id,'industrial','',all,R,st);A.setStatus(x.id,'已批准',all,R,st);
+ const items=A.list(all,R,st),base=E.normalize({}),after=E.normalize({...base,knobs:{...base.knobs,manufacturing:.2}});
+ after.draws=1000;
+ const p={parameter:'manufacturing',evidenceIds:[x.id],note:'工业增速只作为背景，单独测试制造业条件变化，不将其视为参数估计。',before:base,after,baseline:{p10:1,p50:2,p90:3,hit:.1},candidate:{p10:1,p50:2.1,p90:3.1,hit:.2}};
+ assert.equal(A.saveProposal(p,items,E,st).ok,false);
+ assert.match(A.saveProposal(p,items,E,st).error,/抽样次数不变/);
+});
