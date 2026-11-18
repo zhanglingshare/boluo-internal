@@ -43,7 +43,7 @@ function suggest(record){
   matches.length>1?{variableId:null,reason:'命中多个候选变量，需要人工选择。'}:{variableId:null,reason:'没有可靠的自动映射，需人工核对变量定义。'};
 }
 function reviewMap(storage){const a=read(REVIEW_STORE,storage);return Object.fromEntries(a.map(x=>[x.id,x]));}
-function validation(record,variableId,all,research,mappingNote,mappingMode){
+function validation(record,variableId,all,research,mappingNote,mappingMode,storage){
  const blockers=[],warnings=[],v=findVariable(variableId,research),meta=META[variableId];
  if(!v||!meta){blockers.push('尚未映射到研究变量。');return{ok:false,blockers,warnings,modelEligible:false};}
  if(meta.kind==='multi')blockers.push(meta.note);
@@ -65,8 +65,9 @@ function validation(record,variableId,all,research,mappingNote,mappingMode){
  if(['project_delivery','local_service','talent'].includes(variableId)&& (Number(record.value)<0||Number(record.value)>100))blockers.push('比例型变量应处于0—100范围。');
  if(variableId==='gdp'&&Number(record.value)<=0)blockers.push('GDP总量必须大于0。');
  const key=[variableId,record.period,record.geography,record.industry||'',record.scope,record.unit].join('|');
+ const mappedReviews=reviewMap(storage);
  const duplicates=(all||[]).filter(x=>x.id!==record.id&&(()=>{
-  const rv=reviewMapFor(x.id);return rv&&rv.variableId===variableId&&[variableId,x.period,x.geography,x.industry||'',x.scope,x.unit].join('|')===key;
+  const rv=mappedReviews[x.id];return rv&&rv.variableId===variableId&&[variableId,x.period,x.geography,x.industry||'',x.scope,x.unit].join('|')===key;
  })());
  if(duplicates.length){
   if(clean(mappingNote,500).length<15)blockers.push('发现同变量、同地区、同期次、同范围的其他来源记录。请核对版本，并在映射说明中记录取舍依据。');
@@ -76,7 +77,6 @@ function validation(record,variableId,all,research,mappingNote,mappingMode){
  if(variableId==='investment')warnings.push('投资增速是前置信号，不可直接换算为GDP或模型增长系数。');
  if(meta.kind!=='multi')warnings.push(meta.note);
  return{ok:blockers.length===0,blockers,warnings,modelEligible:blockers.length===0&&['A','B'].includes(String(record.evidence_grade||'').toUpperCase()),variable:{id:v.id,name:v.name,unit:v.unit}};
- function reviewMapFor(id){const m=reviewMap(validation._storage);return m[id];}
 }
 function list(observations,research,storage){
  const rows=Array.isArray(observations)?observations:[],reviews=reviewMap(storage);
@@ -85,7 +85,7 @@ function list(observations,research,storage){
   const variableId=fresh?saved.variableId:auto.variableId;
   const mappingMode=fresh?saved.mappingMode:(variableId?'auto':'none');
   const note=fresh?saved.note||'':'';
-  const check=validation(record,variableId,rows,research,note,mappingMode);
+  const check=validation(record,variableId,rows,research,note,mappingMode,storage);
   const status=fresh?saved.status:(variableId?'待审核':'待映射');
   return{record,suggestedVariable:auto.variableId,suggestionReason:auto.reason,variableId,mappingMode,note,status,validation:check};
  });
@@ -93,7 +93,7 @@ function list(observations,research,storage){
 function setMapping(id,variableId,note,observations,research,storage){
  const record=(observations||[]).find(x=>x.id===id);if(!record)return{ok:false,error:'找不到这条观察记录。'};
  const auto=suggest(record),mode=variableId&&variableId!==auto.variableId?'manual':(variableId?'auto':'none');
- const check=validation(record,variableId,observations,research,note,mode);
+ const check=validation(record,variableId,observations,research,note,mode,storage);
  const reviews=reviewMap(storage),old=reviews[id]||{};
  reviews[id]={id,fingerprint:fingerprint(record),variableId:variableId||null,mappingMode:mode,note:clean(note,500),status:variableId?'待审核':'待映射',updatedAt:new Date().toISOString(),previousStatus:old.status||null};
  const ok=write(REVIEW_STORE,Object.values(reviews),storage);
@@ -103,7 +103,7 @@ function setStatus(id,status,observations,research,storage){
  if(!['已批准','退回补资料','已排除','待审核'].includes(status))return{ok:false,error:'无效审核状态。'};
  const record=(observations||[]).find(x=>x.id===id);if(!record)return{ok:false,error:'找不到这条观察记录。'};
  const reviews=reviewMap(storage),old=reviews[id];if(!old||old.fingerprint!==fingerprint(record)||!old.variableId)return{ok:false,error:'请先完成变量映射。'};
- const check=validation(record,old.variableId,observations,research,old.note,old.mappingMode);
+ const check=validation(record,old.variableId,observations,research,old.note,old.mappingMode,storage);
  if(status==='已批准'&&!check.ok)return{ok:false,error:check.blockers.join('；'),validation:check};
  reviews[id]={...old,status,approvedAt:status==='已批准'?new Date().toISOString():null,updatedAt:new Date().toISOString()};
  const ok=write(REVIEW_STORE,Object.values(reviews),storage);
