@@ -154,7 +154,7 @@ function discover(ctx){
  ctx=ctx||{};const storage=ctx.storage,rows=ctx.observations||load(storage);
  return builtIn(ctx,storage).concat(importedIssues(rows,storage)).sort((a,b)=>({watch:0,review:1}[a.tier]??2)-({watch:0,review:1}[b.tier]??2));
 }
-const API={STORE,STATUS_STORE,ALLOWED,parseCsv,load,save,importCsv,clear,discover,median};
+const API={STORE,STATUS_STORE,ALLOWED,parseCsv,load,save,importCsv,clear,discover,median,setStatus};
 root.BoluoDiscovery=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
