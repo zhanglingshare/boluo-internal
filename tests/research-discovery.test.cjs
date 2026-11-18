@@ -42,9 +42,12 @@ test('five-period series can create a robust anomaly candidate',()=>{
  const issue=D.discover({v3:V3,v4:V4,observations:D.load(st),storage:st}).find(x=>x.kind==='anomaly');
  assert.ok(issue);assert.match(issue.summary,/偏离该序列此前变化节奏/);
 });
-test('D-grade assumptions do not trigger empirical anomaly screening',()=>{
- const st=storage(),rows=[10,11,12,13,40].map((v,i)=>metric('工业产值',String(2021+i),v,'研究假设',{evidence_grade:'D'}));
- D.importCsv(csv(rows),st);
+test('C/D proxy or assumption records do not trigger empirical anomaly screening',()=>{
+ const st=storage();
+ for(const grade of ['C','D']){
+  const rows=[10,11,12,13,40].map((v,i)=>metric('工业产值',String(2021+i),v,'研究假设',{evidence_grade:grade}));
+  D.importCsv(csv(rows),st);
+ }
  assert.equal(D.discover({v3:V3,v4:V4,observations:D.load(st),storage:st}).filter(x=>x.kind==='anomaly').length,0);
 });
 test('same-period imported industrial and investment signals can surface a divergence',()=>{
