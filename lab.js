@@ -93,7 +93,7 @@ function insight(r){
  return msg;
 }
 
-const CARD_TYPE_LABELS={signal:'结构信号',target:'目标对照',conflict:'证据冲突',reminder:'提醒',gap:'数据缺口',lead:'机会线索',model:'模型边界',review:'复盘'};
+const CARD_TYPE_LABELS={alert:'观察预警',signal:'结构信号',target:'目标对照',conflict:'证据冲突',reminder:'提醒',gap:'数据缺口',lead:'机会线索',model:'模型边界',review:'复盘'};
 const CARD_STATUS_CLASS={new:'new',investigating:'working',verified:'done',dismissed:'dismissed'};
 function researchCardMarkup(c,compact){
  const status=c.status||'new';let actions='';
@@ -103,8 +103,8 @@ function researchCardMarkup(c,compact){
  const open='<button type="button" class="tiny-btn primary" data-card-open="'+html(c.destination)+'" data-card-view="'+(c.view===undefined?'':c.view)+'">'+html(c.action||'进入研究')+' ↗</button>';
  return '<article class="insight-card tone-'+html(c.tone||'blue')+(compact?' compact':'')+'"><div class="ic-top"><span class="ic-type">'+html(CARD_TYPE_LABELS[c.type]||c.type)+'</span><span class="ic-status '+(CARD_STATUS_CLASS[status]||'new')+'">'+html(c.statusLabel||'新发现')+'</span></div>'+
  '<div class="ic-priority">'+html(c.priority||'研究线索')+' <span>'+html(c.grade||'')+'</span></div><h3>'+html(c.title)+'</h3><div class="ic-metric">'+html(c.metric||'')+'</div>'+
- '<p class="ic-summary">'+html(c.summary||'')+'</p><div class="ic-evidence"><b>依据</b>'+html(c.evidence||'')+'</div>'+
- '<div class="ic-caution"><b>边界</b>'+html(c.caution||'')+'</div><div class="ic-next"><b>下一步</b>'+html(c.nextStep||'')+'</div>'+
+ '<p class="ic-summary">'+html(c.summary||'')+'</p><details class="ic-details"><summary>展开依据、边界与下一步</summary><div class="ic-evidence"><b>依据</b>'+html(c.evidence||'')+'</div>'+
+ '<div class="ic-caution"><b>边界</b>'+html(c.caution||'')+'</div><div class="ic-next"><b>下一步</b>'+html(c.nextStep||'')+'</div></details>'+
  '<div class="ic-foot"><span>'+html(c.source||'')+'</span></div><div class="ic-actions">'+open+actions+'</div></article>';
 }
 function getResearchCards(){return Cards.build({engine:E,v3:V3,v4:V4,research:R,run:current,archiveCount:records.length,storage:localStorage});}
