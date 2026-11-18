@@ -160,7 +160,39 @@ function importedIssues(rows,storage){
    out.push(issue({id:'import-divergence-'+hash(key),kind:'divergence',tier:'watch',area:'data',title:'导入数据出现工业产出与投资方向背离',metric:output.indicator+' '+(output.value>0?'+':'')+output.value+'% / '+investment.indicator+' '+(investment.value>0?'+':'')+investment.value+'%',summary:'同一地区、期次、统计范围和单位下，两项指标方向不同。系统只提示背离，不推断因果。',evidence:[output.period+' · '+output.geography,output.source_name+'：'+output.value+'%',investment.source_name+'：'+investment.value+'%'],alternatives:['存量产能与新增投资时滞','需求、订单或行业结构变化','指标统计范围或价格口径差异'],falsifier:'若两项指标并非同一范围或同一统计口径，先取消背离比较；补充订单、投产批次和产能利用率后再评估解释。',nextStep:'核对两个指标的原始口径，并补充行业、项目和订单证据。',grade:'本地导入 · 同口径方向筛查',source:'导入汇总数据',sourceLinks:[output,investment].filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'data'},storage));
   }
  });
+ const dispersionGroups=new Map();
+ usable.filter(x=>x.record_type==='metric'&&x.industry).forEach(x=>{
+  const k=[x.indicator,x.period,x.geography,x.scope,x.unit].join('|');
+  if(!dispersionGroups.has(k))dispersionGroups.set(k,[]);
+  dispersionGroups.get(k).push(x);
+ });
+ dispersionGroups.forEach((items,key)=>{
+  const byIndustry=new Map();items.forEach(x=>{if(!byIndustry.has(x.industry))byIndustry.set(x.industry,[]);byIndustry.get(x.industry).push(x);});
+  const comparable=Array.from(byIndustry.values()).filter(a=>a.length===1).map(a=>a[0]);
+  if(comparable.length>=3){
+   const sorted=comparable.slice().sort((a,b)=>a.value-b.value),lo=sorted[0],hi=sorted[sorted.length-1];
+   const spread=hi.value-lo.value,threshold=lo.unit==='%'?1:Math.max(.01,Math.max(Math.abs(lo.value),Math.abs(hi.value))*.05);
+   if(spread>threshold){
+    out.push(issue({id:'import-dispersion-'+hash(key),kind:'dispersion',tier:'watch',area:'data',title:'导入数据出现行业内部差异候选',metric:hi.industry+' '+hi.value+' / '+lo.industry+' '+lo.value+' '+lo.unit,summary:'同一指标、地区、期次和统计范围下，'+comparable.length+'个行业之间出现明显差异。这是描述性分化，不说明原因。',evidence:comparable.map(x=>x.industry+'：'+x.value+' '+x.unit+'（'+x.source_name+'）'),alternatives:['行业需求与价格周期不同','企业样本覆盖或规模结构不同','行业分类或统计范围调整'],falsifier:'若行业分类、分母或样本覆盖不一致，应撤销横向比较；补齐行业全量和连续期次后再评估。',nextStep:'核对行业分类、分母、企业覆盖和连续期次，查明差异来自哪些企业与产品。',grade:'本地导入 · 行业横向筛查',source:'导入汇总数据',sourceLinks:comparable.filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'data'},storage));
+   }
+  }
+ });
  const survey=usable.filter(x=>x.record_type==='survey_aggregate');
+ const surveyGroups=new Map();
+ survey.forEach(x=>{
+  const k=[x.indicator,x.geography,x.industry||'',x.population,x.sample_frame,x.aggregation,x.unit,x.scope].join('|');
+  if(!surveyGroups.has(k))surveyGroups.set(k,[]);
+  surveyGroups.get(k).push(x);
+ });
+ surveyGroups.forEach((items,key)=>{
+  const series=items.slice().sort((a,b)=>a.period.localeCompare(b.period));
+  if(series.length>=2&&new Set(series.map(x=>x.period)).size===series.length){
+   const prev=series[series.length-2],latest=series[series.length-1],delta=latest.value-prev.value;
+   if(Math.abs(delta)>.000001){
+    out.push(issue({id:'import-survey-trend-'+hash(key),kind:'survey',tier:'review',area:'survey',title:'同一调查题项出现跨期变化候选',metric:prev.value+' → '+latest.value+' '+latest.unit+'（'+(delta>0?'+':'')+delta.toFixed(2)+'）',summary:'同一题项在'+prev.period+'与'+latest.period+'的匿名汇总值不同。当前没有标准误、权重与样本结构对照，不能判断统计显著性或全县总体变化。',evidence:[prev.period+'：n='+prev.sample_n+'，缺失率 '+prev.missing_rate+'%',latest.period+'：n='+latest.sample_n+'，缺失率 '+latest.missing_rate+'%','目标总体：'+latest.population,'抽样框：'+latest.sample_frame],alternatives:['真实态度或经营状态变化','样本行业、规模或地区构成变化','问卷题项、回收率或缺失处理改变'],falsifier:'若两期题项、抽样框、权重或调查方式不一致，跨期差异不可直接解释为总体变化。',nextStep:'对照两期问卷版本、样本结构、权重、标准误和缺失处理，再决定是否进入测量模型。',grade:'匿名调查跨期比较 · '+latest.evidence_grade,source:'本机导入调查汇总',sourceLinks:[prev,latest].filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'survey'},storage));
+   }
+  }
+ });
  survey.forEach(x=>{
   out.push(issue({id:'import-survey-'+x.id,kind:'survey',tier:'review',area:'survey',title:'新增一条匿名调查汇总观察',metric:x.indicator+' · '+x.value+' '+x.unit,summary:x.period+'，'+x.geography+'，样本量n='+x.sample_n+'。'+(x.sample_n<30?'样本量较小，只作描述性线索。':'样本量本身不能证明代表性，仍需检查抽样框、覆盖和权重。'),evidence:['统计方式：'+x.aggregation,'总体定义：'+x.population,'抽样框：'+x.sample_frame,'缺失率：'+x.missing_rate+'%','来源：'+x.source_name],alternatives:['样本覆盖偏向某类企业','行业、规模或地区构成变化','真实经营态度或表现变化'],falsifier:'若抽样框、权重或缺失处理改变，结果可能发生变化；需与后续批次和公开指标对照。',nextStep:'按行业、规模和地区分层复核，检查缺失率与样本覆盖后再进入模型。',grade:'匿名调查汇总 · '+x.evidence_grade,source:x.source_name,sourceLinks:x.source_url?[{label:x.source_name,url:x.source_url}]:[],destination:'survey'},storage));
  });
