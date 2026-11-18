@@ -4,10 +4,11 @@
 const E=window.BoluoEngine;
 const R=window.BoluoResearch, RV=window.BoluoResearchViz;
 const V3=window.BoluoV3, V3V=window.BoluoV3Viz;
-const V4=window.BoluoV4, V4V=window.BoluoV4Viz, Cards=window.BoluoCards;
+const V4=window.BoluoV4, V4V=window.BoluoV4Viz, Cards=window.BoluoCards, Disc=window.BoluoDiscovery;
 const DD=window.BoluoDiscoveryData, RD=window.BoluoRelationsData;
 if(!V4||!V4V){document.getElementById('stage').textContent='产业结构V4模块加载失败，请刷新页面。';return;}
 if(!Cards){document.getElementById('stage').textContent='动态研判卡模块加载失败，请刷新页面。';return;}
+if(!Disc){document.getElementById('stage').textContent='主动问题发现模块加载失败，请刷新页面。';return;}
 if(!V3||!V3V){document.getElementById('stage').textContent='研究V3模块加载失败，请刷新页面。';return;}
 if(!R||!RV){document.getElementById('stage').textContent='结构研究模块加载失败，请刷新页面。';return;}
 if(!E){document.getElementById('stage').textContent='计算模块加载失败，请刷新页面。';return;}
@@ -19,7 +20,7 @@ let state=E.normalize(safeRead(KEY,DEFAULT));
 let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
-let methodFilter='全部',cardFilter='all';
+let methodFilter='全部',cardFilter='all',discoveryFilter='all',discoveryMessage='';
 let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20,v4Year=null;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
@@ -123,13 +124,44 @@ function researchCardsContextPanel(area){
  '<div class="ic-context-grid">'+cards.map(c=>researchCardMarkup(c,true)).join('')+'</div></section>';
 }
 
+
+const DISCOVERY_KIND={divergence:'指标背离',dispersion:'行业分化',target_gap:'目标落差',conflict:'口径冲突',gap:'数据缺口',survey_gap:'调查盲区',anomaly:'异常候选',survey:'调查观察'};
+const DISCOVERY_STATUS={new:'待核查',investigating:'核查中',verified:'已核实',dismissed:'已排除'};
+function discoveryMarkup(x){
+ const status=x.status||'new';let action='';
+ if(status==='new')action='<button type="button" class="tiny-btn" data-discovery-status="investigating" data-discovery-id="'+html(x.id)+'">开始核查</button>';
+ else if(status==='investigating')action='<button type="button" class="tiny-btn" data-discovery-status="verified" data-discovery-id="'+html(x.id)+'">标记已核实</button><button type="button" class="tiny-btn ghost" data-discovery-status="dismissed" data-discovery-id="'+html(x.id)+'">排除线索</button>';
+ else action='<button type="button" class="tiny-btn" data-discovery-status="new" data-discovery-id="'+html(x.id)+'">重新打开</button>';
+ const evidence=(x.evidence||[]).map(v=>'<li>'+html(v)+'</li>').join('');
+ const alternatives=(x.alternatives||[]).map(v=>'<li>'+html(v)+'</li>').join('');
+ const sourceLinks=(x.sourceLinks||[]).map(v=>'<a href="'+html(v.url)+'" target="_blank" rel="noopener noreferrer">'+html(v.label)+' ↗</a>').join(' · ');
+ return '<article class="discovery-card"><div class="dc-top"><span class="dc-kind">'+html(DISCOVERY_KIND[x.kind]||'研究线索')+'</span><span class="dc-status '+html(status)+'">'+html(DISCOVERY_STATUS[status]||'待核查')+'</span></div>'+
+ '<h3>'+html(x.title)+'</h3><div class="dc-metric">'+html(x.metric||'')+'</div><p>'+html(x.summary||'')+'</p>'+
+ '<details class="dc-details"><summary>查看证据、竞争解释与反证条件</summary><div class="dc-detail-grid"><div><b>触发证据</b><ul>'+evidence+'</ul></div><div><b>可能的其他解释</b><ul>'+alternatives+'</ul></div></div>'+
+ (sourceLinks?'<div class="dc-source-links"><b>原始来源：</b>'+sourceLinks+'</div>':'')+'<div class="dc-falsifier"><b>何时改判：</b>'+html(x.falsifier||'')+'</div><div class="dc-next"><b>下一步：</b>'+html(x.nextStep||'')+'</div></details>'+
+ '<div class="dc-foot"><span>'+html(x.grade||'')+' · '+html(x.source||'')+'</span><span class="dc-actions"><button type="button" class="tiny-btn primary" data-discovery-open="'+html(x.destination||'data')+'">进入核验 ↗</button>'+action+'</span></div></article>';
+}
+function researchDiscoveryPanel(){
+ const observations=Disc.load(localStorage),items=Disc.discover({v3:V3,v4:V4,observations,storage:localStorage});
+ const visible=items.filter(x=>discoveryFilter==='all'||x.kind===discoveryFilter);
+ const counts={watch:items.filter(x=>x.tier==='watch').length,review:items.filter(x=>x.tier==='review').length,open:items.filter(x=>x.status==='new'||x.status==='investigating').length};
+ const filters=[['all','全部'],['divergence','指标背离'],['dispersion','行业分化'],['target_gap','目标落差'],['conflict','口径冲突'],['gap','数据缺口'],['survey_gap','调查盲区'],['anomaly','异常候选'],['survey','调查观察']];
+ return '<section class="discovery-board gap"><div class="db-head"><div><div class="eyebrow">V6 / EVIDENCE-LED DISCOVERY</div><h2>主动问题发现 <small>'+items.length+' 个问题候选</small></h2><p>从公开统计、已有证据和本机导入的匿名汇总数据中筛出值得核查的变化。系统提出问题，不替人下结论。</p></div>'+
+ '<div class="db-kpis"><span><b>'+counts.open+'</b>待核查</span><span><b>'+counts.watch+'</b>观察信号</span><span><b>'+counts.review+'</b>口径/数据审查</span><span><b>'+observations.length+'</b>本机导入记录</span></div></div>'+
+ '<div class="db-toolbar"><div class="db-import-actions"><button type="button" class="tiny-btn primary" data-discovery-import>导入匿名汇总 CSV</button><a href="./research-observation-template.csv" download>下载CSV模板 ↧</a><button type="button" class="tiny-btn ghost" data-discovery-clear>清空本机导入</button><input id="discoveryCsvInput" data-discovery-file type="file" accept=".csv,text/csv" hidden></div>'+
+ '<span class="db-message">'+html(discoveryMessage||'数据只保存在当前浏览器，不会上传；仅接受匿名汇总，不接受个人答卷或企业明细。')+'</span></div>'+
+ '<div class="db-filterbar">'+filters.map(f=>'<button type="button" data-discovery-filter="'+f[0]+'" class="'+(discoveryFilter===f[0]?'active':'')+'">'+f[1]+'</button>').join('')+'</div>'+
+ '<div class="discovery-grid">'+(visible.length?visible.map(discoveryMarkup).join(''):'<div class="dc-empty">这个分类暂时没有问题候选。导入新的匿名汇总数据后，系统会重新筛查。</div>')+'</div>'+
+ '<div class="db-note"><b>研究质量门：</b>异常候选不等于风险事实；样本量不等于代表性；相关不等于因果。只有完成口径核验、来源核验和人工审核后，才考虑把新发现接入模型。D级研究者假设不会作为事实触发异常筛查。</div></section>';
+}
+
 function home(r){
  const d=E.DATA,rate=((state.target/d.gdp)**(1/(state.year-2025))-1)*100;
  return heading('00 / THE BIG QUESTION','投资在降，工业在涨。<br>下一棒，谁来接？',
  '从公开的2025年基准出发，用可改变的条件测试产业接力。不是“预测博罗”，而是逼出最值得追问的结构问题。',
  btn('go-wind','进入可运行风洞 ↗','primary'))+
  '<section class="hero"><div class="hero-panel"><div class="eyebrow">THE STRUCTURAL CONTRADICTION</div><h2><span class="bad">-18.8%</span> <strong>+8.7%</strong></h2><p>2025年固定资产投资下降、规上工业增加值却增长。两者口径不同，也不能直接推断因果关系。这是值得进一步检查的信号。</p>'+badge('A/B｜公开统计','real')+' '+badge('不等于结构性断裂已获证实','model')+'</div><div class="hero-panel"><div class="eyebrow">'+state.year+' / CONDITIONAL TEST</div><h2>'+money(r.total.p50)+' <strong>亿</strong></h2><p>当前情景中位数，P10–P90：'+money(r.total.p10)+'–'+money(r.total.p90)+' 亿元。<br>对照 '+money(state.target)+' 亿，差距 <b class="'+(r.gap>0?'bad':'good')+'">'+sign(-r.gap)+' 亿元</b>。</p><div class="actions">'+btn('go-wind','改变假设 ↗','primary')+btn('save','保存此刻研究','secondary')+'</div></div></section>'+
-researchCardsPanel()+v4HomePanel()+
+researchDiscoveryPanel()+researchCardsPanel()+v4HomePanel()+
  v4RelayBar()+
  '<section class="stats">'+stat('2025 GDP / 公开统计',money(d.gdp)+' 亿','一产 '+d.p+' · 二产 '+d.s+' · 三产 '+d.t,'cyan')+
  stat(state.year+(state.year===2032?'旧内部总量参照差额':'目标差额'),money(state.target-d.gdp)+' 亿',state.year===2032?'旧内部总量参照，与1:5:4产业布局方向无关':'对照目标减去2025基数','gold')+
@@ -911,6 +943,11 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
+ const df=e.target.closest('[data-discovery-filter]');if(df){discoveryFilter=df.dataset.discoveryFilter||'all';draw();return;}
+ const ds=e.target.closest('[data-discovery-status]');if(ds){Disc.setStatus(ds.dataset.discoveryId,ds.dataset.discoveryStatus,localStorage);draw();return;}
+ const dop=e.target.closest('[data-discovery-open]');if(dop){navigate(dop.dataset.discoveryOpen);return;}
+ const di=e.target.closest('[data-discovery-import]');if(di){const fi=document.getElementById('discoveryCsvInput');if(fi)fi.click();return;}
+ const dc=e.target.closest('[data-discovery-clear]');if(dc){Disc.clear(localStorage);discoveryMessage='已清空当前浏览器中的导入汇总数据。';draw();return;}
  const cf=e.target.closest('[data-card-filter]');if(cf){cardFilter=cf.dataset.cardFilter||'all';draw();return;}
  const cs=e.target.closest('[data-card-status]');if(cs){Cards.setStatus(cs.dataset.cardId,cs.dataset.cardStatus,localStorage);draw();return;}
  const co=e.target.closest('[data-card-open]');if(co){const dest=co.dataset.cardOpen,sub=co.dataset.cardView;if(dest==='wind')navigate('wind',Number(sub||0));else navigate(dest);return;}
@@ -969,6 +1006,7 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',function(e){
+ const discoveryFile=e.target.closest('[data-discovery-file]');if(discoveryFile){const file=discoveryFile.files&&discoveryFile.files[0];if(!file)return;if(file.size>2*1024*1024){discoveryMessage='文件超过2MB限制，未导入。';draw();return;}file.text().then(txt=>{const result=Disc.importCsv(txt,localStorage);discoveryMessage=result.ok?'导入完成：新增 '+result.imported+' 条，重复跳过 '+(result.skipped||0)+' 条；当前共 '+result.total+' 条。':('导入失败：'+result.errors.join('；'));discoveryFile.value='';draw();}).catch(()=>{discoveryMessage='文件读取失败，请检查CSV格式。';draw();});return;}
  const v3input=e.target.closest('[data-v3-control]');if(v3input){const key=v3input.dataset.v3Control;
  if(key==='domain')v3Domain=v3input.value;
  if(key==='cut')cascadeCut=Number(v3input.value);
