@@ -51,7 +51,7 @@ function parseCsv(text){
   if(!['A','B','C','D'].includes(grade)){errors.push('第'+line+'行：evidence_grade只能是A/B/C/D。');return;}
   const url=safeText(obj.source_url,500);
   if(url&&!/^https?:\/\//i.test(url)){errors.push('第'+line+'行：source_url必须是http或https链接。');return;}
-  const record={id:'obs-'+hash([type,obj.indicator,obj.period,obj.geography,obj.industry||'',obj.scope,obj.unit,obj.source_name,value].join('|')),
+  const record={id:'obs-'+hash([type,obj.indicator,obj.period,obj.geography,obj.industry||'',obj.scope,obj.unit,obj.source_name,value,obj.sample_n||'',obj.population||'',obj.sample_frame||'',obj.aggregation||'',obj.missing_rate||''].join('|')),
    record_type:type,indicator:safeText(obj.indicator,100),period:obj.period.toUpperCase(),geography:safeText(obj.geography,80),
    industry:safeText(obj.industry,80),value,unit:safeText(obj.unit,24),scope:safeText(obj.scope,120),
    source_name:safeText(obj.source_name,120),source_url:url,evidence_grade:grade,
