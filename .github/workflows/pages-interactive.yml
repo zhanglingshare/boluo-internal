@@ -11,6 +11,8 @@ on:
       - "research-v3-viz.js"
       - "research-v4.js"
       - "research-v4-viz.js"
+      - "research-cards.js"
+      - "tests/research-cards.test.cjs"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
@@ -29,6 +31,8 @@ on:
       - "research-v3-viz.js"
       - "research-v4.js"
       - "research-v4-viz.js"
+      - "research-cards.js"
+      - "tests/research-cards.test.cjs"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
@@ -51,6 +55,7 @@ jobs:
       - run: node --check research-v3-viz.js
       - run: node --check research-v4.js
       - run: node --check research-v4-viz.js
+      - run: node --check research-cards.js
       - run: node --test tests/*.test.cjs
       - name: Protect prior mockups
         run: |
