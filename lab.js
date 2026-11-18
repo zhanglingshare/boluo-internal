@@ -134,10 +134,11 @@ function discoveryMarkup(x){
  else action='<button type="button" class="tiny-btn" data-discovery-status="new" data-discovery-id="'+html(x.id)+'">重新打开</button>';
  const evidence=(x.evidence||[]).map(v=>'<li>'+html(v)+'</li>').join('');
  const alternatives=(x.alternatives||[]).map(v=>'<li>'+html(v)+'</li>').join('');
+ const sourceLinks=(x.sourceLinks||[]).map(v=>'<a href="'+html(v.url)+'" target="_blank" rel="noopener noreferrer">'+html(v.label)+' ↗</a>').join(' · ');
  return '<article class="discovery-card"><div class="dc-top"><span class="dc-kind">'+html(DISCOVERY_KIND[x.kind]||'研究线索')+'</span><span class="dc-status '+html(status)+'">'+html(DISCOVERY_STATUS[status]||'待核查')+'</span></div>'+
  '<h3>'+html(x.title)+'</h3><div class="dc-metric">'+html(x.metric||'')+'</div><p>'+html(x.summary||'')+'</p>'+
  '<details class="dc-details"><summary>查看证据、竞争解释与反证条件</summary><div class="dc-detail-grid"><div><b>触发证据</b><ul>'+evidence+'</ul></div><div><b>可能的其他解释</b><ul>'+alternatives+'</ul></div></div>'+
- '<div class="dc-falsifier"><b>何时改判：</b>'+html(x.falsifier||'')+'</div><div class="dc-next"><b>下一步：</b>'+html(x.nextStep||'')+'</div></details>'+
+ (sourceLinks?'<div class="dc-source-links"><b>原始来源：</b>'+sourceLinks+'</div>':'')+'<div class="dc-falsifier"><b>何时改判：</b>'+html(x.falsifier||'')+'</div><div class="dc-next"><b>下一步：</b>'+html(x.nextStep||'')+'</div></details>'+
  '<div class="dc-foot"><span>'+html(x.grade||'')+' · '+html(x.source||'')+'</span><span class="dc-actions"><button type="button" class="tiny-btn primary" data-discovery-open="'+html(x.destination||'data')+'">进入核验 ↗</button>'+action+'</span></div></article>';
 }
 function researchDiscoveryPanel(){
