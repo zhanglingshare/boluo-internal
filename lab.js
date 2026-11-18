@@ -635,7 +635,7 @@ function adapterReviewEditor(item){
  const canApprove=item.validation.ok&&!['待保存','待映射'].includes(item.status);
  return '<div class="ad-review-editor"><div class="ad-editor-head"><div><span class="ad-kicker">EVIDENCE INSPECTOR</span><h3>'+html(r.indicator)+'</h3></div><span class="adapter-status '+adapterStatusClass(item.status)+'">'+html(item.status)+'</span></div>'+
  '<div class="ad-editor-grid"><label>研究变量<select class="select" data-adapter-map="'+html(r.id)+'">'+opts+'</select></label><label>口径说明<input data-adapter-note="'+html(r.id)+'" value="'+html(note)+'" placeholder="人工映射时填写理由"></label></div>'+
- '<div class="ad-validation-row '+(item.validation.ok?'ok':'blocked')+'">'+(blockers?'<b>阻断 '+item.validation.blockers.length+'</b><ul>'+blockers+'</ul>':'<b>✓ 字段与口径检查通过</b>')+(warnings?'<details><summary>'+warnings.length+' 项解释边界</summary><ul>'+warnings+'</ul></details>':'')+'</div>'+
+ '<div class="ad-validation-row '+(item.validation.ok?'ok':'blocked')+'">'+(blockers?'<b>阻断 '+item.validation.blockers.length+'</b><ul>'+blockers+'</ul>':'<b>✓ 字段与口径检查通过</b>')+(warnings?'<details><summary>展开解释边界</summary><ul>'+warnings+'</ul></details>':'')+'</div>'+
  '<div class="ad-editor-actions"><button type="button" class="tiny-btn" data-adapter-map-save="'+html(r.id)+'">保存映射</button>'+
  (item.status==='已批准'?'<button type="button" class="tiny-btn ghost" data-adapter-status="待审核" data-adapter-id="'+html(r.id)+'">撤销批准</button>':'<button type="button" class="tiny-btn primary" data-adapter-status="已批准" data-adapter-id="'+html(r.id)+'" '+(canApprove?'':'disabled')+'>批准为证据</button>')+
  '<button type="button" class="tiny-btn ghost" data-adapter-status="退回补资料" data-adapter-id="'+html(r.id)+'">退回补资料</button></div>'+
