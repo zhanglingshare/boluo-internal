@@ -4,9 +4,10 @@
 const E=window.BoluoEngine;
 const R=window.BoluoResearch, RV=window.BoluoResearchViz;
 const V3=window.BoluoV3, V3V=window.BoluoV3Viz;
-const V4=window.BoluoV4, V4V=window.BoluoV4Viz;
+const V4=window.BoluoV4, V4V=window.BoluoV4Viz, Cards=window.BoluoCards;
 const DD=window.BoluoDiscoveryData, RD=window.BoluoRelationsData;
 if(!V4||!V4V){document.getElementById('stage').textContent='产业结构V4模块加载失败，请刷新页面。';return;}
+if(!Cards){document.getElementById('stage').textContent='动态研判卡模块加载失败，请刷新页面。';return;}
 if(!V3||!V3V){document.getElementById('stage').textContent='研究V3模块加载失败，请刷新页面。';return;}
 if(!R||!RV){document.getElementById('stage').textContent='结构研究模块加载失败，请刷新页面。';return;}
 if(!E){document.getElementById('stage').textContent='计算模块加载失败，请刷新页面。';return;}
@@ -18,7 +19,7 @@ let state=E.normalize(safeRead(KEY,DEFAULT));
 let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
-let methodFilter='全部';
+let methodFilter='全部',cardFilter='all';
 let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20,v4Year=null;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
@@ -86,23 +87,54 @@ function layoutControls(){
 }
 function insight(r){
  let msg='';
- if(r.gap>0)msg='在当前假设下，2030目标仍有缺口。先识别哪条链能够接续，再谈口号。';
- else msg='当前中位数越过对照线，但并不等于现实目标已经有把握实现。';
- if(state.year===2032)msg='2032和1500亿元属于内部自设对照，不能称为官方十五五目标。'+msg;
+ if(r.gap>0)msg='在当前总量对照假设下仍有缺口。先识别哪条链能够接续，再谈口号。';
+ else msg='当前模拟中位数越过总量对照线，但不等于现实目标已经有把握实现。';
+ if(state.year===2032)msg='2032年1500亿元是旧内部自设总量参照，与1:5:4产业布局方向目标分开。'+msg;
  return msg;
 }
+
+const CARD_TYPE_LABELS={signal:'结构信号',target:'目标对照',conflict:'证据冲突',reminder:'提醒',gap:'数据缺口',lead:'机会线索',model:'模型边界',review:'复盘'};
+const CARD_STATUS_CLASS={new:'new',investigating:'working',verified:'done',dismissed:'dismissed'};
+function researchCardMarkup(c,compact){
+ const status=c.status||'new';let actions='';
+ if(status==='new')actions='<button type="button" class="tiny-btn" data-card-status="investigating" data-card-id="'+html(c.id)+'">开始核查</button>';
+ else if(status==='investigating')actions='<button type="button" class="tiny-btn" data-card-status="verified" data-card-id="'+html(c.id)+'">标记已核实</button><button type="button" class="tiny-btn ghost" data-card-status="dismissed" data-card-id="'+html(c.id)+'">排除线索</button>';
+ else actions='<button type="button" class="tiny-btn" data-card-status="new" data-card-id="'+html(c.id)+'">重新打开</button>';
+ const open='<button type="button" class="tiny-btn primary" data-card-open="'+html(c.destination)+'" data-card-view="'+(c.view===undefined?'':c.view)+'">'+html(c.action||'进入研究')+' ↗</button>';
+ return '<article class="insight-card tone-'+html(c.tone||'blue')+(compact?' compact':'')+'"><div class="ic-top"><span class="ic-type">'+html(CARD_TYPE_LABELS[c.type]||c.type)+'</span><span class="ic-status '+(CARD_STATUS_CLASS[status]||'new')+'">'+html(c.statusLabel||'新发现')+'</span></div>'+
+ '<div class="ic-priority">'+html(c.priority||'研究线索')+' <span>'+html(c.grade||'')+'</span></div><h3>'+html(c.title)+'</h3><div class="ic-metric">'+html(c.metric||'')+'</div>'+
+ '<p class="ic-summary">'+html(c.summary||'')+'</p><div class="ic-evidence"><b>依据</b>'+html(c.evidence||'')+'</div>'+
+ '<div class="ic-caution"><b>边界</b>'+html(c.caution||'')+'</div><div class="ic-next"><b>下一步</b>'+html(c.nextStep||'')+'</div>'+
+ '<div class="ic-foot"><span>'+html(c.source||'')+'</span></div><div class="ic-actions">'+open+actions+'</div></article>';
+}
+function getResearchCards(){return Cards.build({engine:E,v3:V3,v4:V4,research:R,run:current,archiveCount:records.length,storage:localStorage});}
+function researchCardsPanel(){
+ const cards=getResearchCards(),visible=Cards.filter(cards,cardFilter),counts=Cards.counts(cards);
+ return '<section class="insight-board gap"><div class="ic-board-head"><div><div class="eyebrow">RESEARCH SIGNALS / ACTION CARDS</div><h2>动态研判台 <small>'+counts.total+' 张卡片</small></h2><p>公开信号、证据冲突、模型边界与目标任务，统一变成可追溯的研究工作单。卡片状态保存在当前浏览器。</p></div>'+
+ '<div class="ic-board-kpis"><span><b>'+counts.active+'</b>待处理</span><span><b>'+counts.investigating+'</b>核查中</span><span><b>'+counts.verifiedAlerts+'</b>已核实高等级预警</span><span><b>'+counts.gaps+'</b>关键数据缺口</span></div></div>'+
+ '<div class="ic-filterbar">'+Cards.FILTERS.map(f=>'<button type="button" data-card-filter="'+f.id+'" class="'+(cardFilter===f.id?'active':'')+'">'+f.label+'</button>').join('')+'</div>'+
+ '<div class="insight-grid">'+(visible.length?visible.map(c=>researchCardMarkup(c,false)).join(''):'<div class="ic-empty">这个分类暂时没有研判卡。</div>')+'</div>'+
+ '<div class="ic-board-note"><b>预警质量门：</b>当前没有满足多源证据与阈值要求的已核实高等级风险预警。系统不会为了填满红色警报位而制造危机。结构背离、数据缺口和模型情景分别标识。</div></section>';
+}
+function researchCardsContextPanel(area){
+ const cards=getResearchCards().filter(c=>c.area===area&&c.status!=='dismissed');
+ if(!cards.length)return '';
+ return '<section class="ic-context gap"><div class="row wrap"><div><div class="eyebrow">RELATED RESEARCH CARDS</div><h3>与本工作区相关的研判卡</h3></div><span class="micro">'+cards.length+' 条关联线索 · 状态可在首页统一查看</span></div>'+
+ '<div class="ic-context-grid">'+cards.map(c=>researchCardMarkup(c,true)).join('')+'</div></section>';
+}
+
 function home(r){
  const d=E.DATA,rate=((state.target/d.gdp)**(1/(state.year-2025))-1)*100;
  return heading('00 / THE BIG QUESTION','投资在降，工业在涨。<br>下一棒，谁来接？',
  '从公开的2025年基准出发，用可改变的条件测试产业接力。不是“预测博罗”，而是逼出最值得追问的结构问题。',
  btn('go-wind','进入可运行风洞 ↗','primary'))+
  '<section class="hero"><div class="hero-panel"><div class="eyebrow">THE STRUCTURAL CONTRADICTION</div><h2><span class="bad">-18.8%</span> <strong>+8.7%</strong></h2><p>2025年固定资产投资下降、规上工业增加值却增长。两者口径不同，也不能直接推断因果关系。这是值得进一步检查的信号。</p>'+badge('A/B｜公开统计','real')+' '+badge('不等于结构性断裂已获证实','model')+'</div><div class="hero-panel"><div class="eyebrow">'+state.year+' / CONDITIONAL TEST</div><h2>'+money(r.total.p50)+' <strong>亿</strong></h2><p>当前情景中位数，P10–P90：'+money(r.total.p10)+'–'+money(r.total.p90)+' 亿元。<br>对照 '+money(state.target)+' 亿，差距 <b class="'+(r.gap>0?'bad':'good')+'">'+sign(-r.gap)+' 亿元</b>。</p><div class="actions">'+btn('go-wind','改变假设 ↗','primary')+btn('save','保存此刻研究','secondary')+'</div></div></section>'+
-v4HomePanel()+
+researchCardsPanel()+v4HomePanel()+
  v4RelayBar()+
  '<section class="stats">'+stat('2025 GDP / 公开统计',money(d.gdp)+' 亿','一产 '+d.p+' · 二产 '+d.s+' · 三产 '+d.t,'cyan')+
- stat(state.year+'目标差额',money(state.target-d.gdp)+' 亿','对照目标减去2025基数','gold')+
+ stat(state.year+(state.year===2032?'旧内部总量参照差额':'目标差额'),money(state.target-d.gdp)+' 亿',state.year===2032?'旧内部总量参照，与1:5:4产业布局方向无关':'对照目标减去2025基数','gold')+
  stat('所需五年复合增幅',decimal(rate)+'%','名义口径的算术门槛，非官方增速','')+
- stat('当前条件达标比例',perc(r.hit),'只代表模型条件内的样本占比','')+'</section>'+
+ stat('模型样本命中频率',perc(r.hit),'只代表当前总量对照条件内的模拟样本占比','')+'</section>'+
  '<section class="grid2"><article class="card"><h3>一张结构图：博罗的发动机在哪里？</h3><p class="micro">2025年已公布的三次产业增加值份额</p>'+stack([d.p,d.s,d.t])+
  '<div class="chartkey"><span><b style="background:var(--p)"></b>第一产业 10.7%</span><span><b style="background:var(--s)"></b>第二产业 54.6%</span><span><b style="background:var(--t)"></b>第三产业 34.7%</span></div>'+
  '<div class="line-sep"></div><h3>结构变化能传到谁？</h3><p class="small muted">产业协同不是GDP单点提速，而是制造、专业服务、农业加工和人力条件能否互相承接。</p>'+btn('go-models','拆开产业网络 ↗','secondary')+'</article>'+
@@ -137,9 +169,9 @@ function mission(r){
  return heading('01 / QUESTION & FALSIFICATION','这次，我们究竟要证伪什么？',
  '先区分目标、证据、机制和未知量。每个研究假说都应能被现实数据推翻，而不是让模型永远给出漂亮答案。',
  btn('go-data','下一站：看证据 ↗','primary'))+
- v4RelayBar()+
+ v4RelayBar()+researchCardsContextPanel('mission')+
  '<div class="grid2"><article class="card"><h3>问题 A · 产业接力能否跨越目标门槛？</h3>'+line('2025公开基准',money(E.DATA.gdp)+' 亿元','')+
- line(state.year+'对照目标',money(state.target)+' 亿元','gold')+
+ line(state.year+(state.year===2032?'旧内部总量参照（自设）':'对照目标'),money(state.target)+' 亿元','gold')+
  line('所需年均名义增幅',perc(h),'cyan')+
  line('当前模拟中位数',money(r.total.p50)+' 亿元','')+
  line('当前条件目标达标样本占比',perc(r.hit),'')+
@@ -542,7 +574,7 @@ function dataPage(r){
  return heading('02 / EVIDENCE DESK','事实先钉牢，未知才好推演。',
  '数据划成 A/B/C 层，宏观基数不与合成企业关系混称。导入与导出本阶段不做，使用仓库既有公开信息和可复现合成样本。',
  btn('go-survey','继续：看模拟调查 ↗','primary'))+
- v4DataPanel()+
+ researchCardsContextPanel('data')+v4DataPanel()+
  '<details class="card gap"><summary><b>宏观三产历史与2024修订</b> · 点击展开</summary>'+historicalPanel()+'</details>'+
  v3PriceBridgePanel()+v3DataPanel()+
  '<details class="card gap"><summary><b>原版2025宏观清单与来源</b> · 点击展开</summary>'+ '<section class="stats">'+stat('2025 GDP',money(d.gdp)+' 亿','公开地区生产总值','cyan')+
@@ -642,6 +674,7 @@ function modelsPage(r){
  return heading('04 / STRUCTURAL RESEARCH','真正的结构分析，不止画一张网。',
  '从可证伪的理论机制与变量测量开始，连接产业网络的实际计算、竞争性模型对照与条件敏感性。请始终区分真实历史和合成关系。',
  btn('go-wind','进入情景风洞 ↗','primary'))+
+ researchCardsContextPanel('models')+
  '<section class="stats">'+
  stat('2020—2025现价GDP增长',money(R.describe().nominalTotal)+' 亿','真实历年现价数据的算术差分','cyan')+
  stat('合成企业主体',net.nodes+' 个','其中制造300 / 服务120 / 农业80','')+
@@ -674,7 +707,7 @@ function windPage(r){
  const titles=['目标与现实，差了多少？','工业能接住下一棒吗？','增长留下来，还是流走？','农业的价值链，哪里可能堵？','给未来施加一点压力。','最后一棒，是人和行动。'];
  const explain=['从2025年公开基数出发，模拟每年的三产增加值，画出分位带与目标差距。','只改变工业条件，观察二产增加值、服务与总量如何同步响应。','专业服务与制造扩能相互关联，但目前关系边均为合成。','农业增加值与现金流断点是不同层面的观察，不能直接相加。','在合理区间内改变五个条件，显示局部敏感度和条件分布。','把模拟中暴露的薄弱环节，转成可核实的观察清单。'];
  return heading('05 / LIVE CONDITIONAL WIND TUNNEL',titles[view],explain[view],btn('calibration','⚙ 校准全部参数','primary'))+
- windNav()+'<section class="card" style="margin-bottom:17px">'+layoutControls()+'</section>'+
+ windNav()+researchCardsContextPanel('wind')+'<section class="card" style="margin-bottom:17px">'+layoutControls()+'</section>'+
  windBaselineBar(r)+
  (view===0?wind0(r):view===1?wind1(r):view===2?wind2(r):view===3?wind3(r):view===4?wind4(r):wind5(r));
 }
@@ -686,7 +719,7 @@ function windBaselineBar(r){
  const dp=c.total.p50-b.total.p50,dhit=c.hit-b.hit;
  return '<section class="v4-wind-baseline'+(same?'':' on')+'"><div class="row wrap" style="gap:10px"><span class="micro"><b>原始情景</b>（'+E.PRESETS[DEFAULT.scenario].name+' · 全部滑杆归零）</span>'+
  '<span class="wb-cell"><small>P50</small><strong>'+money(b.total.p50)+' <i>→</i> '+money(c.total.p50)+' 亿</strong>'+(same?'':'<em class="'+(dp>=0?'good':'gold')+'">'+sign(dp)+'</em>')+'</span>'+
- '<span class="wb-cell"><small>达标占比</small><strong>'+perc(b.hit)+' <i>→</i> '+perc(c.hit)+'</strong>'+(same?'':'<em class="'+(dhit>=0?'good':'gold')+'">'+(dhit>=0?'+':'')+Math.round(dhit*100)/100+'pp</em>')+'</span>'+
+ '<span class="wb-cell"><small>总量线命中频率</small><strong>'+perc(b.hit)+' <i>→</i> '+perc(c.hit)+'</strong>'+(same?'':'<em class="'+(dhit>=0?'good':'gold')+'">'+(dhit>=0?'+':'')+Math.round(dhit*100)/100+'pp</em>')+'</span>'+
  (same?'<span class="micro muted">当前即原始情景，拨动滑杆或切换情景即出现对照。</span>':
  '<span class="micro muted">← 为原始情景，右侧为当前条件；差额由固定随机种子重算得出，不是两次随意抽样。</span>')+
  (same?'':'<button type="button" class="tiny-btn" data-action-wind="reset-baseline">↺ 回到原始情景</button>')+
@@ -697,8 +730,8 @@ function wind0(r){
  return '<div class="notice" style="margin-bottom:17px"><b>历史检验：</b>2020年二产份额50.0%，2025年54.6%；当前2030结构只是条件演示。2024年三产分项仍为初步统计，GDP已核实修订。'+btn('go-data','查看历史结构 ↗','tiny-btn')+'</div>'+ '<section class="stats">'+
  stat(state.year+' GDP 中位数',money(r.total.p50)+' 亿','模型计算，不是官方预测','cyan')+
  stat('目标差额',sign(-r.gap)+' 亿','中位数减去对照目标',r.gap>0?'bad':'good')+
- stat('模型样本达标占比',perc(r.hit),'取决于增长与波动假设','')+
- stat('结构接近1:5:4占比',perc(r.structural),'内部假设结构线，并非硬性指标','')+'</section>'+
+ stat('总量线命中频率',perc(r.hit),'取决于增长与波动假设，不是现实概率','')+
+ stat('2032产业布局方向','1 : 5 : 4','方向性目标；不按三次产业增加值占比计算达标率','')+'</section>'+
  '<section class="grid2"><article class="card"><h3>从 2025 走向 '+state.year+'：不是一条预测直线</h3>'+chart(r,windBaselineRun())+
  '<div class="chartkey"><span><b style="background:var(--cyan)"></b>条件中位数</span><span><b style="background:var(--blue)"></b>P10–P90范围</span><span><b style="background:var(--gold)"></b>对照目标</span></div>'+
  '<div class="three-gauge"><div><small class="muted">P10</small><b>'+money(r.total.p10)+'</b></div><div><small class="muted">P50</small><b class="cyan">'+money(r.total.p50)+'</b></div><div><small class="muted">P90</small><b>'+money(r.total.p90)+'</b></div></div></article>'+
@@ -819,7 +852,7 @@ function archivePage(r){
  return heading('06 / REPRODUCIBLE RESEARCH','每一次改动，都能再跑一遍。',
  '不使用导入、导出，也不假装云端协同。实验快照只存在当前浏览器中，保存条件、种子、目标与计算摘要，并可重新打开及对照。',
  btn('save','＋ 保存当前情景','primary'))+
- v4RelayBar()+
+ v4RelayBar()+researchCardsContextPanel('archive')+
  '<section class="stats">'+stat('当前实验 ID',r.runId,'由模型输入确定的简短指纹','cyan')+
  stat('抽样次数',money(state.draws),'改变后会重新计算','')+
  stat('保存的浏览器快照',records.length+' 份','只保存在此设备内','')+
@@ -840,14 +873,14 @@ function calibrationMarkup(){
  return '<section class="column" style="padding-top:18px">'+
  '<div class="notice">所有调节只改变合成情景参数。2025年公开统计不跟着滑杆改变。每次参数调整都会按同一随机种子重新抽样。</div>'+
  '<div class="formfield"><label>情景类型</label><select class="select" data-set="scenario">'+Object.keys(E.PRESETS).map(k=>'<option value="'+k+'" '+(k===s.scenario?'selected':'')+'>'+E.PRESETS[k].name+'</option>').join('')+'</select></div>'+
- '<div class="duo"><div class="formfield"><label>对照年份</label><select class="select" data-set="year"><option value="2030" '+(s.year===2030?'selected':'')+'>2030 · 公开努力目标</option><option value="2032" '+(s.year===2032?'selected':'')+'>2032 · 内部假设</option></select></div>'+
+ '<div class="duo"><div class="formfield"><label>对照年份</label><select class="select" data-set="year"><option value="2030" '+(s.year===2030?'selected':'')+'>2030 · 公开努力目标</option><option value="2032" '+(s.year===2032?'selected':'')+'>2032 · 旧内部总量对照（自设）</option></select></div>'+
  '<div class="formfield"><label>目标（亿元）</label><input type="number" min="900" max="2500" step="10" data-set="target" value="'+s.target+'"></div></div>'+
  '<div class="line-sep"></div><h3>五个产业传导条件</h3>'+Object.keys(E.EFFECTS).map(quickSlider).join('')+
  '<div class="line-sep"></div><h3>计算与复现</h3>'+
  '<div class="duo"><div class="formfield"><label>抽样轨迹</label><select class="select" data-set="draws">'+[500,1000,2500,5000].map(k=>'<option value="'+k+'" '+(s.draws===k?'selected':'')+'>'+k.toLocaleString('zh-CN')+' 条</option>').join('')+'</select></div>'+
  '<div class="formfield"><label>随机种子</label><input type="number" min="1" max="4294967294" step="1" data-set="seed" value="'+s.seed+'"></div></div>'+
  '<div class="actions">'+btn('reset','恢复默认条件','secondary')+btn('save','保存当前实验','primary')+'</div>'+
- '<p class="footnote">2032目标1,500亿元来自旧内部视觉设计，仅作自设研究参照；2030年1,600亿元来自公开努力目标。名义增长假设不可与官方不变价增长率直接等价。</p></section>';
+ '<p class="footnote">2032年1,500亿元仅为旧内部方案的自设GDP总量对照，不代表发改局1:5:4产业布局目标。1:5:4不按三次产业增加值占比计算达标率；其可测指标需另行定义。2030年1,600亿元为公开努力目标。名义增长假设不可与官方不变价增长率直接等价。</p></section>';
 }
 function draw(){
  state=E.normalize(state);
@@ -878,6 +911,9 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
+ const cf=e.target.closest('[data-card-filter]');if(cf){cardFilter=cf.dataset.cardFilter||'all';draw();return;}
+ const cs=e.target.closest('[data-card-status]');if(cs){Cards.setStatus(cs.dataset.cardId,cs.dataset.cardStatus,localStorage);draw();return;}
+ const co=e.target.closest('[data-card-open]');if(co){const dest=co.dataset.cardOpen,sub=co.dataset.cardView;if(dest==='wind')navigate('wind',Number(sub||0));else navigate(dest);return;}
  const v4lens=e.target.closest('[data-v4-lens]');if(v4lens){v4Lens=v4lens.dataset.v4Lens;draw();return;}
  const v4industry=e.target.closest('[data-v4-industry]');if(v4industry){v4Industry=v4industry.dataset.v4Industry;draw();return;}
  const v4metric=e.target.closest('[data-v4-metric]');if(v4metric){v4Metric=v4metric.dataset.v4Metric;draw();return;}
