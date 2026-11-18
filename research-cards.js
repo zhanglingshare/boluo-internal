@@ -12,6 +12,7 @@ const STATUS={
 };
 const FILTERS=[
  {id:'all',label:'全部'},
+ {id:'alert',label:'观察预警'},
  {id:'signal',label:'结构信号'},
  {id:'target',label:'目标'},
  {id:'reminder',label:'提醒'},
@@ -56,7 +57,7 @@ function build(ctx){
  const hit=Number(run.hit);
  const raw=[
   {
-   id:'signal-industrial-investment',type:'signal',area:'data',tone:'amber',priority:'重点观察',grade:'A/B · 公开统计',
+   id:'signal-industrial-investment',type:'alert',riskTier:'watch',area:'data',tone:'amber',priority:'观察级 · 需要核查',grade:'A/B · 公开统计',
    title:'工业增长与投资下行同时出现',
    metric:'+8.7%  /  -18.8%',
    summary:'2025年规上工业增加值增长8.7%，固定资产投资下降18.8%。这是方向背离，不等于工业危机，也不能直接推断因果。',
@@ -159,7 +160,7 @@ function counts(cards){
   investigating:cards.filter(x=>x.status==='investigating').length,
   verified:cards.filter(x=>x.status==='verified').length,
   dismissed:cards.filter(x=>x.status==='dismissed').length,
-  verifiedAlerts:cards.filter(x=>x.type==='alert'&&x.status==='verified').length,
+  verifiedAlerts:cards.filter(x=>x.type==='alert'&&x.riskTier==='high'&&x.status==='verified').length,
   targets:cards.filter(x=>x.type==='target').length,
   gaps:cards.filter(x=>x.type==='gap').length
  };
