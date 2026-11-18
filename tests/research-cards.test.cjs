@@ -14,8 +14,10 @@ test('2032 1:5:4 is a layout direction and never receives an added-value progres
 test('GDP target card distinguishes conditional simulation frequency from real probability',()=>{
  const c=make().find(x=>x.id==='target-gdp-simulation');assert.match(c.caution,/不是现实达标概率/);assert.match(c.grade,/条件模拟/);
 });
-test('no confirmed high-level alert is fabricated from a single divergence signal',()=>{
- const stats=Cards.counts(make());assert.equal(stats.verifiedAlerts,0);
+test('the industrial-investment alert is watch-level, not a fabricated high-risk warning',()=>{
+ const alert=make().find(x=>x.id==='signal-industrial-investment');
+ assert.equal(alert.type,'alert');assert.equal(alert.riskTier,'watch');
+ assert.equal(Cards.counts(make()).verifiedAlerts,0);
 });
 test('workflow status can be updated, reopened and persisted',()=>{
  assert.equal(Cards.statusOf('signal-industrial-investment',storage),'new');
