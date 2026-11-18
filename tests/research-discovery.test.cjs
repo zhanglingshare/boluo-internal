@@ -30,6 +30,11 @@ test('unknown fields and invalid periods are rejected',()=>{
  const bad=D.parseCsv(csv([metric('工业增加值','2021年',4)]));
  assert.ok(bad.errors.length);
 });
+test('empty values and duplicate CSV headers are rejected',()=>{
+ const empty=metric('工业增加值','2021',4);empty.value='';
+ assert.ok(D.parseCsv(csv([empty])).errors.some(x=>x.includes('value不能为空')));
+ assert.ok(D.parseCsv(header+',value\n'+row(metric('工业增加值','2021',4))+',9').errors.some(x=>x.includes('列名重复')));
+});
 test('different values from same source scope and period become a conflict candidate',()=>{
  const st=storage(),a=metric('工业增加值','2025',8.7,'公报A'),b=metric('工业增加值','2025',4.1,'公报B');
  const r=D.importCsv(csv([a,b]),st);assert.equal(r.ok,true);
