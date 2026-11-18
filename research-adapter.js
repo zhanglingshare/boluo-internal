@@ -127,7 +127,11 @@ function saveProposal(input,items,engine,storage){
  if(!Number.isFinite(Number(after.knobs&&after.knobs[key]))||Number(after.knobs[key])<lo||Number(after.knobs[key])>hi)return{ok:false,error:'候选参数超出模型允许范围。'};
  const base=engine.normalize(before),candidate=engine.normalize(after);
  if(candidate.knobs[key]===base.knobs[key])return{ok:false,error:'候选参数与当前基准相同，没有形成对照。'};
+ if(['year','target','scenario','seed','draws'].some(k=>base[k]!==candidate[k]))return{ok:false,error:'对照实验必须保持年份、目标、情景、随机种子和抽样次数不变。'};
+ if(Object.keys(engine.EFFECTS).some(k=>k!==key&&base.knobs[k]!==candidate.knobs[k]))return{ok:false,error:'一次只允许改变一个模型参数；其他旋钮必须保持原值。'};
  const summary=x=>({p10:Number(x.p10),p50:Number(x.p50),p90:Number(x.p90),hit:Number(x.hit)});
+ const validSummary=x=>x&&['p10','p50','p90','hit'].every(k=>Number.isFinite(Number(x[k])));
+ if(!validSummary(p.baseline)||!validSummary(p.candidate))return{ok:false,error:'缺少有效的基准与候选情景输出摘要。'};
  const proposal={id:'P-'+hash([key,candidate.knobs[key],base.seed,evidenceIds.join(','),Date.now()].join('|')),parameter:key,label:bridge.label,
   evidenceIds,note:clean(p.note,1000),before:base,after:candidate,baseline:summary(p.baseline),candidate:summary(p.candidate),
   deltaP50:Number(p.candidate.p50)-Number(p.baseline.p50),createdAt:new Date().toISOString(),
