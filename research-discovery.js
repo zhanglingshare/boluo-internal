@@ -29,6 +29,7 @@ function parseCsv(text){
  const nonempty=matrix.filter(r=>r.some(c=>String(c).trim()!==''));
  if(nonempty.length<2)return {rows:[],errors:['没有可导入的数据行。']};
  const headers=nonempty[0].map(x=>safeText(x,80).replace(/^\uFEFF/,'').toLowerCase());
+ if(new Set(headers).size!==headers.length)return {rows:[],errors:['CSV列名重复，请保留标准模板中的唯一字段。']};
  if(headers.some(h=>FORBIDDEN.test(h)))return {rows:[],errors:['检测到个人身份或联系方式字段。仅接受匿名汇总数据，已拒绝整个文件。']};
  const unknown=headers.filter(h=>!ALLOWED.includes(h));
  if(unknown.length)return {rows:[],errors:['存在不支持的字段：'+unknown.join('、')+'。请使用标准模板。']};
@@ -43,6 +44,7 @@ function parseCsv(text){
   if(!['metric','survey_aggregate'].includes(type)){errors.push('第'+line+'行：record_type只能是metric或survey_aggregate。');return;}
   if(!obj.indicator||!obj.period||!obj.geography||!obj.unit||!obj.scope||!obj.source_name){errors.push('第'+line+'行：指标、期次、地区、单位、统计范围和来源名称不能为空。');return;}
   if(!/^20\d{2}([-/](0[1-9]|1[0-2]))?([-/]([0-2]\d|3[01]))?$|^20\d{2}Q[1-4]$/i.test(obj.period)){errors.push('第'+line+'行：期次请使用YYYY、YYYY-MM、YYYY-MM-DD或YYYYQ1格式。');return;}
+  if(obj.value===''){errors.push('第'+line+'行：value不能为空。');return;}
   const value=Number(obj.value);
   if(!Number.isFinite(value)){errors.push('第'+line+'行：value必须是数字。');return;}
   const grade=String(obj.evidence_grade||'').toUpperCase();
@@ -153,7 +155,7 @@ function importedIssues(rows,storage){
  cross.forEach((items,key)=>{
   const output=items.find(x=>/工业/.test(x.indicator)&&/(增加值|产值|产出)/.test(x.indicator));
   const investment=items.find(x=>/(固定资产投资|工业投资)/.test(x.indicator));
-  if(output&&investment&&Math.sign(output.value)!==Math.sign(investment.value)){
+  if(output&&investment&&output.value*investment.value<0){
    out.push(issue({id:'import-divergence-'+hash(key),kind:'divergence',tier:'watch',area:'data',title:'导入数据出现工业产出与投资方向背离',metric:output.indicator+' '+(output.value>0?'+':'')+output.value+'% / '+investment.indicator+' '+(investment.value>0?'+':'')+investment.value+'%',summary:'同一地区、期次、统计范围和单位下，两项指标方向不同。系统只提示背离，不推断因果。',evidence:[output.period+' · '+output.geography,output.source_name+'：'+output.value+'%',investment.source_name+'：'+investment.value+'%'],alternatives:['存量产能与新增投资时滞','需求、订单或行业结构变化','指标统计范围或价格口径差异'],falsifier:'若两项指标并非同一范围或同一统计口径，先取消背离比较；补充订单、投产批次和产能利用率后再评估解释。',nextStep:'核对两个指标的原始口径，并补充行业、项目和订单证据。',grade:'本地导入 · 同口径方向筛查',source:'导入汇总数据',sourceLinks:[output,investment].filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'data'},storage));
   }
  });
