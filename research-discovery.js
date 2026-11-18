@@ -51,7 +51,7 @@ function parseCsv(text){
   if(!['A','B','C','D'].includes(grade)){errors.push('第'+line+'行：evidence_grade只能是A/B/C/D。');return;}
   const url=safeText(obj.source_url,500);
   if(url&&!/^https?:\/\//i.test(url)){errors.push('第'+line+'行：source_url必须是http或https链接。');return;}
-  const record={id:'obs-'+(index+1)+'-'+hash([type,obj.indicator,obj.period,obj.geography,obj.scope,obj.source_name,value].join('|')),
+  const record={id:'obs-'+hash([type,obj.indicator,obj.period,obj.geography,obj.industry||'',obj.scope,obj.unit,obj.source_name,value].join('|')),
    record_type:type,indicator:safeText(obj.indicator,100),period:obj.period.toUpperCase(),geography:safeText(obj.geography,80),
    industry:safeText(obj.industry,80),value,unit:safeText(obj.unit,24),scope:safeText(obj.scope,120),
    source_name:safeText(obj.source_name,120),source_url:url,evidence_grade:grade,
@@ -77,7 +77,8 @@ function save(rows,storage){
 }
 function importCsv(text,storage){
  const parsed=parseCsv(text);if(parsed.errors.length)return {ok:false,imported:0,errors:parsed.errors,total:load(storage).length};
- const old=load(storage),seen=new Set(old.map(x=>x.id)),fresh=parsed.rows.filter(x=>!seen.has(x.id));
+ const old=load(storage),seen=new Set(old.map(x=>x.id)),fresh=[];
+ parsed.rows.forEach(x=>{if(!seen.has(x.id)){fresh.push(x);seen.add(x.id);}});
  const merged=old.concat(fresh).slice(-MAX_ROWS),ok=save(merged,storage);
  return {ok,imported:ok?fresh.length:0,skipped:parsed.rows.length-fresh.length,errors:ok?[]:['浏览器本地存储不可用，数据未保存。'],total:old.length+(ok?fresh.length:0)};
 }
