@@ -23,7 +23,7 @@ let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
 let methodFilter='全部',cardFilter='all',discoveryFilter='all',discoveryMessage='';
-let adapterSelections={},adapterNotes={},adapterFilter='all',adapterParam='manufacturing',adapterValue=.2,adapterProposalNote='',adapterPreview=null,adapterMessage='';
+let adapterSelections={},adapterNotes={},adapterFilter='all',adapterParam='manufacturing',adapterValue=.2,adapterProposalNote='',adapterPreview=null,adapterMessage='',adapterStep=0,adapterPresentation=false,adapterSelectedId='public-2025-industrial';
 let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20,v4Year=null;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
@@ -616,72 +616,84 @@ function adapterObservations(){
  }));
  return publicRows.concat(imports);
 }
+
 function adapterStatusClass(status){return status==='已批准'?'verified':status==='已排除'?'dismissed':status==='退回补资料'?'needs-data':'working';}
-function adapterRecordCard(item,all){
- const r=item.record,selected=adapterSelections[r.id]!==undefined?adapterSelections[r.id]:(item.variableId||'');
- const note=adapterNotes[r.id]!==undefined?adapterNotes[r.id]:item.note;
- const status=item.status;
- const blockers=item.validation.blockers.map(x=>'<li>'+html(x)+'</li>').join('');
- const warnings=item.validation.warnings.map(x=>'<li>'+html(x)+'</li>').join('');
- const variableOptions='<option value="">暂不映射</option>'+R.VARIABLES.map(v=>'<option value="'+v.id+'" '+(selected===v.id?'selected':'')+'>'+html(v.name)+' · '+html(v.unit)+'</option>').join('');
- const url=r.source_url&&/^https?:\/\//i.test(r.source_url)?'<a href="'+html(r.source_url)+'" target="_blank" rel="noopener noreferrer">核验来源 ↗</a>':'';
- const grade='<span class="adapter-grade '+html(String(r.evidence_grade||'').toLowerCase())+'">'+html(r.evidence_grade||'?')+'级</span>';
- const actions='<div class="adapter-actions"><button type="button" class="tiny-btn" data-adapter-map-save="'+html(r.id)+'">保存映射</button>'+
- (status==='已批准'?'<button type="button" class="tiny-btn ghost" data-adapter-status="待审核" data-adapter-id="'+html(r.id)+'">撤销批准</button>':
-  '<button type="button" class="tiny-btn primary" data-adapter-status="已批准" data-adapter-id="'+html(r.id)+'" '+(item.validation.ok&&status!=='待保存'&&status!=='待映射'?'':'disabled')+'>批准进入证据层</button>')+
- '<button type="button" class="tiny-btn ghost" data-adapter-status="退回补资料" data-adapter-id="'+html(r.id)+'">退回补资料</button></div>';
- return '<article class="adapter-record" data-adapter-card="'+html(r.id)+'"><div class="adapter-record-head"><div><div class="adapter-meta">'+grade+' <span>'+html(r.period)+' · '+html(r.geography)+'</span><span>'+html(r.record_type==='survey_aggregate'?'匿名调查汇总':'指标观察')+'</span></div><h3>'+html(r.indicator)+'</h3></div><span class="adapter-status '+adapterStatusClass(status)+'">'+html(status)+'</span></div>'+
- '<div class="adapter-value">'+html(r.value)+' <small>'+html(r.unit)+'</small></div><p class="adapter-source">'+html(r.source_name)+' · '+html(r.scope)+' '+url+'</p>'+
- '<div class="adapter-map-row"><label>映射到研究变量<select class="select" data-adapter-map="'+html(r.id)+'">'+variableOptions+'</select></label>'+
- '<label>映射依据 / 口径说明<input type="text" data-adapter-note="'+html(r.id)+'" value="'+html(note||'')+'" placeholder="人工映射请说明定义、分母、单位和对应关系"></label></div>'+
- '<div class="adapter-validation '+(item.validation.ok?'pass':'blocked')+'">'+
- (blockers?'<div><b>阻断项</b><ul>'+blockers+'</ul></div>':'<b>审核门通过：可申请进入事实证据层</b>')+
- (warnings?'<div><b>仍需留意</b><ul>'+warnings+'</ul></div>':'')+'</div>'+actions+'</article>';
+function adapterAllItems(){const all=adapterObservations();return{all,items:Adapter.list(all,R,localStorage)};}
+function adapterStepNav(){
+ const steps=[['命题','为什么要适配'],['证据','先看数据'],['映射','变量如何连接'],['实验','现场运行'],['答辩','结果与边界']];
+ return '<div class="ad-stepnav">'+steps.map((s,i)=>'<button type="button" data-adapter-step="'+i+'" class="'+(adapterStep===i?'active':'')+(adapterStep>i?' passed':'')+'"><span>0'+(i+1)+'</span><b>'+s[0]+'</b><small>'+s[1]+'</small></button>').join('')+'</div>';
 }
-function adapterBridgePanel(items){
- const bridge=Adapter.BRIDGES.find(x=>x.key===adapterParam)||Adapter.BRIDGES[0];
- const evidence=Adapter.approvedFor(adapterParam,items),lo=adapterParam==='project_delay'?0:-1;
- const proposals=Adapter.getProposals(localStorage);
+function adapterFooter(){return '<div class="ad-controls"><button type="button" class="ghost" data-adapter-prev '+(adapterStep===0?'disabled':'')+'>← 上一节</button><span>第 '+(adapterStep+1)+' / 5 节</span><button type="button" class="primary" data-adapter-next '+(adapterStep===4?'disabled':'')+'>'+(adapterStep===3?'进入答辩结果':'继续')+' →</button></div>';}
+function adapterSignalBar(item){
+ const v=Number(item.record.value)||0,w=Math.min(100,Math.abs(v)/20*100),negative=v<0;
+ return '<div class="ad-signal"><div class="ad-signal-head"><span>'+html(item.record.indicator)+'</span><b class="'+(negative?'negative':'positive')+'">'+(v>0?'+':'')+decimal(v,1)+'%</b></div><div class="ad-signal-track"><i class="'+(negative?'negative':'positive')+'" style="width:'+w+'%"></i></div><small>'+html(item.record.period)+' · '+html(item.record.source_name)+' · '+html(item.record.evidence_grade)+'级</small></div>';
+}
+function adapterReviewEditor(item){
+ const r=item.record,selected=adapterSelections[r.id]!==undefined?adapterSelections[r.id]:(item.variableId||item.suggestedVariable||''),note=adapterNotes[r.id]!==undefined?adapterNotes[r.id]:(item.note||'');
+ const opts='<option value="">暂不映射</option>'+R.VARIABLES.map(v=>'<option value="'+v.id+'" '+(selected===v.id?'selected':'')+'>'+html(v.name)+' · '+html(v.unit)+'</option>').join('');
+ const blockers=item.validation.blockers.map(x=>'<li>'+html(x)+'</li>').join(''),warnings=item.validation.warnings.map(x=>'<li>'+html(x)+'</li>').join('');
+ const canApprove=item.validation.ok&&!['待保存','待映射'].includes(item.status);
+ return '<div class="ad-review-editor"><div class="ad-editor-head"><div><span class="ad-kicker">EVIDENCE INSPECTOR</span><h3>'+html(r.indicator)+'</h3></div><span class="adapter-status '+adapterStatusClass(item.status)+'">'+html(item.status)+'</span></div>'+
+ '<div class="ad-editor-grid"><label>研究变量<select class="select" data-adapter-map="'+html(r.id)+'">'+opts+'</select></label><label>口径说明<input data-adapter-note="'+html(r.id)+'" value="'+html(note)+'" placeholder="人工映射时填写理由"></label></div>'+
+ '<div class="ad-validation-row '+(item.validation.ok?'ok':'blocked')+'">'+(blockers?'<b>阻断 '+item.validation.blockers.length+'</b><ul>'+blockers+'</ul>':'<b>✓ 字段与口径检查通过</b>')+(warnings?'<details><summary>'+warnings.length+' 项解释边界</summary><ul>'+warnings+'</ul></details>':'')+'</div>'+
+ '<div class="ad-editor-actions"><button type="button" class="tiny-btn" data-adapter-map-save="'+html(r.id)+'">保存映射</button>'+
+ (item.status==='已批准'?'<button type="button" class="tiny-btn ghost" data-adapter-status="待审核" data-adapter-id="'+html(r.id)+'">撤销批准</button>':'<button type="button" class="tiny-btn primary" data-adapter-status="已批准" data-adapter-id="'+html(r.id)+'" '+(canApprove?'':'disabled')+'>批准为证据</button>')+
+ '<button type="button" class="tiny-btn ghost" data-adapter-status="退回补资料" data-adapter-id="'+html(r.id)+'">退回补资料</button></div>'+
+ '<div class="ad-source-line">'+(r.source_url&&/^https?:\/\//i.test(r.source_url)?'<a href="'+html(r.source_url)+'" target="_blank" rel="noopener noreferrer">打开来源 ↗</a>':'')+'<span>'+html(r.scope)+' · '+html(r.geography)+' · '+html(r.period)+'</span></div></div>';
+}
+function adapterEvidenceSlide(items,all){
+ const approved=items.filter(x=>x.status==='已批准'&&x.validation.ok).length;
+ const selected=items.find(x=>x.record.id===adapterSelectedId)||items[0];
+ const rows=items.map(item=>'<button type="button" class="ad-evidence-row '+(selected&&selected.record.id===item.record.id?'selected':'')+'" data-adapter-select-evidence="'+html(item.record.id)+'"><span class="ad-grade">'+html(item.record.evidence_grade||'?')+'</span><span class="ad-evidence-name"><b>'+html(item.record.indicator)+'</b><small>'+html(item.record.period)+' · '+html(item.record.geography)+'</small></span><strong>'+html(item.record.value)+' <small>'+html(item.record.unit)+'</small></strong><span class="ad-evidence-status">'+html(item.status)+'</span><i>↗</i></button>').join('');
+ return '<section class="ad-slide ad-evidence-slide"><div class="ad-slide-head"><div><span class="ad-kicker">02 / EVIDENCE REVIEW</span><h2>先问数据：<em>它能证明什么？</em></h2></div><div class="ad-slide-index">02<span>/05</span></div></div>'+
+ '<div class="ad-evidence-layout"><div class="ad-evidence-left"><div class="ad-chart-title"><span>2025 · 两个方向相反的公开信号</span><small>公开统计 · B级</small></div><div class="ad-signal-stack">'+items.filter(x=>x.record.id.startsWith('public-2025-')).map(adapterSignalBar).join('')+'</div>'+
+ '<div class="ad-evidence-counts"><div><b>'+items.length+'</b><small>观察记录</small></div><div><b>'+approved+'</b><small>已批准证据</small></div><div><b>'+items.filter(x=>!x.validation.ok).length+'</b><small>存在阻断</small></div></div>'+
+ '<div class="ad-upload-row"><button type="button" class="tiny-btn primary" data-adapter-import>＋ 导入匿名汇总 CSV</button><a href="./research-observation-template.csv" download>模板 ↧</a><input type="file" accept=".csv,text/csv" data-adapter-file hidden></div></div>'+
+ '<div class="ad-evidence-right"><div class="ad-chart-title"><span>证据清单</span><small>点击一条进行审核</small></div><div class="ad-evidence-list">'+rows+'</div>'+
+ (selected?adapterReviewEditor(selected):'<div class="ad-empty">暂无观察记录</div>')+'</div></div>'+
+ '<div class="ad-takeaway"><b>答辩要点</b><span>增长与下滑同时出现，只能提出结构问题，不能把两条增速直接换算成模型系数。</span></div></section>';
+}
+function adapterMappingSlide(items){
+ const bridge=Adapter.BRIDGES.find(x=>x.key===adapterParam)||Adapter.BRIDGES[0],evidence=Adapter.approvedFor(adapterParam,items);
+ const vars=bridge.variables.map(id=>R.VARIABLES.find(v=>v.id===id)).filter(Boolean);
+ const variableNodes=vars.map(v=>'<div class="ad-node"><small>RESEARCH VARIABLE</small><b>'+html(v.name)+'</b><span>'+html(v.unit)+'</span></div>').join('');
+ const evidenceNodes=evidence.length?evidence.map(x=>'<div class="ad-node evidence"><small>'+html(x.record.evidence_grade)+'级 · '+html(x.record.period)+'</small><b>'+html(x.record.indicator)+'</b><span>'+html(x.record.value)+' '+html(x.record.unit)+'</span></div>').join(''):'<div class="ad-node empty"><small>NO APPROVED EVIDENCE</small><b>尚无批准证据</b><span>返回上一节完成审核</span></div>';
+ const buttons=Adapter.BRIDGES.map(x=>'<button type="button" data-adapter-param="'+x.key+'" class="'+(x.key===adapterParam?'active':'')+'">'+html(x.label)+'</button>').join('');
+ return '<section class="ad-slide"><div class="ad-slide-head"><div><span class="ad-kicker">03 / VARIABLE MAPPING</span><h2>从一条观察，到一个<em>可检验条件</em></h2></div><div class="ad-slide-index">03<span>/05</span></div></div>'+
+ '<div class="ad-param-tabs">'+buttons+'</div><div class="ad-mapping-flow"><div class="ad-flow-col"><small>01 / EVIDENCE</small>'+evidenceNodes+'</div><div class="ad-flow-arrow">→</div><div class="ad-flow-col"><small>02 / VARIABLE</small>'+(variableNodes||'<div class="ad-node empty"><b>复合指标</b><span>需要多维数据结构</span></div>')+'</div><div class="ad-flow-arrow">→</div><div class="ad-flow-col"><small>03 / MODEL CONDITION</small><div class="ad-node model"><small>SCENARIO INPUT</small><b>'+html(bridge.label)+'</b><span>当前基准 '+decimal(state.knobs[adapterParam],2)+'</span></div></div></div>'+
+ '<div class="ad-mapping-bottom"><div><b>'+html(bridge.label)+'</b><p>'+html(bridge.reason)+'</p></div><div class="ad-gap-meter"><span>直接校准资格</span><strong>0%</strong><div><i style="width:0%"></i></div><small>还缺：'+html(bridge.need)+'</small></div></div>'+
+ '<div class="ad-takeaway"><b>关键边界</b><span>变量可以承接证据，不代表变量已经识别出因果系数。映射关系是研究假设，不是自动证明。</span></div></section>';
+}
+function adapterHistogramMarkup(result,label,kind){
+ if(!result||!result.histogram)return '';
+ const counts=result.histogram.counts||[],max=Math.max(1,...counts);
+ return '<div class="ad-histogram '+kind+'"><div class="ad-hist-head"><b>'+label+'</b><span>P50 '+money(result.total.p50)+' 亿</span></div><div class="ad-hist-bars">'+counts.map((v,i)=>'<i title="第'+(i+1)+'组：'+v+'条" style="height:'+Math.max(3,v/max*100)+'%"></i>').join('')+'</div><div class="ad-hist-foot"><span>'+money(result.total.p10)+' 亿</span><span>P10</span><span>P90</span><span>'+money(result.total.p90)+' 亿</span></div></div>';
+}
+function adapterExperimentSlide(items){
+ const bridge=Adapter.BRIDGES.find(x=>x.key===adapterParam)||Adapter.BRIDGES[0],evidence=Adapter.approvedFor(adapterParam,items),lo=adapterParam==='project_delay'?0:-1;
  const preview=adapterPreview&&adapterPreview.parameter===adapterParam?adapterPreview:null;
- const bridges=Adapter.BRIDGES.map(x=>'<button type="button" data-adapter-param="'+x.key+'" class="'+(x.key===adapterParam?'active':'')+'"><b>'+html(x.label)+'</b><small>'+Adapter.approvedFor(x.key,items).length+' 条已批准关联证据</small></button>').join('');
- const result=preview?'<div class="adapter-result"><div class="adapter-result-head"><b>同种子、同抽样次数的并行重跑</b><span>仅情景比较</span></div><div class="adapter-result-grid">'+
- '<div><small>原基准 P50</small><strong>'+money(preview.baseline.total.p50)+' 亿</strong><em>P10 '+money(preview.baseline.total.p10)+' · P90 '+money(preview.baseline.total.p90)+'</em></div>'+
- '<div><small>候选情景 P50</small><strong>'+money(preview.candidate.total.p50)+' 亿</strong><em>P10 '+money(preview.candidate.total.p10)+' · P90 '+money(preview.candidate.total.p90)+'</em></div>'+
- '<div><small>P50变化</small><strong class="'+(preview.delta>=0?'good':'bad')+'">'+sign(preview.delta)+' 亿</strong><em>条件命中频率 '+perc(preview.baseline.hit)+' → '+perc(preview.candidate.hit)+'</em></div></div>'+
- '<p>关联证据：'+preview.evidence.map(x=>html(x.record.indicator)+'（'+html(x.record.period)+'）').join('、')+'</p>'+
- '<div class="adapter-warning">注意：证据仅提供情境背景。参数由研究者手动设定，并非通过数据估计。这个结果不改变默认模型。</div>'+
- '<button type="button" class="tiny-btn primary" data-adapter-save-proposal>保存情景提案</button></div>':'<div class="adapter-empty">先选择一个有已批准关联证据的参数，再填写解释并运行对照。没有证据时，不开放“证据关联实验”。</div>';
- const history=proposals.length?'<div class="adapter-proposals">'+proposals.slice(0,8).map(p=>'<div class="adapter-proposal"><div><b>'+html(p.label)+'</b><small>'+html(p.createdAt)+' · '+html(p.status)+'</small></div><strong>'+sign(p.deltaP50)+' 亿</strong><span>关联 '+p.evidenceIds.length+' 条证据 · 未应用</span></div>').join('')+'</div>':'<p class="footnote">尚无保存的情景提案。</p>';
- return '<section class="card gap adapter-bridge"><div class="eyebrow">V7 / EVIDENCE → SCENARIO BRIDGE</div><h2>证据关联的情景实验</h2><p class="adapter-intro">只有审核通过的证据可以挂接到相关模型条件。系统不会把观测值直接换算成模型系数；你需要明确提出一个待检验的情景变化。</p>'+
- '<div class="adapter-bridge-grid">'+bridges+'</div>'+
- '<div class="adapter-bridge-detail"><div><h3>'+html(bridge.label)+'</h3><p>'+html(bridge.reason)+'</p><div class="adapter-needed"><b>要获得直接校准资格，还缺：</b>'+html(bridge.need)+'</div>'+
- '<div class="adapter-warning">当前状态：仅允许“证据关联的手动情景压测”，不允许自动估计或写回参数。</div></div>'+
- '<div class="adapter-controls"><label>候选情景参数 <output data-adapter-live>'+decimal(adapterValue,2)+'</output></label><input type="range" min="'+lo+'" max="1" step="0.05" value="'+adapterValue+'" data-adapter-value>'+
- '<label>为什么这样调整？</label><textarea data-adapter-proposal-note rows="3" placeholder="写明证据如何影响你的判断，以及这次只是测试什么情景。">'+html(adapterProposalNote)+'</textarea>'+
- '<button type="button" class="primary" data-adapter-run '+(evidence.length?'':'disabled')+'>运行同条件对照</button>'+
- '<small>'+evidence.length+' 条已批准关联证据 · 原基准参数 '+decimal(state.knobs[adapterParam],2)+'</small></div></div>'+
- result+'<div class="adapter-history"><h3>本机保存的情景提案</h3>'+history+'</div></section>';
+ const tabs=Adapter.BRIDGES.map(x=>'<button type="button" data-adapter-param="'+x.key+'" class="'+(x.key===adapterParam?'active':'')+'">'+html(x.label)+'</button>').join('');
+ const result=preview?'<div class="ad-run-output"><div class="ad-result-kpis"><div><small>原基准 P50</small><b>'+money(preview.baseline.total.p50)+'<i>亿</i></b></div><div><small>候选 P50</small><b>'+money(preview.candidate.total.p50)+'<i>亿</i></b></div><div><small>中位数变化</small><b class="'+(preview.delta>=0?'positive':'negative')+'">'+sign(preview.delta)+'<i>亿</i></b></div><div><small>命中频率</small><b>'+perc(preview.baseline.hit)+' <i>→</i> '+perc(preview.candidate.hit)+'</b></div></div><div class="ad-hist-pair">'+adapterHistogramMarkup(preview.baseline,'原基准 · 分布','baseline')+adapterHistogramMarkup(preview.candidate,'候选情景 · 分布','candidate')+'</div><div class="ad-run-note">同一随机种子 · 同一抽样次数 · 只改变一个参数。分布变化属于当前模型假设下的条件结果。</div></div>':'<div class="ad-run-placeholder"><div class="ad-play-icon">▶</div><b>等待运行实验</b><span>调整右侧参数，点击运行，分布图将在这里生成。</span></div>';
+ return '<section class="ad-slide"><div class="ad-slide-head"><div><span class="ad-kicker">04 / LIVE MODEL DEMO</span><h2>让模型现场回答：<em>如果条件改变？</em></h2></div><div class="ad-slide-index">04<span>/05</span></div></div>'+
+ '<div class="ad-param-tabs">'+tabs+'</div><div class="ad-experiment-layout"><div class="ad-experiment-visual">'+result+'</div><aside class="ad-control-panel"><small>LIVE CONTROL / '+html(bridge.label)+'</small><div class="ad-control-number"><b data-adapter-live>'+decimal(adapterValue,2)+'</b><span>候选冲击强度</span></div><input type="range" min="'+lo+'" max="1" step="0.05" value="'+adapterValue+'" data-adapter-value><div class="ad-control-scale"><span>'+lo.toFixed(1)+'</span><span>0</span><span>+1.0</span></div><label>本次实验解释</label><textarea data-adapter-proposal-note rows="3" placeholder="说明为什么改变这个条件，以及这次想检验什么。">'+html(adapterProposalNote)+'</textarea><div class="ad-linked-evidence"><b>'+evidence.length+' 条已批准关联证据</b><small>'+(evidence.length?evidence.map(x=>html(x.record.indicator)+' '+html(x.record.value)+html(x.record.unit)).join(' · '):'当前没有证据，不能运行关联实验')+'</small></div><button type="button" class="primary ad-run-button" data-adapter-run '+(evidence.length?'':'disabled')+'>▶ 运行模型</button></aside></div>'+
+ '<div class="ad-takeaway"><b>实验规则</b><span>数据提供现实背景，参数仍由研究者手动设定。实验不会自动校准或改写默认模型。</span></div></section>';
+}
+function adapterDefenseConclusion(){
+ const proposals=Adapter.getProposals(localStorage),preview=adapterPreview;
+ const saved=proposals.length?proposals.slice(0,5).map(p=>'<div class="ad-proposal-row"><div><b>'+html(p.label)+'</b><small>'+html(p.createdAt)+' · '+html(p.status)+'</small></div><strong>'+sign(p.deltaP50)+' 亿</strong><span>'+p.evidenceIds.length+' 条证据关联</span></div>').join(''):'<div class="ad-empty">尚未保存情景提案。完成现场实验后，可以把它带入研究档案。</div>';
+ const calib=Adapter.BRIDGES.map((b,i)=>'<div class="ad-calib-item"><span>0'+(i+1)+'</span><b>'+html(b.label)+'</b><i>待识别</i></div>').join('');
+ const save=preview?'<button type="button" class="primary" data-adapter-save-proposal>保存本轮情景提案</button>':'<button type="button" class="primary" data-adapter-step="3">返回运行实验</button>';
+ return '<section class="ad-slide"><div class="ad-slide-head"><div><span class="ad-kicker">05 / FINDINGS & LIMITATIONS</span><h2>研究结论：<em>我们知道什么，还不知道什么？</em></h2></div><div class="ad-slide-index">05<span>/05</span></div></div><div class="ad-conclusion-grid"><div class="ad-conclusion-main"><div class="ad-conclusion-number"><strong>0<span>/5</span></strong><small>参数具备直接数据校准资格</small></div><div class="ad-calib-list">'+calib+'</div><div class="ad-thesis-line">当前最可靠的成果不是“算出一个答案”，而是把证据、变量、假设和模型结果分开。</div></div><div class="ad-conclusion-side"><div class="ad-kicker">RESEARCH OUTPUT</div><h3>实验提案</h3>'+saved+save+'<details class="ad-boundary"><summary>展开研究边界</summary><ul><li>现有滑杆是情景冲击强度，不是直接观测变量。</li><li>尚缺测量方程、跨期数据、滞后结构和独立验证。</li><li>本机数据与提案保存在浏览器，不是部门云端协作。</li><li>模型条件命中频率不是现实发生概率。</li></ul></details></div></div><div class="ad-takeaway"><b>下一阶段</b><span>补齐真实项目、企业调查与产业交易数据，建立可回测的参数识别和版本审计机制。</span></div></section>';
 }
 function adapterPage(){
- const all=adapterObservations(),items=Adapter.list(all,R,localStorage);
- const visible=items.filter(x=>adapterFilter==='all'||(adapterFilter==='approved'?x.status==='已批准':adapterFilter==='blocked'?!x.validation.ok:adapterFilter==='pending'?x.status!=='已批准'&&x.status!=='已排除':true));
- const approved=items.filter(x=>x.status==='已批准'&&x.validation.ok).length;
- const imports=all.filter(x=>!x.id.startsWith('public-2025-')).length;
- const filterButtons=[['all','全部 '+items.length],['pending','待处理'],['approved','已批准 '+approved],['blocked','存在阻断']];
- return heading('07 / EVIDENCE ADMISSION & MODEL ADAPTER','数据先过门，再进入模型。','把公开指标和导入的匿名汇总数据映射到研究变量。审核通过只代表可作为证据使用，不代表已经识别模型参数。',btn('go-discovery','回到主动问题发现 ↗','secondary'))+
- '<section class="stats">'+stat('待审核观察',items.filter(x=>x.status!=='已批准').length+' 条','包括仓库公开演示基准与本机导入','cyan')+
- stat('已批准证据',approved+' 条','只进入证据层，不自动改参数','good')+
- stat('本机导入记录',imports+' 条','不上传、不跨设备同步','')+
- stat('情景提案',Adapter.getProposals(localStorage).length+' 份','均为手动假设，未应用','gold')+'</section>'+
- '<section class="card gap"><div class="row wrap"><div><div class="eyebrow">01 / OBSERVATION REVIEW</div><h2>数据审核台</h2><p class="adapter-intro">内置两条2025公开基准作为适配示例；导入记录仍留在当前浏览器。A/B可核验来源才有资格申请批准，C/D不进入事实证据层。</p></div>'+
- '<div class="adapter-import"><button type="button" class="tiny-btn primary" data-adapter-import>导入匿名汇总 CSV</button><a href="./research-observation-template.csv" download>下载模板 ↧</a><input type="file" accept=".csv,text/csv" data-adapter-file hidden></div></div>'+
- '<p class="adapter-message">'+html(adapterMessage)+'</p><div class="adapter-filter">'+filterButtons.map(x=>'<button type="button" data-adapter-filter="'+x[0]+'" class="'+(adapterFilter===x[0]?'active':'')+'">'+x[1]+'</button>').join('')+'</div>'+
- '<div class="adapter-record-list">'+(visible.length?visible.map(x=>adapterRecordCard(x,all)).join(''):'<div class="adapter-empty">这个分类暂时没有记录。</div>')+'</div>'+
- '<p class="footnote">审核状态和映射记录保存在当前浏览器。浏览器本地存储不是加密数据库；不得导入个人答卷、企业交易明细或商业秘密。</p></section>'+
- adapterBridgePanel(items)+
- '<section class="card gap"><div class="eyebrow">MODEL ADMISSION RULE</div><h3>当前模型的直接校准资格</h3><div class="adapter-no-direct"><strong>0 / 5</strong><span>个参数具备直接数据校准资格</span></div><p>现有模型的五个旋钮是情景冲击强度，不是可直接观测的统计量。工业增速、投资增速、本地采购率、岗位缺口率和账期天数都不能不经识别就换算成旋钮值。后续必须建立明确的测量方程、基准期、滞后结构和估计/验证方法。</p></section>';
+ const {all,items}=adapterAllItems();
+ const slides=[
+ '<section class="ad-slide ad-opening"><div class="ad-opening-left"><span class="ad-kicker">BOLUO / RESEARCH DEFENSE · 2026</span><div class="ad-issue">RESEARCH QUESTION <span>01</span></div><h1>增长与下滑，<br><em>为什么同时发生？</em></h1><p>从两个公开信号出发，现场演示数据怎样进入研究变量，再进入情景模型。</p><div class="ad-opening-foot"><span>公开统计基准</span><span>·</span><span>证据审核</span><span>·</span><span>模型演示</span></div></div><div class="ad-opening-visual"><div class="ad-orbit orbit-one"></div><div class="ad-orbit orbit-two"></div><div class="ad-big-signal up"><small>工业增加值</small><strong>+8.7%</strong><span>2025 · B级</span></div><div class="ad-big-signal down"><small>固定资产投资</small><strong>-18.8%</strong><span>2025 · B级</span></div><div class="ad-center-mark">≠</div></div><div class="ad-opening-bottom"><b>核心命题</b><span>方向背离 ≠ 因果关系。统计信号必须经过口径审核、变量定义与模型识别。</span></div></section>',
+ adapterEvidenceSlide(items,all),adapterMappingSlide(items),adapterExperimentSlide(items),adapterDefenseConclusion()
+ ];
+ const title=['研究命题','证据审核','变量映射','现场实验','研究结论'][adapterStep]||'研究命题';
+ return '<div class="adapter-defense '+(adapterPresentation?'presentation':'')+'"><header class="ad-topline"><div><span class="ad-brand">B<span>·</span></span><b>博罗内部研究 / 数据适配专题</b><small>V7 · RESEARCH DEFENSE</small></div><div class="ad-top-actions"><span class="ad-current-title">'+title+'</span><button type="button" class="ghost" data-adapter-presentation>'+(adapterPresentation?'退出演示':'全屏答辩模式')+'</button></div></header>'+adapterStepNav()+(adapterMessage?'<div class="ad-toast">'+html(adapterMessage)+'</div>':'')+slides[adapterStep]+adapterFooter()+'<div class="ad-shortcut">键盘 ← → 翻页 · ESC 退出演示 · 右上角进入全屏答辩</div></div>';
 }
-
 function dataPage(r){
  const d=E.DATA;
  return heading('02 / EVIDENCE DESK','事实先钉牢，未知才好推演。',
