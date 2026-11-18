@@ -14,6 +14,7 @@ const FILTERS=[
  {id:'all',label:'全部'},
  {id:'signal',label:'结构信号'},
  {id:'target',label:'目标'},
+ {id:'reminder',label:'提醒'},
  {id:'conflict',label:'证据冲突'},
  {id:'gap',label:'数据缺口'},
  {id:'lead',label:'机会线索'},
