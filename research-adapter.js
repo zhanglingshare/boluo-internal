@@ -86,7 +86,8 @@ function list(observations,research,storage){
   const mappingMode=fresh?saved.mappingMode:(variableId?'auto':'none');
   const note=fresh?saved.note||'':'';
   const check=validation(record,variableId,rows,research,note,mappingMode,storage);
-  const status=fresh?saved.status:(variableId?'待审核':'待映射');
+  let status=fresh?saved.status:(variableId?'待保存':'待映射');
+  if(status==='已批准'&&!check.ok)status='待复核';
   return{record,suggestedVariable:auto.variableId,suggestionReason:auto.reason,variableId,mappingMode,note,status,validation:check};
  });
 }
