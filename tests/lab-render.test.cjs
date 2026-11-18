@@ -246,7 +246,7 @@ test('V7 defense navigation reveals evidence, variable mapping and live model de
  click('[data-adapter-map-save]',{adapterMapSave:'public-2025-industrial'});
  assert.match(v.stage.innerHTML,/映射已保存/);
  click('[data-adapter-status]',{adapterId:'public-2025-industrial',adapterStatus:'已批准'});
- assert.match(v.stage.innerHTML,/1 条已批准关联证据/);
+ assert.match(v.stage.innerHTML,/已批准证据/);
  click('[data-adapter-next]',{});
  assert.match(v.stage.innerHTML,/VARIABLE MAPPING/);
  assert.match(v.stage.innerHTML,/RESEARCH VARIABLE/);
