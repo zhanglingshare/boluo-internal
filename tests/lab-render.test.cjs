@@ -11,12 +11,13 @@ const V4=require('../research-v4.js');globalThis.BoluoV4=V4;
 const V4V=require('../research-v4-viz.js');
 const Cards=require('../research-cards.js');globalThis.BoluoCards=Cards;
 const Disc=require('../research-discovery.js');globalThis.BoluoDiscovery=Disc;
+const Adapter=require('../research-adapter.js');globalThis.BoluoAdapter=Adapter;
 const js=fs.readFileSync(path.resolve(__dirname,'../lab.js'),'utf8');
 function boot(route){
  const nodes={};const listeners={};
  function element(id){if(!nodes[id])nodes[id]={innerHTML:'',textContent:'',style:{},hidden:true};return nodes[id];}
  const location={hash:'#'+route};
- const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoCards:Cards,BoluoDiscovery:Disc,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
+ const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoCards:Cards,BoluoDiscovery:Disc,BoluoAdapter:Adapter,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
  const document={body:{style:{}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
  const storage=new Map();
  const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);},removeItem(k){storage.delete(k);}};
@@ -24,8 +25,8 @@ function boot(route){
  vm.runInNewContext(js,ctx,{timeout:10000});
  return {nodes,listeners,location,window,document,stage:element('stage')};
 }
-test('seven workspaces all render non-empty HTML',()=>{
- for(const name of ['home','mission','data','survey','models','wind/0','archive']){
+test('eight workspaces all render non-empty HTML',()=>{
+ for(const name of ['home','mission','data','survey','models','wind/0','archive','adapter']){
   const v=boot(name);
   assert.ok(v.stage.innerHTML.length>1000,name+' blank');
   assert.doesNotMatch(v.stage.innerHTML,/undefined|NaN/,'corrupt number or label on '+name);
@@ -225,4 +226,39 @@ test('V6 discovery statuses, filters and destination links are wired',()=>{
  assert.match(v.stage.innerHTML,/这个分类暂时没有问题候选/);
  v.listeners.click({target:{closest(sel){return sel==='[data-discovery-open]'?{dataset:{discoveryOpen:'survey'}}:null;}}});
  assert.equal(v.location.hash,'#survey');
+});
+
+test('V7 adapter workspace separates evidence approval from model calibration',()=>{
+ const v=boot('adapter');
+ assert.match(v.stage.innerHTML,/数据审核台/);
+ assert.match(v.stage.innerHTML,/规上工业增加值/);
+ assert.match(v.stage.innerHTML,/固定资产投资/);
+ assert.match(v.stage.innerHTML,/0 \/ 5/);
+ assert.match(v.stage.innerHTML,/不允许自动估计或写回参数/);
+ assert.match(v.stage.innerHTML,/保存映射/);
+});
+test('V7 public evidence must be mapped and approved before a scenario bridge can run',()=>{
+ const v=boot('adapter');
+ const click=(selector,dataset)=>v.listeners.click({target:{closest(sel){return sel===selector?{dataset}:null;}}});
+ click('[data-adapter-map-save]',{adapterMapSave:'public-2025-industrial'});
+ assert.match(v.stage.innerHTML,/映射已保存/);
+ click('[data-adapter-status]',{adapterId:'public-2025-industrial',adapterStatus:'已批准'});
+ assert.match(v.stage.innerHTML,/1 条已批准关联证据/);
+ assert.match(v.stage.innerHTML,/批准进入证据层/);
+ v.listeners.input({target:{closest(sel){return sel==='[data-adapter-proposal-note]'?{value:'规上工业增速只作为当前状态证据，测试制造业条件变化对情景分布的影响。'}:null;}}});
+ click('[data-adapter-run]',{});
+ assert.match(v.stage.innerHTML,/同种子、同抽样次数的并行重跑/);
+ assert.match(v.stage.innerHTML,/参数由研究者手动设定/);
+ click('[data-adapter-save-proposal]',{});
+ assert.match(v.stage.innerHTML,/情景提案已保存/);
+ assert.match(v.stage.innerHTML,/情景提案 · 未应用/);
+ assert.match(v.stage.innerHTML,/默认基准未改变/);
+});
+test('V7 parameter bridge selection never implies direct coefficient estimation',()=>{
+ const v=boot('adapter');
+ v.listeners.click({target:{closest(sel){return sel==='[data-adapter-param]'?{dataset:{adapterParam:'project_delay'}}:null;}}});
+ assert.match(v.stage.innerHTML,/项目延期条件/);
+ assert.match(v.stage.innerHTML,/缺少项目批次和时滞映射/);
+ assert.match(v.stage.innerHTML,/0 \/ 5/);
+ assert.doesNotMatch(v.stage.innerHTML,/已自动校准/);
 });
