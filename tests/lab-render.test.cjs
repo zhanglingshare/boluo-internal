@@ -10,15 +10,16 @@ const V3V=require('../research-v3-viz.js');
 const V4=require('../research-v4.js');globalThis.BoluoV4=V4;
 const V4V=require('../research-v4-viz.js');
 const Cards=require('../research-cards.js');globalThis.BoluoCards=Cards;
+const Disc=require('../research-discovery.js');globalThis.BoluoDiscovery=Disc;
 const js=fs.readFileSync(path.resolve(__dirname,'../lab.js'),'utf8');
 function boot(route){
  const nodes={};const listeners={};
  function element(id){if(!nodes[id])nodes[id]={innerHTML:'',textContent:'',style:{},hidden:true};return nodes[id];}
  const location={hash:'#'+route};
- const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoCards:Cards,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
+ const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoCards:Cards,BoluoDiscovery:Disc,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
  const document={body:{style:{}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
  const storage=new Map();
- const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}};
+ const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);},removeItem(k){storage.delete(k);}};
  const ctx={window,location,document,localStorage,alert(){throw new Error('unexpected alert');}};
  vm.runInNewContext(js,ctx,{timeout:10000});
  return {nodes,listeners,location,window,document,stage:element('stage')};
@@ -205,4 +206,23 @@ test('research-card filters and destinations are wired',()=>{
  assert.match(v.stage.innerHTML,/制造企业本地服务采购关系尚不可测/);
  v.listeners.click({target:{closest(sel){return sel==='[data-card-open]'?{dataset:{cardOpen:'models',cardView:''}}:null;}}});
  assert.equal(v.location.hash,'#models');
+});
+
+test('V6 active discovery panel renders explainable candidates and safe local intake',()=>{
+ const v=boot('home');
+ assert.match(v.stage.innerHTML,/主动问题发现/);
+ assert.match(v.stage.innerHTML,/工业产出与投资方向背离/);
+ assert.match(v.stage.innerHTML,/竞争解释与反证条件/);
+ assert.match(v.stage.innerHTML,/导入匿名汇总 CSV/);
+ assert.match(v.stage.innerHTML,/不会上传/);
+ assert.match(v.stage.innerHTML,/下载CSV模板/);
+});
+test('V6 discovery statuses, filters and destination links are wired',()=>{
+ const v=boot('home');
+ v.listeners.click({target:{closest(sel){return sel==='[data-discovery-status]'?{dataset:{discoveryId:'discovery-public-industrial-investment',discoveryStatus:'investigating'}}:null;}}});
+ assert.match(v.stage.innerHTML,/核查中/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-discovery-filter]'?{dataset:{discoveryFilter:'anomaly'}}:null;}}});
+ assert.match(v.stage.innerHTML,/这个分类暂时没有问题候选/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-discovery-open]'?{dataset:{discoveryOpen:'survey'}}:null;}}});
+ assert.equal(v.location.hash,'#survey');
 });

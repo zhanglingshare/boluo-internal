@@ -79,3 +79,21 @@ test('discovery status and local import clearing work',()=>{
  const issue=D.discover({v3:V3,v4:V4,observations:[],storage:st}).find(x=>x.id==='discovery-public-industrial-investment');
  assert.equal(issue.status,'investigating');D.importCsv(csv([metric('工业增加值','2021',4)]),st);assert.equal(D.clear(st),true);assert.equal(D.load(st).length,0);
 });
+
+test('same-period industry aggregates can surface cross-sectional dispersion',()=>{
+ const st=storage(),rows=[
+  {...metric('行业增加值增速','2025',5),industry:'电气机械'},
+  {...metric('行业增加值增速','2025',6),industry:'金属制品'},
+  {...metric('行业增加值增速','2025',25),industry:'电子设备'}
+ ];
+ D.importCsv(csv(rows),st);
+ const issue=D.discover({v3:V3,v4:V4,observations:D.load(st),storage:st}).find(x=>x.id.startsWith('import-dispersion-'));
+ assert.ok(issue);assert.match(issue.title,/行业内部差异/);
+});
+test('survey waves are compared descriptively without claiming significance',()=>{
+ const st=storage(),base={record_type:'survey_aggregate',indicator:'订单预期',geography:'博罗县',industry:'电子设备',unit:'分',scope:'匿名企业问卷均值',source_name:'问卷汇总',evidence_grade:'B',sample_n:50,population:'规上制造业企业',sample_frame:'同一行业分层名录',aggregation:'mean',missing_rate:3};
+ const rows=[{...base,period:'2025Q4',value:3.2},{...base,period:'2026Q1',value:3.9}];
+ D.importCsv(csv(rows),st);
+ const issue=D.discover({v3:V3,v4:V4,observations:D.load(st),storage:st}).find(x=>x.id.startsWith('import-survey-trend-'));
+ assert.ok(issue);assert.match(issue.summary,/不能判断统计显著性/);
+});
