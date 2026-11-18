@@ -310,3 +310,11 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
 .insight-card.compact .ic-actions{margin-top:8px}
 @media(max-width:760px){.insight-board{padding:16px}.ic-board-head{align-items:flex-start}.ic-board-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}.insight-grid,.ic-context-grid{grid-template-columns:1fr}.ic-board-head h2{font-size:20px}.ic-metric{font-size:24px}.ic-filterbar{margin-inline:-2px}}
 @media(prefers-reduced-motion:reduce){.insight-card{transition:none}.insight-card:hover{transform:none}}
+
+.ic-details{margin-top:8px;border-top:1px solid rgba(145,175,210,.12);padding-top:7px}
+.ic-details summary{cursor:pointer;list-style:none;color:#a9c5df;font-size:10px;display:flex;align-items:center;gap:7px}
+.ic-details summary::-webkit-details-marker{display:none}
+.ic-details summary:after{content:"＋";font-size:12px;color:var(--cyan);margin-left:auto}
+.ic-details[open] summary:after{content:"−"}
+.ic-details .ic-evidence,.ic-details .ic-caution,.ic-details .ic-next{margin-top:7px}
+.insight-card.compact .ic-details summary{font-size:10px}
