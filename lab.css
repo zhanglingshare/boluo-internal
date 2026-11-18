@@ -368,3 +368,8 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
 .db-note b{color:#c9d9e9}
 @media(max-width:760px){.discovery-board{padding:15px}.db-head{align-items:flex-start}.db-head h2{font-size:20px}.db-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}.discovery-grid{grid-template-columns:1fr}.dc-detail-grid{grid-template-columns:1fr}.db-toolbar{align-items:flex-start}.db-message{width:100%}}
 @media(prefers-reduced-motion:reduce){.discovery-card{transition:none}}
+
+.dc-source-links{font-size:10px;line-height:1.6;color:var(--muted);padding:8px 9px;margin-top:8px;border-radius:8px;background:rgba(80,140,190,.06)}
+.dc-source-links b{color:#c6d7e9;margin-right:5px}
+.dc-source-links a{color:#8ec9ee;text-decoration:none}
+.dc-source-links a:hover{text-decoration:underline}
