@@ -4,11 +4,11 @@
 const E=window.BoluoEngine;
 const R=window.BoluoResearch, RV=window.BoluoResearchViz;
 const V3=window.BoluoV3, V3V=window.BoluoV3Viz;
-const V4=window.BoluoV4, V4V=window.BoluoV4Viz, Cards=window.BoluoCards, Disc=window.BoluoDiscovery;
+const V4=window.BoluoV4, V4V=window.BoluoV4Viz, Cards=window.BoluoCards, Disc=window.BoluoDiscovery;\nconst Adapter=window.BoluoAdapter;
 const DD=window.BoluoDiscoveryData, RD=window.BoluoRelationsData;
 if(!V4||!V4V){document.getElementById('stage').textContent='产业结构V4模块加载失败，请刷新页面。';return;}
 if(!Cards){document.getElementById('stage').textContent='动态研判卡模块加载失败，请刷新页面。';return;}
-if(!Disc){document.getElementById('stage').textContent='主动问题发现模块加载失败，请刷新页面。';return;}
+if(!Disc){document.getElementById('stage').textContent='主动问题发现模块加载失败，请刷新页面。';return;}\nif(!Adapter){document.getElementById('stage').textContent='数据审核与模型适配模块加载失败，请刷新页面。';return;}
 if(!V3||!V3V){document.getElementById('stage').textContent='研究V3模块加载失败，请刷新页面。';return;}
 if(!R||!RV){document.getElementById('stage').textContent='结构研究模块加载失败，请刷新页面。';return;}
 if(!E){document.getElementById('stage').textContent='计算模块加载失败，请刷新页面。';return;}
@@ -20,7 +20,7 @@ let state=E.normalize(safeRead(KEY,DEFAULT));
 let records=safeRead(ARCHIVE,[]);if(!Array.isArray(records))records=[];
 let page='home',view=0,sampleSize=300,recv=75,pay=12,daily=10,activeService='',compareId=null;
 let historyMode='share',selectedVariable='project_delivery',cutCount=10,cutMode='targeted',selectedNetworkNode='S1';
-let methodFilter='全部',cardFilter='all',discoveryFilter='all',discoveryMessage='';
+let methodFilter='全部',cardFilter='all',discoveryFilter='all',discoveryMessage='';\nlet adapterSelections={},adapterNotes={},adapterFilter='all',adapterParam='manufacturing',adapterValue=.2,adapterProposalNote='',adapterPreview=null,adapterMessage='';
 let v4Lens='history',v4Industry='electronics',v4Metric='shares',v4Peer='huiyang',v4Local=30,v4VA=35,v4Improve=20,v4Year=null;
 let dataLens='industry',v3Domain='全部',selectedIndustry=0,selectedConflict='retail',selectedQuestion='H1',selectedMechanism=0,cascadeCut=10,cascadeMode='targeted',cascadeThreshold=2;
 let memoMorrisKey='',memoMorrisValue=null;
@@ -601,7 +601,85 @@ function v4HomePanel(){
  '<div class="tile"><small>2025 · 惠州五地</small><div class="big-num cyan">54.6%</div><p>博罗第二产业GDP份额。与惠阳65%、惠城27.6%放在同一结构坐标对照。</p>'+btn('go-data','比较五地结构','tiny-btn')+'</div></section>';
 }
 
-function dataPage(r){
+
+function adapterObservations(){
+ const imports=Disc.load(localStorage);
+ const picks=['规上工业增加值','固定资产投资'];
+ const publicRows=V3.INDICATORS.filter(x=>picks.includes(x.name)).map(x=>({
+  id:'public-2025-'+(x.name==='规上工业增加值'?'industrial':'investment'),
+  record_type:'metric',indicator:x.name,period:'2025',geography:'博罗县',industry:'',
+  value:x.value,unit:'%',scope:x.name==='规上工业增加值'?'规上工业增加值可比价同比':'固定资产投资年度同比',
+  source_name:'2025博罗统计公报',source_url:V3.URL.stat,evidence_grade:'B',notes:'仓库已核对的公开基准；只作为变量适配演示。'
+ }));
+ return publicRows.concat(imports);
+}
+function adapterStatusClass(status){return status==='已批准'?'verified':status==='已排除'?'dismissed':status==='退回补资料'?'needs-data':'working';}
+function adapterRecordCard(item,all){
+ const r=item.record,selected=adapterSelections[r.id]!==undefined?adapterSelections[r.id]:(item.variableId||'');
+ const note=adapterNotes[r.id]!==undefined?adapterNotes[r.id]:item.note;
+ const status=item.status;
+ const blockers=item.validation.blockers.map(x=>'<li>'+html(x)+'</li>').join('');
+ const warnings=item.validation.warnings.map(x=>'<li>'+html(x)+'</li>').join('');
+ const variableOptions='<option value="">暂不映射</option>'+R.VARIABLES.map(v=>'<option value="'+v.id+'" '+(selected===v.id?'selected':'')+'>'+html(v.name)+' · '+html(v.unit)+'</option>').join('');
+ const url=r.source_url&&/^https?:\/\//i.test(r.source_url)?'<a href="'+html(r.source_url)+'" target="_blank" rel="noopener noreferrer">核验来源 ↗</a>':'';
+ const grade='<span class="adapter-grade '+html(String(r.evidence_grade||'').toLowerCase())+'">'+html(r.evidence_grade||'?')+'级</span>';
+ const actions='<div class="adapter-actions"><button type="button" class="tiny-btn" data-adapter-map-save="'+html(r.id)+'">保存映射</button>'+
+ (status==='已批准'?'<button type="button" class="tiny-btn ghost" data-adapter-status="待审核" data-adapter-id="'+html(r.id)+'">撤销批准</button>':
+  '<button type="button" class="tiny-btn primary" data-adapter-status="已批准" data-adapter-id="'+html(r.id)+'" '+(item.validation.ok?'':'disabled')+'>批准进入证据层</button>')+
+ '<button type="button" class="tiny-btn ghost" data-adapter-status="退回补资料" data-adapter-id="'+html(r.id)+'">退回补资料</button></div>';
+ return '<article class="adapter-record" data-adapter-card="'+html(r.id)+'"><div class="adapter-record-head"><div><div class="adapter-meta">'+grade+' <span>'+html(r.period)+' · '+html(r.geography)+'</span><span>'+html(r.record_type==='survey_aggregate'?'匿名调查汇总':'指标观察')+'</span></div><h3>'+html(r.indicator)+'</h3></div><span class="adapter-status '+adapterStatusClass(status)+'">'+html(status)+'</span></div>'+
+ '<div class="adapter-value">'+html(r.value)+' <small>'+html(r.unit)+'</small></div><p class="adapter-source">'+html(r.source_name)+' · '+html(r.scope)+' '+url+'</p>'+
+ '<div class="adapter-map-row"><label>映射到研究变量<select class="select" data-adapter-map="'+html(r.id)+'">'+variableOptions+'</select></label>'+
+ '<label>映射依据 / 口径说明<input type="text" data-adapter-note="'+html(r.id)+'" value="'+html(note||'')+'" placeholder="人工映射请说明定义、分母、单位和对应关系"></label></div>'+
+ '<div class="adapter-validation '+(item.validation.ok?'pass':'blocked')+'">'+
+ (blockers?'<div><b>阻断项</b><ul>'+blockers+'</ul></div>':'<b>审核门通过：可申请进入事实证据层</b>')+
+ (warnings?'<div><b>仍需留意</b><ul>'+warnings+'</ul></div>':'')+'</div>'+actions+'</article>';
+}
+function adapterBridgePanel(items){
+ const bridge=Adapter.BRIDGES.find(x=>x.key===adapterParam)||Adapter.BRIDGES[0];
+ const evidence=Adapter.approvedFor(adapterParam,items),lo=adapterParam==='project_delay'?0:-1;
+ const proposals=Adapter.getProposals(localStorage);
+ const baseline=E.run(state);
+ const preview=adapterPreview&&adapterPreview.parameter===adapterParam?adapterPreview:null;
+ const bridges=Adapter.BRIDGES.map(x=>'<button type="button" data-adapter-param="'+x.key+'" class="'+(x.key===adapterParam?'active':'')+'"><b>'+html(x.label)+'</b><small>'+Adapter.approvedFor(x.key,items).length+' 条已批准关联证据</small></button>').join('');
+ const result=preview?'<div class="adapter-result"><div class="adapter-result-head"><b>同种子、同抽样次数的并行重跑</b><span>仅情景比较</span></div><div class="adapter-result-grid">'+
+ '<div><small>原基准 P50</small><strong>'+money(preview.baseline.total.p50)+' 亿</strong><em>P10 '+money(preview.baseline.total.p10)+' · P90 '+money(preview.baseline.total.p90)+'</em></div>'+
+ '<div><small>候选情景 P50</small><strong>'+money(preview.candidate.total.p50)+' 亿</strong><em>P10 '+money(preview.candidate.total.p10)+' · P90 '+money(preview.candidate.total.p90)+'</em></div>'+
+ '<div><small>P50变化</small><strong class="'+(preview.delta>=0?'good':'bad')+'">'+sign(preview.delta)+' 亿</strong><em>条件命中频率 '+perc(preview.baseline.hit)+' → '+perc(preview.candidate.hit)+'</em></div></div>'+
+ '<p>关联证据：'+preview.evidence.map(x=>html(x.record.indicator)+'（'+html(x.record.period)+'）').join('、')+'</p>'+
+ '<div class="adapter-warning">注意：证据仅提供情境背景。参数由研究者手动设定，并非通过数据估计。这个结果不改变默认模型。</div>'+
+ '<button type="button" class="tiny-btn primary" data-adapter-save-proposal>保存情景提案</button></div>':'<div class="adapter-empty">先选择一个有已批准关联证据的参数，再填写解释并运行对照。没有证据时，不开放“证据关联实验”。</div>';
+ const history=proposals.length?'<div class="adapter-proposals">'+proposals.slice(0,8).map(p=>'<div class="adapter-proposal"><div><b>'+html(p.label)+'</b><small>'+html(p.createdAt)+' · '+html(p.status)+'</small></div><strong>'+sign(p.deltaP50)+' 亿</strong><span>关联 '+p.evidenceIds.length+' 条证据 · 未应用</span></div>').join('')+'</div>':'<p class="footnote">尚无保存的情景提案。</p>';
+ return '<section class="card gap adapter-bridge"><div class="eyebrow">V7 / EVIDENCE → SCENARIO BRIDGE</div><h2>证据关联的情景实验</h2><p class="adapter-intro">只有审核通过的证据可以挂接到相关模型条件。系统不会把观测值直接换算成模型系数；你需要明确提出一个待检验的情景变化。</p>'+
+ '<div class="adapter-bridge-grid">'+bridges+'</div>'+
+ '<div class="adapter-bridge-detail"><div><h3>'+html(bridge.label)+'</h3><p>'+html(bridge.reason)+'</p><div class="adapter-needed"><b>要获得直接校准资格，还缺：</b>'+html(bridge.need)+'</div>'+
+ '<div class="adapter-warning">当前状态：仅允许“证据关联的手动情景压测”，不允许自动估计或写回参数。</div></div>'+
+ '<div class="adapter-controls"><label>候选情景参数 <output data-adapter-live>'+decimal(adapterValue,2)+'</output></label><input type="range" min="'+lo+'" max="1" step="0.05" value="'+adapterValue+'" data-adapter-value>'+
+ '<label>为什么这样调整？</label><textarea data-adapter-proposal-note rows="3" placeholder="写明证据如何影响你的判断，以及这次只是测试什么情景。">'+html(adapterProposalNote)+'</textarea>'+
+ '<button type="button" class="primary" data-adapter-run '+(evidence.length?'':'disabled')+'>运行同条件对照</button>'+
+ '<small>'+evidence.length+' 条已批准关联证据 · 原基准参数 '+decimal(state.knobs[adapterParam],2)+'</small></div></div>'+
+ result+'<div class="adapter-history"><h3>本机保存的情景提案</h3>'+history+'</div></section>';
+}
+function adapterPage(){
+ const all=adapterObservations(),items=Adapter.list(all,R,localStorage);
+ const visible=items.filter(x=>adapterFilter==='all'||(adapterFilter==='approved'?x.status==='已批准':adapterFilter==='blocked'?!x.validation.ok:adapterFilter==='pending'?x.status!=='已批准'&&x.status!=='已排除':true));
+ const approved=items.filter(x=>x.status==='已批准'&&x.validation.ok).length;
+ const imports=all.filter(x=>!x.id.startsWith('public-2025-')).length;
+ const filterButtons=[['all','全部 '+items.length],['pending','待处理'],['approved','已批准 '+approved],['blocked','存在阻断']];
+ return heading('07 / EVIDENCE ADMISSION & MODEL ADAPTER','数据先过门，再进入模型。','把公开指标和导入的匿名汇总数据映射到研究变量。审核通过只代表可作为证据使用，不代表已经识别模型参数。',btn('go-discovery','回到主动问题发现 ↗','secondary'))+
+ '<section class="stats">'+stat('待审核观察',items.filter(x=>x.status!=='已批准').length+' 条','包括仓库公开演示基准与本机导入','cyan')+
+ stat('已批准证据',approved+' 条','只进入证据层，不自动改参数','good')+
+ stat('本机导入记录',imports+' 条','不上传、不跨设备同步','')+
+ stat('情景提案',Adapter.getProposals(localStorage).length+' 份','均为手动假设，未应用','gold')+'</section>'+
+ '<section class="card gap"><div class="row wrap"><div><div class="eyebrow">01 / OBSERVATION REVIEW</div><h2>数据审核台</h2><p class="adapter-intro">内置两条2025公开基准作为适配示例；导入记录仍留在当前浏览器。A/B可核验来源才有资格申请批准，C/D不进入事实证据层。</p></div>'+
+ '<div class="adapter-import"><button type="button" class="tiny-btn primary" data-adapter-import>导入匿名汇总 CSV</button><a href="./research-observation-template.csv" download>下载模板 ↧</a><input type="file" accept=".csv,text/csv" data-adapter-file hidden></div></div>'+
+ '<div class="adapter-filter">'+filterButtons.map(x=>'<button type="button" data-adapter-filter="'+x[0]+'" class="'+(adapterFilter===x[0]?'active':'')+'">'+x[1]+'</button>').join('')+'</div>'+
+ '<div class="adapter-record-list">'+(visible.length?visible.map(x=>adapterRecordCard(x,all)).join(''):'<div class="adapter-empty">这个分类暂时没有记录。</div>')+'</div>'+
+ '<p class="footnote">审核状态和映射记录保存在当前浏览器。浏览器本地存储不是加密数据库；不得导入个人答卷、企业交易明细或商业秘密。</p></section>'+
+ adapterBridgePanel(items)+
+ '<section class="card gap"><div class="eyebrow">MODEL ADMISSION RULE</div><h3>当前模型的直接校准资格</h3><div class="adapter-no-direct"><strong>0 / 5</strong><span>个参数具备直接数据校准资格</span></div><p>现有模型的五个旋钮是情景冲击强度，不是可直接观测的统计量。工业增速、投资增速、本地采购率、岗位缺口率和账期天数都不能不经识别就换算成旋钮值。后续必须建立明确的测量方程、基准期、滞后结构和估计/验证方法。</p></section>';
+}
+\nfunction dataPage(r){
  const d=E.DATA;
  return heading('02 / EVIDENCE DESK','事实先钉牢，未知才好推演。',
  '数据划成 A/B/C 层，宏观基数不与合成企业关系混称。导入与导出本阶段不做，使用仓库既有公开信息和可复现合成样本。',
@@ -920,10 +998,10 @@ function draw(){
  safeWrite(KEY,state);
  const parts=(location.hash||'#home').slice(1).split('/');
  const hashpage=parts[0],hashsub=parts[1]||'';
- if(['home','mission','data','survey','models','wind','archive'].includes(hashpage))page=hashpage;else page='home';
+ if(['home','mission','data','survey','models','wind','archive','adapter'].includes(hashpage))page=hashpage;else page='home';
  document.querySelectorAll('[data-page]').forEach(el=>{const active=el.getAttribute('data-page')===page;el.classList.toggle('active',active);if(el.matches('.navitem'))el.setAttribute('aria-current',active?'page':'false');});
  document.getElementById('topRun').textContent='LIVE · '+current.runId.toUpperCase()+' · '+state.draws.toLocaleString('zh-CN')+' 条';
- stage.innerHTML=page==='home'?home(current):page==='mission'?mission(current):page==='data'?dataPage(current):page==='survey'?surveyPage(current):page==='models'?modelsPage(current):page==='wind'?windPage(current):archivePage(current);
+ stage.innerHTML=page==='home'?home(current):page==='mission'?mission(current):page==='data'?dataPage(current):page==='survey'?surveyPage(current):page==='models'?modelsPage(current):page==='wind'?windPage(current):page==='adapter'?adapterPage():archivePage(current);
  document.getElementById('calibrationContent').innerHTML=calibrationMarkup();
 }
 function navigate(target,sub){
@@ -943,7 +1021,7 @@ function save(){
  if(!ok)alert('浏览器未允许本地存储。实验条件已计算，但快照无法持久保存。');
 }
 document.addEventListener('click',function(e){
- const df=e.target.closest('[data-discovery-filter]');if(df){discoveryFilter=df.dataset.discoveryFilter||'all';draw();return;}
+ const ap=e.target.closest('[data-adapter-param]');if(ap){adapterParam=ap.dataset.adapterParam;adapterValue=Math.max(adapterParam==='project_delay'?0:-1,Math.min(1,state.knobs[adapterParam]+.2));adapterPreview=null;draw();return;}\n const af=e.target.closest('[data-adapter-filter]');if(af){adapterFilter=af.dataset.adapterFilter;draw();return;}\n const aim=e.target.closest('[data-adapter-import]');if(aim){const fi=document.querySelector('[data-adapter-file]');if(fi)fi.click();return;}\n const ams=e.target.closest('[data-adapter-map-save]');if(ams){const id=ams.dataset.adapterMapSave,all=adapterObservations(),selected=adapterSelections[id]!==undefined?adapterSelections[id]:'',note=adapterNotes[id]||'';const res=Adapter.setMapping(id,selected, note,all,R,localStorage);adapterMessage=res.ok?(res.validation.ok?'映射已保存，等待审核批准。':'映射已保存，但仍有阻断项。'):res.error;draw();return;}\n const ast=e.target.closest('[data-adapter-status]');if(ast){const id=ast.dataset.adapterId,all=adapterObservations(),res=Adapter.setStatus(id,ast.dataset.adapterStatus,all,R,localStorage);adapterMessage=res.ok?'审核状态已更新。':res.error;draw();return;}\n const arun=e.target.closest('[data-adapter-run]');if(arun){const all=adapterObservations(),items=Adapter.list(all,R,localStorage),evidence=Adapter.approvedFor(adapterParam,items);if(!evidence.length){adapterMessage='该参数没有已批准的关联证据，不能运行证据关联实验。';draw();return;}if(adapterProposalNote.trim().length<15){adapterMessage='请先写明至少15个字的情景解释。';draw();return;}const before=E.normalize(state),after=E.normalize({...before,knobs:{...before.knobs,[adapterParam]:adapterValue}}),baseline=E.run(before),candidate=E.run(after);adapterPreview={parameter:adapterParam,evidence,before,after,baseline,candidate,delta:candidate.total.p50-baseline.total.p50};adapterMessage='对照运行完成。结果仍是条件情景，不是参数估计。';draw();return;}\n const asave=e.target.closest('[data-adapter-save-proposal]');if(asave&&adapterPreview){const all=adapterObservations(),items=Adapter.list(all,R,localStorage),res=Adapter.saveProposal({parameter:adapterPreview.parameter,evidenceIds:adapterPreview.evidence.map(x=>x.record.id),note:adapterProposalNote,before:adapterPreview.before,after:adapterPreview.after,baseline:adapterPreview.baseline.total,candidate:adapterPreview.candidate.total},items,E,localStorage);adapterMessage=res.ok?'情景提案已保存，默认基准未改变。':res.error;adapterPreview=null;draw();return;}\n const goDisc=e.target.closest('[data-action="go-discovery"]');if(goDisc){navigate('home');return;}\n const df=e.target.closest('[data-discovery-filter]');if(df){discoveryFilter=df.dataset.discoveryFilter||'all';draw();return;}
  const ds=e.target.closest('[data-discovery-status]');if(ds){Disc.setStatus(ds.dataset.discoveryId,ds.dataset.discoveryStatus,localStorage);draw();return;}
  const dop=e.target.closest('[data-discovery-open]');if(dop){navigate(dop.dataset.discoveryOpen);return;}
  const di=e.target.closest('[data-discovery-import]');if(di){const fi=document.getElementById('discoveryCsvInput');if(fi)fi.click();return;}
@@ -990,7 +1068,7 @@ document.addEventListener('click',function(e){
  if(act==='remove'){records=records.filter(x=>x.id!==id);if(compareId===id)compareId=null;safeWrite(ARCHIVE,records);draw();return;}
 });
 document.addEventListener('input',function(e){
- const v4live=e.target.closest('[data-v4-control]');
+ const adapterRange=e.target.closest('[data-adapter-value]');if(adapterRange){adapterValue=Number(adapterRange.value);const out=adapterRange.parentElement.querySelector('output[data-adapter-live]');if(out)out.textContent=decimal(adapterValue,2);return;}\n const adapterNote=e.target.closest('[data-adapter-note]');if(adapterNote){adapterNotes[adapterNote.dataset.adapterNote]=adapterNote.value;return;}\n const proposalNote=e.target.closest('[data-adapter-proposal-note]');if(proposalNote){adapterProposalNote=proposalNote.value;return;}\n const v4live=e.target.closest('[data-v4-control]');
  if(v4live&&v4live.type==='range'){
   const value=Number(v4live.value);
   if(v4live.dataset.v4Control==='local'){v4Local=value;v4Improve=Math.min(v4Improve,100-v4Local);}
@@ -1006,8 +1084,8 @@ document.addEventListener('input',function(e){
  }
 });
 document.addEventListener('change',function(e){
- const discoveryFile=e.target.closest('[data-discovery-file]');if(discoveryFile){const file=discoveryFile.files&&discoveryFile.files[0];if(!file)return;if(file.size>2*1024*1024){discoveryMessage='文件超过2MB限制，未导入。';draw();return;}file.text().then(txt=>{const result=Disc.importCsv(txt,localStorage);discoveryMessage=result.ok?'导入完成：新增 '+result.imported+' 条，重复跳过 '+(result.skipped||0)+' 条；当前共 '+result.total+' 条。':('导入失败：'+result.errors.join('；'));discoveryFile.value='';draw();}).catch(()=>{discoveryMessage='文件读取失败，请检查CSV格式。';draw();});return;}
- const v3input=e.target.closest('[data-v3-control]');if(v3input){const key=v3input.dataset.v3Control;
+ const adapterFile=e.target.closest('[data-adapter-file]');if(adapterFile){const file=adapterFile.files&&adapterFile.files[0];if(!file)return;if(file.size>2*1024*1024){adapterMessage='文件超过2MB限制，未导入。';draw();return;}file.text().then(txt=>{const result=Disc.importCsv(txt,localStorage);adapterMessage=result.ok?'导入完成：新增 '+result.imported+' 条，重复跳过 '+(result.skipped||0)+' 条。':('导入失败：'+result.errors.join('；'));adapterFile.value='';draw();}).catch(()=>{adapterMessage='文件读取失败，请检查CSV格式。';draw();});return;}\n const mapSelect=e.target.closest('[data-adapter-map]');if(mapSelect){adapterSelections[mapSelect.dataset.adapterMap]=mapSelect.value;draw();return;}\n const discoveryFile=e.target.closest('[data-discovery-file]');if(discoveryFile){const file=discoveryFile.files&&discoveryFile.files[0];if(!file)return;if(file.size>2*1024*1024){discoveryMessage='文件超过2MB限制，未导入。';draw();return;}file.text().then(txt=>{const result=Disc.importCsv(txt,localStorage);discoveryMessage=result.ok?'导入完成：新增 '+result.imported+' 条，重复跳过 '+(result.skipped||0)+' 条；当前共 '+result.total+' 条。':('导入失败：'+result.errors.join('；'));discoveryFile.value='';draw();}).catch(()=>{discoveryMessage='文件读取失败，请检查CSV格式。';draw();});return;}
+ const proposalParam=e.target.closest('[data-adapter-param-select]');if(proposalParam){adapterParam=proposalParam.value;adapterValue=Math.max(adapterParam==='project_delay'?0:-1,Math.min(1,state.knobs[adapterParam]+.2));adapterPreview=null;draw();return;}\n const proposalNote=e.target.closest('[data-adapter-proposal-note]');if(proposalNote){adapterProposalNote=proposalNote.value;return;}\n const adapterNote=e.target.closest('[data-adapter-note]');if(adapterNote){adapterNotes[adapterNote.dataset.adapterNote]=adapterNote.value;return;}\n const v3input=e.target.closest('[data-v3-control]');if(v3input){const key=v3input.dataset.v3Control;
  if(key==='domain')v3Domain=v3input.value;
  if(key==='cut')cascadeCut=Number(v3input.value);
  if(key==='mode')cascadeMode=v3input.value;
