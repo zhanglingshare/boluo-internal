@@ -13,6 +13,8 @@ on:
       - "research-v4-viz.js"
       - "research-cards.js"
       - "research-discovery.js"
+      - "research-adapter.js"
+      - "tests/research-adapter.test.cjs"
       - "research-observation-template.csv"
       - "docs/V6-DATA-CONTRACT.md"
       - "tests/research-cards.test.cjs"
@@ -65,6 +67,7 @@ jobs:
       - run: node --check research-v4-viz.js
       - run: node --check research-cards.js
       - run: node --check research-discovery.js
+      - run: node --check research-adapter.js
       - run: node --test tests/*.test.cjs
       - name: Protect prior mockups
         run: |
