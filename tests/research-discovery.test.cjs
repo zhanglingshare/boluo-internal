@@ -21,6 +21,12 @@ test('CSV import accepts aggregate indicators and stores locally only',()=>{
  assert.equal(r.ok,true);assert.equal(r.imported,1);assert.equal(D.load(st).length,1);
  assert.equal(D.importCsv(csv([metric('工业增加值','2021',4)]),st).imported,0);
 });
+test('import IDs are stable across row order and duplicate rows in one file are deduplicated',()=>{
+ const st=storage(),a=metric('工业增加值','2021',4,'公报A'),b=metric('固定资产投资','2021',-2,'公报B');
+ const first=D.importCsv(csv([a,a,b]),st);assert.equal(first.imported,2);assert.equal(first.skipped,1);
+ const second=D.importCsv(csv([b,a]),st);assert.equal(second.imported,0);assert.equal(second.skipped,2);
+ assert.equal(D.load(st).length,2);
+});
 test('PII or respondent-level columns are rejected as a whole',()=>{
  const st=storage(),bad=header+',phone\n'+row(metric('工业增加值','2021',4))+',13800000000';
  const r=D.importCsv(bad,st);assert.equal(r.ok,false);assert.equal(D.load(st).length,0);
