@@ -29,6 +29,7 @@ function parseCsv(text){
  const nonempty=matrix.filter(r=>r.some(c=>String(c).trim()!==''));
  if(nonempty.length<2)return {rows:[],errors:['没有可导入的数据行。']};
  const headers=nonempty[0].map(x=>safeText(x,80).replace(/^\uFEFF/,'').toLowerCase());
+ if(new Set(headers).size!==headers.length)return {rows:[],errors:['CSV列名重复，请保留标准模板中的唯一字段。']};
  if(headers.some(h=>FORBIDDEN.test(h)))return {rows:[],errors:['检测到个人身份或联系方式字段。仅接受匿名汇总数据，已拒绝整个文件。']};
  const unknown=headers.filter(h=>!ALLOWED.includes(h));
  if(unknown.length)return {rows:[],errors:['存在不支持的字段：'+unknown.join('、')+'。请使用标准模板。']};
@@ -43,13 +44,14 @@ function parseCsv(text){
   if(!['metric','survey_aggregate'].includes(type)){errors.push('第'+line+'行：record_type只能是metric或survey_aggregate。');return;}
   if(!obj.indicator||!obj.period||!obj.geography||!obj.unit||!obj.scope||!obj.source_name){errors.push('第'+line+'行：指标、期次、地区、单位、统计范围和来源名称不能为空。');return;}
   if(!/^20\d{2}([-/](0[1-9]|1[0-2]))?([-/]([0-2]\d|3[01]))?$|^20\d{2}Q[1-4]$/i.test(obj.period)){errors.push('第'+line+'行：期次请使用YYYY、YYYY-MM、YYYY-MM-DD或YYYYQ1格式。');return;}
+  if(obj.value===''){errors.push('第'+line+'行：value不能为空。');return;}
   const value=Number(obj.value);
   if(!Number.isFinite(value)){errors.push('第'+line+'行：value必须是数字。');return;}
   const grade=String(obj.evidence_grade||'').toUpperCase();
   if(!['A','B','C','D'].includes(grade)){errors.push('第'+line+'行：evidence_grade只能是A/B/C/D。');return;}
   const url=safeText(obj.source_url,500);
   if(url&&!/^https?:\/\//i.test(url)){errors.push('第'+line+'行：source_url必须是http或https链接。');return;}
-  const record={id:'obs-'+(index+1)+'-'+hash([type,obj.indicator,obj.period,obj.geography,obj.scope,obj.source_name,value].join('|')),
+  const record={id:'obs-'+hash([type,obj.indicator,obj.period,obj.geography,obj.industry||'',obj.scope,obj.unit,obj.source_name,value].join('|')),
    record_type:type,indicator:safeText(obj.indicator,100),period:obj.period.toUpperCase(),geography:safeText(obj.geography,80),
    industry:safeText(obj.industry,80),value,unit:safeText(obj.unit,24),scope:safeText(obj.scope,120),
    source_name:safeText(obj.source_name,120),source_url:url,evidence_grade:grade,
@@ -75,7 +77,8 @@ function save(rows,storage){
 }
 function importCsv(text,storage){
  const parsed=parseCsv(text);if(parsed.errors.length)return {ok:false,imported:0,errors:parsed.errors,total:load(storage).length};
- const old=load(storage),seen=new Set(old.map(x=>x.id)),fresh=parsed.rows.filter(x=>!seen.has(x.id));
+ const old=load(storage),seen=new Set(old.map(x=>x.id)),fresh=[];
+ parsed.rows.forEach(x=>{if(!seen.has(x.id)){fresh.push(x);seen.add(x.id);}});
  const merged=old.concat(fresh).slice(-MAX_ROWS),ok=save(merged,storage);
  return {ok,imported:ok?fresh.length:0,skipped:parsed.rows.length-fresh.length,errors:ok?[]:['浏览器本地存储不可用，数据未保存。'],total:old.length+(ok?fresh.length:0)};
 }
@@ -118,7 +121,7 @@ function builtIn(ctx,storage){
  return out;
 }
 function importedIssues(rows,storage){
- const usable=(rows||[]).filter(x=>x.evidence_grade!=='D');
+ const usable=(rows||[]).filter(x=>x.evidence_grade==='A'||x.evidence_grade==='B');
  const out=[],groups=new Map();
  usable.forEach(x=>{const k=[x.record_type,x.indicator,x.geography,x.industry||'',x.scope,x.unit].join('|');if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x);});
  groups.forEach((items,key)=>{
@@ -127,35 +130,39 @@ function importedIssues(rows,storage){
    if(same.length>1){
     const vals=same.map(x=>x.value),spread=Math.max(...vals)-Math.min(...vals),base=Math.max(1,...vals.map(Math.abs)),threshold=same[0].unit==='%'?1:base*.05;
     if(spread>threshold){
-     out.push(issue({id:'import-conflict-'+hash(key+'|'+period),kind:'conflict',tier:'review',area:'data',title:'同一指标出现不同来源数值',metric:same[0].indicator+' · '+period,summary:'相同地区、统计范围和期次下出现不同数值。先核对口径，不自动选取较大或较新的数。',evidence:same.map(x=>x.source_name+'：'+x.value+' '+x.unit+'（'+x.evidence_grade+'级）'),alternatives:['统计范围或样本范围不同','初步值与修订值不同','单位或计算方法不同','来源转录错误'],falsifier:'回到原始表并确认范围、版本和单位后，差异可能消失或需要保留为版本差。',nextStep:'核对来源原表、统计时点、样本范围、单位和修订状态。',grade:'导入数据 · 待复核',source:'本地导入汇总数据',destination:'data'},storage));
+     out.push(issue({id:'import-conflict-'+hash(key+'|'+period),kind:'conflict',tier:'review',area:'data',title:'同一指标出现不同来源数值',metric:same[0].indicator+' · '+period,summary:'相同地区、统计范围和期次下出现不同数值。先核对口径，不自动选取较大或较新的数。',evidence:same.map(x=>x.source_name+'：'+x.value+' '+x.unit+'（'+x.evidence_grade+'级）'),alternatives:['统计范围或样本范围不同','初步值与修订值不同','单位或计算方法不同','来源转录错误'],falsifier:'回到原始表并确认范围、版本和单位后，差异可能消失或需要保留为版本差。',nextStep:'核对来源原表、统计时点、样本范围、单位和修订状态。',grade:'导入数据 · 待复核',source:'本地导入汇总数据',sourceLinks:same.filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'data'},storage));
     }
    }
   });
   if(items[0].record_type==='metric'){
    const series=items.slice().sort((a,b)=>a.period.localeCompare(b.period));
-   if(series.length>=5){
+   if(series.length>=5&&new Set(series.map(x=>x.period)).size===series.length){
     const deltas=[];for(let i=1;i<series.length;i++)deltas.push(series[i].value-series[i-1].value);
     const mid=median(deltas),mad=median(deltas.map(x=>Math.abs(x-mid))),last=deltas[deltas.length-1];
     const threshold=Math.max(2.5*mad,series[0].unit==='%'?1:Math.max(.01,Math.abs(mid)*2));
     if(Math.abs(last-mid)>threshold){
      const latest=series[series.length-1],prev=series[series.length-2];
-     out.push(issue({id:'import-anomaly-'+hash(key),kind:'anomaly',tier:'watch',area:'data',title:'发现一项时间序列异常候选',metric:latest.indicator+' '+(last>0?'+':'')+last.toFixed(2)+' '+latest.unit,summary:latest.geography+' '+latest.indicator+' 在'+prev.period+'至'+latest.period+'的变化，偏离该序列此前变化节奏。当前仅是统计筛查候选。',evidence:['历史变化中位数 '+mid.toFixed(2)+' '+latest.unit,'历史变化MAD '+mad.toFixed(2)+' '+latest.unit,'最新变化 '+last.toFixed(2)+' '+latest.unit,'有效期次数 '+series.length],alternatives:['真实结构变化','统计口径或样本范围改变','一次性冲击或季节因素','录入、单位或版本错误'],falsifier:'核对原始来源、口径与后续期次；若修订后回归常态或后续反转，不应保留为持续异常。',nextStep:'复核最新数据并补充同期行业、企业规模或相关指标作交叉验证。',grade:'本地导入 · 统计候选',source:'MAD稳健变化筛查（仅用于线索排序）',destination:'data'},storage));
+     out.push(issue({id:'import-anomaly-'+hash(key),kind:'anomaly',tier:'watch',area:'data',title:'发现一项时间序列异常候选',metric:latest.indicator+' '+(last>0?'+':'')+last.toFixed(2)+' '+latest.unit,summary:latest.geography+' '+latest.indicator+' 在'+prev.period+'至'+latest.period+'的变化，偏离该序列此前变化节奏。当前仅是统计筛查候选。',evidence:['历史变化中位数 '+mid.toFixed(2)+' '+latest.unit,'历史变化MAD '+mad.toFixed(2)+' '+latest.unit,'最新变化 '+last.toFixed(2)+' '+latest.unit,'有效期次数 '+series.length],alternatives:['真实结构变化','统计口径或样本范围改变','一次性冲击或季节因素','录入、单位或版本错误'],falsifier:'核对原始来源、口径与后续期次；若修订后回归常态或后续反转，不应保留为持续异常。',nextStep:'复核最新数据并补充同期行业、企业规模或相关指标作交叉验证。',grade:'本地导入 · 统计候选',source:'MAD稳健变化筛查（仅用于线索排序）',sourceLinks:[prev,latest].filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'data'},storage));
     }
    }
   }
  });
  const cross=new Map();
- usable.filter(x=>x.record_type==='metric'&&x.unit==='%').forEach(x=>{const k=[x.period,x.geography,x.scope].join('|');if(!cross.has(k))cross.set(k,[]);cross.get(k).push(x);});
+ usable.filter(x=>x.record_type==='metric'&&x.unit==='%').forEach(x=>{
+  const k=[x.period,x.geography,x.scope].join('|');
+  if(!cross.has(k))cross.set(k,[]);
+  cross.get(k).push(x);
+ });
  cross.forEach((items,key)=>{
   const output=items.find(x=>/工业/.test(x.indicator)&&/(增加值|产值|产出)/.test(x.indicator));
   const investment=items.find(x=>/(固定资产投资|工业投资)/.test(x.indicator));
-  if(output&&investment&&Math.sign(output.value)!==Math.sign(investment.value)){
-   out.push(issue({id:'import-divergence-'+hash(key),kind:'divergence',tier:'watch',area:'data',title:'导入数据出现工业产出与投资方向背离',metric:output.indicator+' '+(output.value>0?'+':'')+output.value+'% / '+investment.indicator+' '+(investment.value>0?'+':'')+investment.value+'%',summary:'同一地区、期次、统计范围和单位下，两项指标方向不同。系统只提示背离，不推断因果。',evidence:[output.period+' · '+output.geography,output.source_name+'：'+output.value+'%',investment.source_name+'：'+investment.value+'%'],alternatives:['存量产能与新增投资时滞','需求、订单或行业结构变化','指标统计范围或价格口径差异'],falsifier:'若两项指标并非同一范围或同一统计口径，先取消背离比较；补充订单、投产批次和产能利用率后再评估解释。',nextStep:'核对两个指标的原始口径，并补充行业、项目和订单证据。',grade:'本地导入 · 同口径方向筛查',source:'导入汇总数据',destination:'data'},storage));
+  if(output&&investment&&output.value*investment.value<0){
+   out.push(issue({id:'import-divergence-'+hash(key),kind:'divergence',tier:'watch',area:'data',title:'导入数据出现工业产出与投资方向背离',metric:output.indicator+' '+(output.value>0?'+':'')+output.value+'% / '+investment.indicator+' '+(investment.value>0?'+':'')+investment.value+'%',summary:'同一地区、期次、统计范围和单位下，两项指标方向不同。系统只提示背离，不推断因果。',evidence:[output.period+' · '+output.geography,output.source_name+'：'+output.value+'%',investment.source_name+'：'+investment.value+'%'],alternatives:['存量产能与新增投资时滞','需求、订单或行业结构变化','指标统计范围或价格口径差异'],falsifier:'若两项指标并非同一范围或同一统计口径，先取消背离比较；补充订单、投产批次和产能利用率后再评估解释。',nextStep:'核对两个指标的原始口径，并补充行业、项目和订单证据。',grade:'本地导入 · 同口径方向筛查',source:'导入汇总数据',sourceLinks:[output,investment].filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'data'},storage));
   }
  });
  const survey=usable.filter(x=>x.record_type==='survey_aggregate');
  survey.forEach(x=>{
-  out.push(issue({id:'import-survey-'+x.id,kind:'survey',tier:'review',area:'survey',title:'新增一条匿名调查汇总观察',metric:x.indicator+' · '+x.value+' '+x.unit,summary:x.period+'，'+x.geography+'，样本量n='+x.sample_n+'。'+(x.sample_n<30?'样本量较小，只作描述性线索。':'样本量本身不能证明代表性，仍需检查抽样框、覆盖和权重。'),evidence:['统计方式：'+x.aggregation,'总体定义：'+x.population,'抽样框：'+x.sample_frame,'缺失率：'+x.missing_rate+'%','来源：'+x.source_name],alternatives:['样本覆盖偏向某类企业','行业、规模或地区构成变化','真实经营态度或表现变化'],falsifier:'若抽样框、权重或缺失处理改变，结果可能发生变化；需与后续批次和公开指标对照。',nextStep:'按行业、规模和地区分层复核，检查缺失率与样本覆盖后再进入模型。',grade:'匿名调查汇总 · '+x.evidence_grade,source:x.source_name,destination:'survey'},storage));
+  out.push(issue({id:'import-survey-'+x.id,kind:'survey',tier:'review',area:'survey',title:'新增一条匿名调查汇总观察',metric:x.indicator+' · '+x.value+' '+x.unit,summary:x.period+'，'+x.geography+'，样本量n='+x.sample_n+'。'+(x.sample_n<30?'样本量较小，只作描述性线索。':'样本量本身不能证明代表性，仍需检查抽样框、覆盖和权重。'),evidence:['统计方式：'+x.aggregation,'总体定义：'+x.population,'抽样框：'+x.sample_frame,'缺失率：'+x.missing_rate+'%','来源：'+x.source_name],alternatives:['样本覆盖偏向某类企业','行业、规模或地区构成变化','真实经营态度或表现变化'],falsifier:'若抽样框、权重或缺失处理改变，结果可能发生变化；需与后续批次和公开指标对照。',nextStep:'按行业、规模和地区分层复核，检查缺失率与样本覆盖后再进入模型。',grade:'匿名调查汇总 · '+x.evidence_grade,source:x.source_name,sourceLinks:x.source_url?[{label:x.source_name,url:x.source_url}]:[],destination:'survey'},storage));
  });
  return out;
 }
@@ -163,7 +170,7 @@ function discover(ctx){
  ctx=ctx||{};const storage=ctx.storage,rows=ctx.observations||load(storage);
  return builtIn(ctx,storage).concat(importedIssues(rows,storage)).sort((a,b)=>({watch:0,review:1}[a.tier]??2)-({watch:0,review:1}[b.tier]??2));
 }
-const API={STORE,STATUS_STORE,ALLOWED,parseCsv,load,save,importCsv,clear,discover,median};
+const API={STORE,STATUS_STORE,ALLOWED,parseCsv,load,save,importCsv,clear,discover,median,setStatus};
 root.BoluoDiscovery=API;
 if(typeof module!=='undefined'&&module.exports)module.exports=API;
 })(typeof window!=='undefined'?window:globalThis);
