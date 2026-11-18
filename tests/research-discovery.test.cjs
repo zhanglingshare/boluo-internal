@@ -24,7 +24,7 @@ test('PII or respondent-level columns are rejected as a whole',()=>{
  const r=D.importCsv(bad,st);assert.equal(r.ok,false);assert.equal(D.load(st).length,0);
 });
 test('unknown fields and invalid periods are rejected',()=>{
- assert.ok(D.parseCsv(header+',employee_name\n').errors.length);
+ assert.ok(D.parseCsv(header+',employee_name\n'+row(metric('工业增加值','2021',4))+',测试人员').errors.length);
  const bad=D.parseCsv(csv([metric('工业增加值','2021年',4)]));
  assert.ok(bad.errors.length);
 });
@@ -59,8 +59,7 @@ test('survey aggregate requires sample frame, population and missingness metadat
  const bad={...good,sample_frame:''};assert.equal(D.parseCsv(csv([bad])).errors.length,1);
 });
 test('discovery status and local import clearing work',()=>{
- const st=storage();D.importCsv(csv([metric('工业增加值','2021',4)]),st);
- const id=D.load(st)[0].id;assert.equal(D.setStatus(id,'investigating',st),true);
- const issue=D.discover({v3:V3,v4:V4,observations:D.load(st),storage:st}).find(x=>x.id===id);
- assert.equal(issue.status,'investigating');assert.equal(D.clear(st),true);assert.equal(D.load(st).length,0);
+ const st=storage();assert.equal(D.setStatus('discovery-public-industrial-investment','investigating',st),true);
+ const issue=D.discover({v3:V3,v4:V4,observations:[],storage:st}).find(x=>x.id==='discovery-public-industrial-investment');
+ assert.equal(issue.status,'investigating');D.importCsv(csv([metric('工业增加值','2021',4)]),st);assert.equal(D.clear(st),true);assert.equal(D.load(st).length,0);
 });
