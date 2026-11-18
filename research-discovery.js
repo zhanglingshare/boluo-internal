@@ -144,6 +144,19 @@ function importedIssues(rows,storage){
    }
   }
  });
+ const cross=new Map();
+ usable.filter(x=>x.record_type==='metric'&&x.unit==='%').forEach(x=>{
+  const k=[x.period,x.geography,x.scope].join('|');
+  if(!cross.has(k))cross.set(k,[]);
+  cross.get(k).push(x);
+ });
+ cross.forEach((items,key)=>{
+  const output=items.find(x=>/工业/.test(x.indicator)&&/(增加值|产值|产出)/.test(x.indicator));
+  const investment=items.find(x=>/(固定资产投资|工业投资)/.test(x.indicator));
+  if(output&&investment&&Math.sign(output.value)!==Math.sign(investment.value)){
+   out.push(issue({id:'import-divergence-'+hash(key),kind:'divergence',tier:'watch',area:'data',title:'导入数据出现工业产出与投资方向背离',metric:output.indicator+' '+(output.value>0?'+':'')+output.value+'% / '+investment.indicator+' '+(investment.value>0?'+':'')+investment.value+'%',summary:'同一地区、期次、统计范围和单位下，两项指标方向不同。系统只提示背离，不推断因果。',evidence:[output.period+' · '+output.geography,output.source_name+'：'+output.value+'%',investment.source_name+'：'+investment.value+'%'],alternatives:['存量产能与新增投资时滞','需求、订单或行业结构变化','指标统计范围或价格口径差异'],falsifier:'若两项指标并非同一范围或同一统计口径，先取消背离比较；补充订单、投产批次和产能利用率后再评估解释。',nextStep:'核对两个指标的原始口径，并补充行业、项目和订单证据。',grade:'本地导入 · 同口径方向筛查',source:'导入汇总数据',sourceLinks:[output,investment].filter(x=>x.source_url).map(x=>({label:x.source_name,url:x.source_url})),destination:'data'},storage));
+  }
+ });
  const survey=usable.filter(x=>x.record_type==='survey_aggregate');
  survey.forEach(x=>{
   out.push(issue({id:'import-survey-'+x.id,kind:'survey',tier:'review',area:'survey',title:'新增一条匿名调查汇总观察',metric:x.indicator+' · '+x.value+' '+x.unit,summary:x.period+'，'+x.geography+'，样本量n='+x.sample_n+'。'+(x.sample_n<30?'样本量较小，只作描述性线索。':'样本量本身不能证明代表性，仍需检查抽样框、覆盖和权重。'),evidence:['统计方式：'+x.aggregation,'总体定义：'+x.population,'抽样框：'+x.sample_frame,'缺失率：'+x.missing_rate+'%','来源：'+x.source_name],alternatives:['样本覆盖偏向某类企业','行业、规模或地区构成变化','真实经营态度或表现变化'],falsifier:'若抽样框、权重或缺失处理改变，结果可能发生变化；需与后续批次和公开指标对照。',nextStep:'按行业、规模和地区分层复核，检查缺失率与样本覆盖后再进入模型。',grade:'匿名调查汇总 · '+x.evidence_grade,source:x.source_name,sourceLinks:x.source_url?[{label:x.source_name,url:x.source_url}]:[],destination:'survey'},storage));
