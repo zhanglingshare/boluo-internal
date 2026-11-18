@@ -15,10 +15,15 @@ on:
       - "research-discovery.js"
       - "research-adapter.js"
       - "tests/research-adapter.test.cjs"
+      - "docs/V7-MODEL-ADAPTER.md"
+      - "research-adapter.js"
+      - "tests/research-adapter.test.cjs"
       - "research-observation-template.csv"
       - "docs/V6-DATA-CONTRACT.md"
+      - "docs/V7-MODEL-ADAPTER.md"
       - "tests/research-cards.test.cjs"
       - "tests/research-discovery.test.cjs"
+      - "tests/research-adapter.test.cjs"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
@@ -39,9 +44,14 @@ on:
       - "research-v4-viz.js"
       - "research-cards.js"
       - "research-discovery.js"
+      - "research-adapter.js"
+      - "tests/research-adapter.test.cjs"
+      - "docs/V7-MODEL-ADAPTER.md"
       - "research-observation-template.csv"
       - "docs/V6-DATA-CONTRACT.md"
+      - "docs/V7-MODEL-ADAPTER.md"
       - "tests/research-discovery.test.cjs"
+      - "tests/research-adapter.test.cjs"
       - "tests/research-cards.test.cjs"
       - "lab.css"
       - "tests/browser-engine.test.cjs"
@@ -67,6 +77,7 @@ jobs:
       - run: node --check research-v4-viz.js
       - run: node --check research-cards.js
       - run: node --check research-discovery.js
+      - run: node --check research-adapter.js
       - run: node --check research-adapter.js
       - run: node --test tests/*.test.cjs
       - name: Protect prior mockups
