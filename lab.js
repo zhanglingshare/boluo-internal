@@ -642,7 +642,6 @@ function adapterBridgePanel(items){
  const bridge=Adapter.BRIDGES.find(x=>x.key===adapterParam)||Adapter.BRIDGES[0];
  const evidence=Adapter.approvedFor(adapterParam,items),lo=adapterParam==='project_delay'?0:-1;
  const proposals=Adapter.getProposals(localStorage);
- const baseline=E.run(state);
  const preview=adapterPreview&&adapterPreview.parameter===adapterParam?adapterPreview:null;
  const bridges=Adapter.BRIDGES.map(x=>'<button type="button" data-adapter-param="'+x.key+'" class="'+(x.key===adapterParam?'active':'')+'"><b>'+html(x.label)+'</b><small>'+Adapter.approvedFor(x.key,items).length+' 条已批准关联证据</small></button>').join('');
  const result=preview?'<div class="adapter-result"><div class="adapter-result-head"><b>同种子、同抽样次数的并行重跑</b><span>仅情景比较</span></div><div class="adapter-result-grid">'+
@@ -686,7 +685,7 @@ function adapterPage(){
 function dataPage(r){
  const d=E.DATA;
  return heading('02 / EVIDENCE DESK','事实先钉牢，未知才好推演。',
- '数据划成 A/B/C 层，宏观基数不与合成企业关系混称。导入与导出本阶段不做，使用仓库既有公开信息和可复现合成样本。',
+ '数据划成 A/B/C 层，宏观基数不与合成企业关系混称。已开放匿名汇总CSV本地导入与人工审核；部门API、云端同步和数据导出尚未开放。',
  btn('go-survey','继续：看模拟调查 ↗','primary'))+
  researchCardsContextPanel('data')+v4DataPanel()+
  '<details class="card gap"><summary><b>宏观三产历史与2024修订</b> · 点击展开</summary>'+historicalPanel()+'</details>'+
