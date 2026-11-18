@@ -173,3 +173,7 @@ GitHub Actions会自动运行Python测试与基础安全/数据隔离检查。
 - 审核、映射和情景提案保存在当前浏览器localStorage；不上传、不跨设备同步。正式部门使用仍需服务端权限、版本、审计与数据安全机制。
 
 验收路径：[V7数据适配台](https://zhanglingshare.github.io/boluo-internal/#adapter)。详细准入规则见 [docs/V7-MODEL-ADAPTER.md](docs/V7-MODEL-ADAPTER.md)。
+
+
+### V7 presentation mode
+The adapter workspace is now presented as a five-part research defense: research question → evidence review → variable mapping → live model experiment → findings and limitations. It uses chart-first slides, compact evidence inspection, clickable model bridges, live distribution comparisons and keyboard navigation. Use **全屏答辩模式** for a projector-style walkthrough; ←/→ moves between slides and Esc exits. This is a presentation layer over the existing working functions, not a static slide deck.

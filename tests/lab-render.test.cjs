@@ -18,7 +18,7 @@ function boot(route){
  function element(id){if(!nodes[id])nodes[id]={innerHTML:'',textContent:'',style:{},hidden:true};return nodes[id];}
  const location={hash:'#'+route};
  const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoCards:Cards,BoluoDiscovery:Disc,BoluoAdapter:Adapter,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
- const document={body:{style:{}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
+ const document={body:{style:{},classList:{toggle(){},remove(){}}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
  const storage=new Map();
  const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);},removeItem(k){storage.delete(k);}};
  const ctx={window,location,document,localStorage,alert(){throw new Error('unexpected alert');}};
@@ -228,37 +228,53 @@ test('V6 discovery statuses, filters and destination links are wired',()=>{
  assert.equal(v.location.hash,'#survey');
 });
 
-test('V7 adapter workspace separates evidence approval from model calibration',()=>{
+test('V7 adapter workspace renders as a visual research defense',()=>{
  const v=boot('adapter');
- assert.match(v.stage.innerHTML,/数据审核台/);
- assert.match(v.stage.innerHTML,/规上工业增加值/);
- assert.match(v.stage.innerHTML,/固定资产投资/);
- assert.match(v.stage.innerHTML,/0 \/ 5/);
- assert.match(v.stage.innerHTML,/不允许自动估计或写回参数/);
- assert.match(v.stage.innerHTML,/保存映射/);
+ assert.match(v.stage.innerHTML,/RESEARCH QUESTION/);
+ assert.match(v.stage.innerHTML,/\+8\.7%/);
+ assert.match(v.stage.innerHTML,/-18\.8%/);
+ assert.match(v.stage.innerHTML,/全屏答辩模式/);
+ assert.match(v.stage.innerHTML,/data-adapter-step="4"/);
+ assert.doesNotMatch(v.stage.innerHTML,/数据审核台/);
 });
-test('V7 public evidence must be mapped and approved before a scenario bridge can run',()=>{
+test('V7 defense navigation reveals evidence, variable mapping and live model demo',()=>{
  const v=boot('adapter');
  const click=(selector,dataset)=>v.listeners.click({target:{closest(sel){return sel===selector?{dataset}:null;}}});
+ click('[data-adapter-next]',{});
+ assert.match(v.stage.innerHTML,/EVIDENCE REVIEW/);
+ assert.match(v.stage.innerHTML,/先问数据/);
  click('[data-adapter-map-save]',{adapterMapSave:'public-2025-industrial'});
  assert.match(v.stage.innerHTML,/映射已保存/);
  click('[data-adapter-status]',{adapterId:'public-2025-industrial',adapterStatus:'已批准'});
- assert.match(v.stage.innerHTML,/1 条已批准关联证据/);
- assert.match(v.stage.innerHTML,/批准进入证据层/);
+ assert.match(v.stage.innerHTML,/已批准证据/);
+ click('[data-adapter-next]',{});
+ assert.match(v.stage.innerHTML,/VARIABLE MAPPING/);
+ assert.match(v.stage.innerHTML,/RESEARCH VARIABLE/);
+ click('[data-adapter-next]',{});
+ assert.match(v.stage.innerHTML,/LIVE MODEL DEMO/);
+ assert.match(v.stage.innerHTML,/运行模型/);
  v.listeners.input({target:{closest(sel){return sel==='[data-adapter-proposal-note]'?{value:'规上工业增速只作为当前状态证据，测试制造业条件变化对情景分布的影响。'}:null;}}});
  click('[data-adapter-run]',{});
- assert.match(v.stage.innerHTML,/同种子、同抽样次数的并行重跑/);
- assert.match(v.stage.innerHTML,/参数由研究者手动设定/);
+ assert.match(v.stage.innerHTML,/同一随机种子/);
+ assert.match(v.stage.innerHTML,/ad-hist-bars/);
+ click('[data-adapter-next]',{});
+ assert.match(v.stage.innerHTML,/FINDINGS & LIMITATIONS/);
  click('[data-adapter-save-proposal]',{});
  assert.match(v.stage.innerHTML,/情景提案已保存/);
  assert.match(v.stage.innerHTML,/情景提案 · 未应用/);
- assert.match(v.stage.innerHTML,/默认基准未改变/);
 });
-test('V7 parameter bridge selection never implies direct coefficient estimation',()=>{
+test('V7 model condition tabs and presentation mode are interactive',()=>{
  const v=boot('adapter');
- v.listeners.click({target:{closest(sel){return sel==='[data-adapter-param]'?{dataset:{adapterParam:'project_delay'}}:null;}}});
+ const click=(selector,dataset)=>v.listeners.click({target:{closest(sel){return sel===selector?{dataset}:null;}}});
+ click('[data-adapter-step]',{adapterStep:'2'});
+ assert.match(v.stage.innerHTML,/VARIABLE MAPPING/);
+ click('[data-adapter-param]',{adapterParam:'project_delay'});
  assert.match(v.stage.innerHTML,/项目延期条件/);
- assert.match(v.stage.innerHTML,/缺少项目批次和时滞映射/);
- assert.match(v.stage.innerHTML,/0 \/ 5/);
- assert.doesNotMatch(v.stage.innerHTML,/已自动校准/);
+ click('[data-adapter-presentation]',{});
+ assert.match(v.stage.innerHTML,/退出演示/);
+ assert.equal(v.document.body.classList.toggle!==undefined,true);
+ v.listeners.keydown({key:'ArrowRight',target:{closest(){return null;}},preventDefault(){}});
+ assert.match(v.stage.innerHTML,/LIVE MODEL DEMO/);
+ v.listeners.keydown({key:'Escape',target:{closest(){return null;}},preventDefault(){}});
+ assert.match(v.stage.innerHTML,/全屏答辩模式/);
 });
