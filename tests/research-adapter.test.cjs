@@ -59,7 +59,7 @@ test('scenario proposal requires approved linked evidence and explicit interpret
  A.setStatus(x.id,'已批准',all,R,st);
  const items=A.list(all,R,st),before=E.normalize({year:2030,target:1600,scenario:'balanced',seed:20321111,draws:500,knobs:{}}),after=E.normalize({...before,knobs:{...before.knobs,manufacturing:.2}});
  const baseline=E.run(before),candidate=E.run(after);
- const saved=A.saveProposal({parameter:'manufacturing',evidenceIds:[x.id],note:'工业增加值增速仅作为情境背景，测试制造业增长条件上调的敏感性。',before,after,baseline:baseline.total,candidate:candidate.total},items,E,st);
+ const saved=A.saveProposal({parameter:'manufacturing',evidenceIds:[x.id],note:'工业增加值增速仅作为情境背景，测试制造业增长条件上调的敏感性。',before,after,baseline:{...baseline.total,hit:baseline.hit},candidate:{...candidate.total,hit:candidate.hit}},items,E,st);
  assert.equal(saved.ok,true);assert.equal(saved.proposal.status,'情景提案 · 未应用');
  assert.equal(E.normalize({}).knobs.manufacturing,0);
  assert.equal(A.getProposals(st).length,1);
