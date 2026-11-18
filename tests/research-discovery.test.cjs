@@ -1,6 +1,8 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const D=require('../research-discovery.js'),V3=require('../research-v3.js'),V4=require('../research-v4.js');
+const D=require('../research-discovery.js');
+const R=require('../research-core.js');globalThis.BoluoResearch=R;
+const V3=require('../research-v3.js'),V4=require('../research-v4.js');
 const storage=()=>{const m=new Map();return{getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)};};
 const header='record_type,indicator,period,geography,industry,value,unit,scope,source_name,source_url,evidence_grade,sample_n,population,sample_frame,aggregation,missing_rate,notes';
 function row(a){return header.split(',').map(k=>a[k]===undefined?'':String(a[k])).join(',');}
