@@ -79,8 +79,7 @@ function run(input){
  const shares=current.map(r=>r.map(v=>v/(r[0]+r[1]+r[2])));
  const share=[0,1,2].map(i=>quantile(shares.map(r=>r[i]),.5));
  const hit=totals.filter(x=>x>=s.target).length/N;
- const structural=shares.filter(r=>Math.max(Math.abs(r[0]-.1),Math.abs(r[1]-.5),Math.abs(r[2]-.4))<=.01).length/N;
- return {state:s,rate:rates,history,sector,share,total:range,hit,structural,
+ return {state:s,rate:rates,history,sector,share,total:range,hit,
   gap:s.target-range.p50,histogram:{counts:hist,min,max},samples:N,
   runId:hash(JSON.stringify(s)),notes:'前台以真实2025年宏观基准及C级增长与扰动假设计算；并非统计预测或经验证的因果估计'};
 }

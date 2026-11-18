@@ -96,3 +96,8 @@ test('synthetic HTMT, two-predictor VIF and holdout predictions are computed, no
  assert.ok(Number.isFinite(m.holdout.skill));
  assert.match(m.holdout.method,/非PLSpredict/);
 });
+
+test('the legacy 1:5:4 added-value proximity metric is no longer emitted',()=>{
+ const r=E.run(base);
+ assert.equal(Object.prototype.hasOwnProperty.call(r,'structural'),false);
+});

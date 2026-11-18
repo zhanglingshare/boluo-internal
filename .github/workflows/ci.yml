@@ -2,7 +2,19 @@ name: Internal Lab | Demo, Models & API
 on:
   push:
     branches: [main]
+    paths:
+      - "boluo/**"
+      - "boluo-room/**"
+      - "tools/**"
+      - "tests/*.py"
+      - "requirements.txt"
   pull_request:
+    paths:
+      - "boluo/**"
+      - "boluo-room/**"
+      - "tools/**"
+      - "tests/*.py"
+      - "requirements.txt"
   workflow_dispatch:
 permissions:
   contents: read
