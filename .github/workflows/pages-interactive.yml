@@ -5,6 +5,7 @@ on:
       - "index.html"
       - "engine.js"
       - "lab.js"
+      - "lab.css"
       - "research-core.js"
       - "research-viz.js"
       - "research-v3.js"
@@ -13,22 +14,25 @@ on:
       - "research-v4-viz.js"
       - "research-cards.js"
       - "research-discovery.js"
+      - "research-adapter.js"
       - "research-observation-template.csv"
       - "docs/V6-DATA-CONTRACT.md"
-      - "tests/research-cards.test.cjs"
-      - "tests/research-discovery.test.cjs"
-      - "lab.css"
+      - "docs/V7-MODEL-ADAPTER.md"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
       - "tests/research-methods.test.cjs"
       - "tests/research-v3.test.cjs"
       - "tests/research-v4.test.cjs"
+      - "tests/research-cards.test.cjs"
+      - "tests/research-discovery.test.cjs"
+      - "tests/research-adapter.test.cjs"
       - ".github/workflows/pages-interactive.yml"
   pull_request:
     paths:
       - "index.html"
       - "engine.js"
       - "lab.js"
+      - "lab.css"
       - "research-core.js"
       - "research-viz.js"
       - "research-v3.js"
@@ -37,16 +41,18 @@ on:
       - "research-v4-viz.js"
       - "research-cards.js"
       - "research-discovery.js"
+      - "research-adapter.js"
       - "research-observation-template.csv"
       - "docs/V6-DATA-CONTRACT.md"
-      - "tests/research-discovery.test.cjs"
-      - "tests/research-cards.test.cjs"
-      - "lab.css"
+      - "docs/V7-MODEL-ADAPTER.md"
       - "tests/browser-engine.test.cjs"
       - "tests/lab-render.test.cjs"
       - "tests/research-methods.test.cjs"
       - "tests/research-v3.test.cjs"
       - "tests/research-v4.test.cjs"
+      - "tests/research-cards.test.cjs"
+      - "tests/research-discovery.test.cjs"
+      - "tests/research-adapter.test.cjs"
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -65,6 +71,7 @@ jobs:
       - run: node --check research-v4-viz.js
       - run: node --check research-cards.js
       - run: node --check research-discovery.js
+      - run: node --check research-adapter.js
       - run: node --test tests/*.test.cjs
       - name: Protect prior mockups
         run: |
