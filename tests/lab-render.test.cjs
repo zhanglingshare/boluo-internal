@@ -9,12 +9,13 @@ const V3=require('../research-v3.js');globalThis.BoluoV3=V3;
 const V3V=require('../research-v3-viz.js');
 const V4=require('../research-v4.js');globalThis.BoluoV4=V4;
 const V4V=require('../research-v4-viz.js');
+const Cards=require('../research-cards.js');globalThis.BoluoCards=Cards;
 const js=fs.readFileSync(path.resolve(__dirname,'../lab.js'),'utf8');
 function boot(route){
  const nodes={};const listeners={};
  function element(id){if(!nodes[id])nodes[id]={innerHTML:'',textContent:'',style:{},hidden:true};return nodes[id];}
  const location={hash:'#'+route};
- const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
+ const window={BoluoEngine:E,BoluoResearch:R,BoluoResearchViz:RV,BoluoV3:V3,BoluoV3Viz:V3V,BoluoV4:V4,BoluoV4Viz:V4V,BoluoCards:Cards,location,scrollTo(){},addEventListener(name,fn){listeners['win:'+name]=fn;}};
  const document={body:{style:{}},getElementById:element,querySelectorAll(){return [];},addEventListener(name,fn){listeners[name]=fn;}};
  const storage=new Map();
  const localStorage={getItem(k){return storage.get(k)||null;},setItem(k,v){storage.set(k,v);}};
@@ -178,4 +179,30 @@ test('V4 public enterprise clues are separated from unverified purchase relation
  assert.match(v.stage.innerHTML,/欣旺达/);
  assert.match(v.stage.innerHTML,/华通/);
  assert.match(v.stage.innerHTML,/没有足够可靠的实际交易边/);
+});
+
+test('dynamic research cards render across the existing workspaces',()=>{
+ const home=boot('home');
+ assert.match(home.stage.innerHTML,/动态研判台/);
+ assert.match(home.stage.innerHTML,/1 : 5 : 4/);
+ assert.match(home.stage.innerHTML,/不按三次产业增加值占比计算达标率/);
+ assert.match(home.stage.innerHTML,/已核实高等级预警/);
+ assert.match(home.stage.innerHTML,/工业增长与投资下行同时出现/);
+ for(const [route,needle] of [['data','证据冲突'],['models','真实企业关系图'],['wind/0','当前风洞总量对照线'],['archive','复盘机制']]){
+  const v=boot(route);assert.ok(v.stage.innerHTML.includes(needle),route+' missing related card '+needle);
+ }
+});
+test('research-card workflow state changes and survives redraw in the same browser',()=>{
+ const v=boot('home');
+ v.listeners.click({target:{closest(sel){return sel==='[data-card-status]'?{dataset:{cardId:'signal-industrial-investment',cardStatus:'investigating'}}:null;}}});
+ assert.match(v.stage.innerHTML,/核查中/);
+ assert.match(v.stage.innerHTML,/标记已核实/);
+});
+test('research-card filters and destinations are wired',()=>{
+ const v=boot('home'),before=v.stage.innerHTML;
+ v.listeners.click({target:{closest(sel){return sel==='[data-card-filter]'?{dataset:{cardFilter:'gap'}}:null;}}});
+ assert.notEqual(v.stage.innerHTML,before);
+ assert.match(v.stage.innerHTML,/制造企业本地服务采购关系尚不可测/);
+ v.listeners.click({target:{closest(sel){return sel==='[data-card-open]'?{dataset:{cardOpen:'models',cardView:''}}:null;}}});
+ assert.equal(v.location.hash,'#models');
 });
