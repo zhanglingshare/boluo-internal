@@ -172,8 +172,8 @@ GitHub Actions会自动运行Python测试与基础安全/数据隔离检查。
 - **不做自动系数估计、不写回默认参数。当前五个情景旋钮直接校准资格均为0/5。** 观测值与情景冲击系数不是同一个统计对象。
 - 审核、映射和情景提案保存在当前浏览器localStorage；不上传、不跨设备同步。正式部门使用仍需服务端权限、版本、审计与数据安全机制。
 
-验收路径：[V7数据适配台](https://zhanglingshare.github.io/boluo-internal/#adapter)。详细准入规则见 [docs/V7-MODEL-ADAPTER.md](docs/V7-MODEL-ADAPTER.md)。
+验收路径：[V7决策实验室](https://zhanglingshare.github.io/boluo-internal/#adapter)。详细准入规则见 [docs/V7-MODEL-ADAPTER.md](docs/V7-MODEL-ADAPTER.md)。
 
 
-### V7 presentation mode
-The adapter workspace is now presented as a five-part research defense: research question → evidence review → variable mapping → live model experiment → findings and limitations. It uses chart-first slides, compact evidence inspection, clickable model bridges, live distribution comparisons and keyboard navigation. Use **全屏答辩模式** for a projector-style walkthrough; ←/→ moves between slides and Esc exits. This is a presentation layer over the existing working functions, not a static slide deck.
+### V7 证据与情景推演工作区
+V7以五个连续环节组织操作：问题发现 → 信号核验 → 关联梳理 → 情景推演 → 结果研判。界面以关键数字、关系图、分布图和可操作参数为主，复杂口径与风险边界按需展开。可进入全屏演示，使用键盘←/→切换环节、Esc退出。页面连接现有证据审核、变量关联和情景计算功能，不是静态展示页。

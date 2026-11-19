@@ -459,7 +459,7 @@ button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}.ambient{
  .adapter-record{padding:12px}
 }
 
-/* V7 research-defense presentation system */
+/* V7 decision-support workspace: chart-first, interactive presentation system */
 .adaptive-defense{min-width:0}
 .adapter-defense{--ad-line:rgba(123,166,208,.18);--ad-muted:#8298b4;--ad-cyan:#79d9ff;--ad-gold:#f3c27b;max-width:1360px;margin:0 auto;color:#e8f3ff}
 .ad-topline{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 18px;padding:0 0 14px;border-bottom:1px solid var(--ad-line)}
