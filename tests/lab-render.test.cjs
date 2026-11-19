@@ -252,7 +252,7 @@ test('V7 defense navigation reveals evidence, variable mapping and live model de
  assert.match(v.stage.innerHTML,/FACTOR/);
  click('[data-adapter-next]',{});
  assert.match(v.stage.innerHTML,/SCENARIO TEST/);
- assert.match(v.stage.innerHTML,/运行模型/);
+ assert.match(v.stage.innerHTML,/运行推演/);
  v.listeners.input({target:{closest(sel){return sel==='[data-adapter-proposal-note]'?{value:'规上工业增速只作为当前状态证据，测试制造业条件变化对情景分布的影响。'}:null;}}});
  click('[data-adapter-run]',{});
  assert.match(v.stage.innerHTML,/同一随机种子/);
