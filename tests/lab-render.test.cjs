@@ -260,7 +260,7 @@ test('V7 defense navigation reveals evidence, variable mapping and live model de
  click('[data-adapter-next]',{});
  assert.match(v.stage.innerHTML,/DECISION IMPLICATIONS/);
  click('[data-adapter-save-proposal]',{});
- assert.match(v.stage.innerHTML,/情景提案已保存/);
+ assert.match(v.stage.innerHTML,/情景记录已保存/);
  assert.match(v.stage.innerHTML,/情景提案 · 未应用/);
 });
 test('V7 model condition tabs and full-screen mode are interactive',()=>{
