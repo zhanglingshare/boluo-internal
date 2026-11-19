@@ -228,7 +228,7 @@ test('V6 discovery statuses, filters and destination links are wired',()=>{
  assert.equal(v.location.hash,'#survey');
 });
 
-test('V7 adapter workspace renders as a visual research defense',()=>{
+test('V7 decision workspace renders as a five-stage operational flow',()=>{
  const v=boot('adapter');
  assert.match(v.stage.innerHTML,/RESEARCH QUESTION/);
  assert.match(v.stage.innerHTML,/\+8\.7%/);
@@ -263,7 +263,7 @@ test('V7 defense navigation reveals evidence, variable mapping and live model de
  assert.match(v.stage.innerHTML,/情景提案已保存/);
  assert.match(v.stage.innerHTML,/情景提案 · 未应用/);
 });
-test('V7 model condition tabs and presentation mode are interactive',()=>{
+test('V7 model condition tabs and full-screen mode are interactive',()=>{
  const v=boot('adapter');
  const click=(selector,dataset)=>v.listeners.click({target:{closest(sel){return sel===selector?{dataset}:null;}}});
  click('[data-adapter-step]',{adapterStep:'2'});
