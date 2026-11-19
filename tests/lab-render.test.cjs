@@ -230,7 +230,7 @@ test('V6 discovery statuses, filters and destination links are wired',()=>{
 
 test('V7 decision workspace renders as a five-stage operational flow',()=>{
  const v=boot('adapter');
- assert.match(v.stage.innerHTML,/RESEARCH QUESTION/);
+ assert.match(v.stage.innerHTML,/DECISION QUESTION/);
  assert.match(v.stage.innerHTML,/\+8\.7%/);
  assert.match(v.stage.innerHTML,/-18\.8%/);
  assert.match(v.stage.innerHTML,/全屏模式/);
@@ -241,17 +241,17 @@ test('V7 defense navigation reveals evidence, variable mapping and live model de
  const v=boot('adapter');
  const click=(selector,dataset)=>v.listeners.click({target:{closest(sel){return sel===selector?{dataset}:null;}}});
  click('[data-adapter-next]',{});
- assert.match(v.stage.innerHTML,/EVIDENCE REVIEW/);
+ assert.match(v.stage.innerHTML,/SIGNAL REVIEW/);
  assert.match(v.stage.innerHTML,/先问数据/);
  click('[data-adapter-map-save]',{adapterMapSave:'public-2025-industrial'});
  assert.match(v.stage.innerHTML,/映射已保存/);
  click('[data-adapter-status]',{adapterId:'public-2025-industrial',adapterStatus:'已批准'});
  assert.match(v.stage.innerHTML,/已批准证据/);
  click('[data-adapter-next]',{});
- assert.match(v.stage.innerHTML,/VARIABLE MAPPING/);
+ assert.match(v.stage.innerHTML,/FACTOR CONNECTIONS/);
  assert.match(v.stage.innerHTML,/RESEARCH VARIABLE/);
  click('[data-adapter-next]',{});
- assert.match(v.stage.innerHTML,/LIVE MODEL DEMO/);
+ assert.match(v.stage.innerHTML,/SCENARIO TEST/);
  assert.match(v.stage.innerHTML,/运行模型/);
  v.listeners.input({target:{closest(sel){return sel==='[data-adapter-proposal-note]'?{value:'规上工业增速只作为当前状态证据，测试制造业条件变化对情景分布的影响。'}:null;}}});
  click('[data-adapter-run]',{});
@@ -267,14 +267,14 @@ test('V7 model condition tabs and full-screen mode are interactive',()=>{
  const v=boot('adapter');
  const click=(selector,dataset)=>v.listeners.click({target:{closest(sel){return sel===selector?{dataset}:null;}}});
  click('[data-adapter-step]',{adapterStep:'2'});
- assert.match(v.stage.innerHTML,/VARIABLE MAPPING/);
+ assert.match(v.stage.innerHTML,/FACTOR CONNECTIONS/);
  click('[data-adapter-param]',{adapterParam:'project_delay'});
  assert.match(v.stage.innerHTML,/项目延期条件/);
  click('[data-adapter-presentation]',{});
  assert.match(v.stage.innerHTML,/退出演示/);
  assert.equal(v.document.body.classList.toggle!==undefined,true);
  v.listeners.keydown({key:'ArrowRight',target:{closest(){return null;}},preventDefault(){}});
- assert.match(v.stage.innerHTML,/LIVE MODEL DEMO/);
+ assert.match(v.stage.innerHTML,/SCENARIO TEST/);
  v.listeners.keydown({key:'Escape',target:{closest(){return null;}},preventDefault(){}});
  assert.match(v.stage.innerHTML,/全屏模式/);
 });
