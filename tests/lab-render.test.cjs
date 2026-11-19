@@ -233,7 +233,7 @@ test('V7 decision workspace renders as a five-stage operational flow',()=>{
  assert.match(v.stage.innerHTML,/RESEARCH QUESTION/);
  assert.match(v.stage.innerHTML,/\+8\.7%/);
  assert.match(v.stage.innerHTML,/-18\.8%/);
- assert.match(v.stage.innerHTML,/全屏演示/);
+ assert.match(v.stage.innerHTML,/全屏模式/);
  assert.match(v.stage.innerHTML,/data-adapter-step="4"/);
  assert.doesNotMatch(v.stage.innerHTML,/数据审核台/);
 });
@@ -276,5 +276,5 @@ test('V7 model condition tabs and full-screen mode are interactive',()=>{
  v.listeners.keydown({key:'ArrowRight',target:{closest(){return null;}},preventDefault(){}});
  assert.match(v.stage.innerHTML,/LIVE MODEL DEMO/);
  v.listeners.keydown({key:'Escape',target:{closest(){return null;}},preventDefault(){}});
- assert.match(v.stage.innerHTML,/全屏演示/);
+ assert.match(v.stage.innerHTML,/全屏模式/);
 });
