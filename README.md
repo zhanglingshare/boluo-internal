@@ -175,5 +175,5 @@ GitHub Actions会自动运行Python测试与基础安全/数据隔离检查。
 验收路径：[V7决策实验室](https://zhanglingshare.github.io/boluo-internal/#adapter)。详细准入规则见 [docs/V7-MODEL-ADAPTER.md](docs/V7-MODEL-ADAPTER.md)。
 
 
-### V7 决策实验工作区
+### V7 证据与情景推演工作区
 V7以五个连续环节组织操作：问题发现 → 信号核验 → 关联梳理 → 情景推演 → 结果研判。界面以关键数字、关系图、分布图和可操作参数为主，复杂口径与风险边界按需展开。可进入全屏演示，使用键盘←/→切换环节、Esc退出。页面连接现有证据审核、变量关联和情景计算功能，不是静态展示页。
