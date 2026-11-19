@@ -258,7 +258,7 @@ test('V7 defense navigation reveals evidence, variable mapping and live model de
  assert.match(v.stage.innerHTML,/同一随机种子/);
  assert.match(v.stage.innerHTML,/ad-hist-bars/);
  click('[data-adapter-next]',{});
- assert.match(v.stage.innerHTML,/FINDINGS & LIMITATIONS/);
+ assert.match(v.stage.innerHTML,/DECISION IMPLICATIONS/);
  click('[data-adapter-save-proposal]',{});
  assert.match(v.stage.innerHTML,/情景提案已保存/);
  assert.match(v.stage.innerHTML,/情景提案 · 未应用/);
@@ -271,7 +271,7 @@ test('V7 model condition tabs and full-screen mode are interactive',()=>{
  click('[data-adapter-param]',{adapterParam:'project_delay'});
  assert.match(v.stage.innerHTML,/项目延期条件/);
  click('[data-adapter-presentation]',{});
- assert.match(v.stage.innerHTML,/退出演示/);
+ assert.match(v.stage.innerHTML,/退出全屏/);
  assert.equal(v.document.body.classList.toggle!==undefined,true);
  v.listeners.keydown({key:'ArrowRight',target:{closest(){return null;}},preventDefault(){}});
  assert.match(v.stage.innerHTML,/SCENARIO TEST/);
