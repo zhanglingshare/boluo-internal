@@ -249,7 +249,7 @@ test('V7 defense navigation reveals evidence, variable mapping and live model de
  assert.match(v.stage.innerHTML,/已批准证据/);
  click('[data-adapter-next]',{});
  assert.match(v.stage.innerHTML,/FACTOR CONNECTIONS/);
- assert.match(v.stage.innerHTML,/RESEARCH VARIABLE/);
+ assert.match(v.stage.innerHTML,/FACTOR/);
  click('[data-adapter-next]',{});
  assert.match(v.stage.innerHTML,/SCENARIO TEST/);
  assert.match(v.stage.innerHTML,/运行模型/);
