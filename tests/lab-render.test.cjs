@@ -242,7 +242,7 @@ test('V7 defense navigation reveals evidence, variable mapping and live model de
  const click=(selector,dataset)=>v.listeners.click({target:{closest(sel){return sel===selector?{dataset}:null;}}});
  click('[data-adapter-next]',{});
  assert.match(v.stage.innerHTML,/SIGNAL REVIEW/);
- assert.match(v.stage.innerHTML,/先问数据/);
+ assert.match(v.stage.innerHTML,/先核验信号/);
  click('[data-adapter-map-save]',{adapterMapSave:'public-2025-industrial'});
  assert.match(v.stage.innerHTML,/映射已保存/);
  click('[data-adapter-status]',{adapterId:'public-2025-industrial',adapterStatus:'已批准'});
